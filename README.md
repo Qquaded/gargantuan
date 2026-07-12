@@ -15,7 +15,7 @@ brew install cmake vcpkg ninja
 Install Vulkan SDK as well, then configure CMake:
 
 ```
-cmake --preset=default
+cmake -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_OSX_ARCHITECTURES=arm64 --preset=default
 ```
 
 Now:

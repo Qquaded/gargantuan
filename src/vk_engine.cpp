@@ -3,12 +3,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_vulkan.h"
 #include "vulkan/vulkan_core.h"
-#include <cstdint>
-#include <stdexcept>
-#include <string>
-#include <vector>
 #include "vulkan/vk_enum_string_helper.h"
-
 
 void VulkanEngine::init()
 {
@@ -24,6 +19,10 @@ void VulkanEngine::init()
 		windowExtent.height,
 		windowFlags
 	);
+
+	if (window == nullptr) {
+		throw std::runtime_error(std::string("Failed to create window: ") + SDL_GetError());
+	}
 
 	VkApplicationInfo applicationInfo {};
 	applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -46,13 +45,14 @@ void VulkanEngine::init()
 	// Add in KHR extension
 	std::vector<const char*> requiredExtensions;
 	for (uint32_t index = 0; index < sdlExtensionCount; index++) {
-		requiredExtensions.emplace_back(requiredExtensions[index]);
+		requiredExtensions.emplace_back(sdlExtensionNames[index]);
 	}
+	delete [] sdlExtensionNames;
 
 	requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
-	createInfo.enabledExtensionCount = requiredExtensions.size();
+	createInfo.enabledExtensionCount = (uint32_t) requiredExtensions.size();
 	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 	createInfo.enabledLayerCount = 0;
 
@@ -105,6 +105,7 @@ void VulkanEngine::run()
 					printf(key.type == SDL_KEYUP ? "Pressed" : "Released");
 					printf(": %s", SDL_GetKeyName(event.key.keysym.sym));
 					printf("\n");
+					break;
 				}
 
 				default:

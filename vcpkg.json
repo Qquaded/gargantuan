@@ -1,8 +1,6 @@
 {
   "dependencies": [
-    "sdl2",
-    "vulkan-loader",
     "vulkan-headers",
-    "vk-bootstrap"
+    "vulkan-loader"
   ]
 }
