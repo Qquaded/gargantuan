@@ -4,6 +4,56 @@
 #include "SDL2/SDL_vulkan.h"
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vk_enum_string_helper.h"
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <map>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+bool isValidationLayersSupported(std::vector<const char*> validationLayers) {
+	uint32_t layerCount;
+	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+	std::vector<VkLayerProperties> availableLayers(layerCount);
+	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+	for (const char* layerName: validationLayers) {
+		bool layerFound = false;
+
+		for (const auto& layerProperties: availableLayers) {
+			if (strcmp(layerName, layerProperties.layerName) == 0) {
+				layerFound = true;
+				break;
+			}
+		}
+
+		if (!layerFound) return false;
+	}
+
+	return true;
+}
+
+int scorePhysicalDevice(VkPhysicalDevice device) {
+	int score = 0;
+
+	VkPhysicalDeviceFeatures deviceFeatures;
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	// Metal doesn't use geometry shaders, so MoltenVK reports false here.
+	// We should still score higher for devices that support it.
+	if (deviceFeatures.geometryShader) score += 500;
+
+	// Maximum possible size of textures affects graphics quality
+	score += deviceProperties.limits.maxImageDimension2D;
+
+	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
+
+	return score;
+}
 
 void VulkanEngine::init()
 {
@@ -36,13 +86,13 @@ void VulkanEngine::init()
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &applicationInfo;
 
-	// Get SDL extensions
+	// SDL extensions
 	uint32_t sdlExtensionCount;
 	SDL_Vulkan_GetInstanceExtensions(window, &sdlExtensionCount, nullptr);
 	const char** sdlExtensionNames = new const char *[sdlExtensionCount];
 	SDL_Vulkan_GetInstanceExtensions(window, &sdlExtensionCount, sdlExtensionNames);
 
-	// Add in KHR extension
+	// MacOS bullshittery
 	std::vector<const char*> requiredExtensions;
 	for (uint32_t index = 0; index < sdlExtensionCount; index++) {
 		requiredExtensions.emplace_back(sdlExtensionNames[index]);
@@ -54,7 +104,29 @@ void VulkanEngine::init()
 
 	createInfo.enabledExtensionCount = (uint32_t) requiredExtensions.size();
 	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
-	createInfo.enabledLayerCount = 0;
+
+	// Validation layers
+	const std::vector<const char*> validationLayers = {
+		"VK_LAYER_KHRONOS_validation"
+	};
+
+	#ifdef NDEBUG
+		const bool enableValidationLayers = false;
+	#else
+		const bool enableValidationLayers = true;
+	#endif
+
+	if (enableValidationLayers) {
+		if (!isValidationLayersSupported(validationLayers))
+		{
+			throw std::runtime_error("Validation layers unavailable");
+		};
+
+		createInfo.enabledLayerCount = validationLayers.size();
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	} else {
+		createInfo.enabledLayerCount = 0;
+	}
 
 	VkResult createResult = vkCreateInstance(&createInfo, nullptr, &instance);
 	if (createResult != VK_SUCCESS) {
@@ -62,6 +134,25 @@ void VulkanEngine::init()
 		errorMessage.append(string_VkResult(createResult));
 		throw std::runtime_error(errorMessage);
 	}
+
+	// Devices
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	if (deviceCount == 0) throw std::runtime_error("No devices available");
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+	std::multimap<int, VkPhysicalDevice> candidates;
+	for (const auto& device:devices) {
+		int score = scorePhysicalDevice(device);
+		candidates.insert(std::make_pair(score, device));
+	}
+
+	if (candidates.rbegin()->first > 0) physicalDevice = candidates.rbegin() -> second;
+	else throw std::runtime_error("No supported devices");
+
+	// TODO: queue families
 
 	isInitialized = true;
 }
