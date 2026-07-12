@@ -5,17 +5,17 @@
 
 class VulkanEngine {
 public:
-	bool isInitialized { false };
-	bool isRendering { true };
-	int frameNumber { 0 };
+  bool isInitialized{false};
+  bool isRendering{true};
+  int frameNumber{0};
 
-	VkExtent2D windowExtent { 480, 320 };
-	struct SDL_Window* window { nullptr };
+  VkExtent2D windowExtent{480, 320};
+  struct SDL_Window *window{nullptr};
 
-	VkInstance instance;
+  VkInstance instance;
 
-	void init();
-	void cleanup();
-	void render();
-	void run();
+  void init();
+  void cleanup();
+  void render();
+  void run();
 };
