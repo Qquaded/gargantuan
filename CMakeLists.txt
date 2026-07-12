@@ -1,11 +1,15 @@
-cmake_minimum_required(VERSION 3.15)
-project(RaylibEngine CXX)
+cmake_minimum_required(VERSION 3.20)
+project(gargantuan CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+file(GLOB_RECURSE GARGANTUAN_SOURCES CONFIGURE_DEPENDS
+	"src/*.cpp"
+	"src/*.hpp"
+	"src/*.h"
+)
 
-find_package(raylib REQUIRED)
+find_package(SDL2 REQUIRED)
+find_package(Vulkan REQUIRED)
 
-add_executable(zero src/main.cpp)
+add_executable(gargantuan ${GARGANTUAN_SOURCES})
 
-target_link_libraries(zero PRIVATE raylib)
+target_link_libraries(gargantuan PRIVATE SDL2 Vulkan::Vulkan)

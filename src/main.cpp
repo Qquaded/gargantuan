@@ -1,19 +1,10 @@
-#include "raylib.h"
-#include <string>
-using namespace std;
+#include "vk_engine.h"
 
-int main() {
-	InitWindow(320, 240, "Zero");
-	SetTargetFPS(120);
-
-	while (!WindowShouldClose()) {
-		BeginDrawing();
-			ClearBackground(BLACK);
-			string fpsLabel = "FPS: " + to_string(GetFPS());
-			DrawText(fpsLabel.c_str(), 0, 0, 20, WHITE);
-		EndDrawing();
-	}
-
-	CloseWindow();
+int main(int argc, char* argv[])
+{
+	VulkanEngine engine;
+	engine.init();
+	engine.run();
+	engine.cleanup();
 	return 0;
 }
