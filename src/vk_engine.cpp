@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-bool isValidationLayersSupported(std::vector<const char *> validationLayers) {
+bool isValidationLayersSupported(const std::vector<const char *>& validationLayers) {
   uint32_t layerCount;
   vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -190,7 +190,7 @@ void VulkanEngine::run() {
       case SDL_KEYUP:
       case SDL_KEYDOWN: {
         SDL_KeyboardEvent key = event.key;
-        printf(key.type == SDL_KEYUP ? "Pressed" : "Released");
+        printf(key.type == SDL_KEYUP ? "Released" : "Pressed");
         printf(": %s", SDL_GetKeyName(event.key.keysym.sym));
         printf("\n");
         break;
