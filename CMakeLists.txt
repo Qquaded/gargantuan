@@ -12,4 +12,4 @@ find_package(Vulkan REQUIRED)
 
 add_executable(gargantuan ${GARGANTUAN_SOURCES})
 
-target_link_libraries(gargantuan PRIVATE SDL2 Vulkan::Vulkan)
+target_link_libraries(gargantuan PRIVATE SDL2 Vulkan::Vulkan vkbootstrap)

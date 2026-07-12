@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vk_types.h"
+#include "vulkan/vulkan_core.h"
 
 class VulkanEngine {
 public:
@@ -11,8 +12,10 @@ public:
 	VkExtent2D windowExtent { 480, 320 };
 	struct SDL_Window* window { nullptr };
 
+	VkInstance instance;
+
 	void init();
 	void cleanup();
-	void draw();
+	void render();
 	void run();
 };

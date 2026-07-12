@@ -1,6 +1,14 @@
 #include "vk_engine.h"
 
 #include "SDL2/SDL.h"
+#include "SDL2/SDL_vulkan.h"
+#include "vulkan/vulkan_core.h"
+#include <cstdint>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include "vulkan/vk_enum_string_helper.h"
+
 
 void VulkanEngine::init()
 {
@@ -17,6 +25,44 @@ void VulkanEngine::init()
 		windowFlags
 	);
 
+	VkApplicationInfo applicationInfo {};
+	applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	applicationInfo.pApplicationName = "Gargantuan";
+	applicationInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 0);
+	applicationInfo.pEngineName = "No Engine";
+	applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+	applicationInfo.apiVersion = VK_API_VERSION_1_0;
+
+	VkInstanceCreateInfo createInfo {};
+	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	createInfo.pApplicationInfo = &applicationInfo;
+
+	// Get SDL extensions
+	uint32_t sdlExtensionCount;
+	SDL_Vulkan_GetInstanceExtensions(window, &sdlExtensionCount, nullptr);
+	const char** sdlExtensionNames = new const char *[sdlExtensionCount];
+	SDL_Vulkan_GetInstanceExtensions(window, &sdlExtensionCount, sdlExtensionNames);
+
+	// Add in KHR extension
+	std::vector<const char*> requiredExtensions;
+	for (uint32_t index = 0; index < sdlExtensionCount; index++) {
+		requiredExtensions.emplace_back(requiredExtensions[index]);
+	}
+
+	requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+
+	createInfo.enabledExtensionCount = requiredExtensions.size();
+	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+	createInfo.enabledLayerCount = 0;
+
+	VkResult createResult = vkCreateInstance(&createInfo, nullptr, &instance);
+	if (createResult != VK_SUCCESS) {
+		std::string errorMessage = "Failed to create Vulkan instance: ";
+		errorMessage.append(string_VkResult(createResult));
+		throw std::runtime_error(errorMessage);
+	}
+
 	isInitialized = true;
 }
 
@@ -24,11 +70,12 @@ void VulkanEngine::cleanup()
 {
 	if (isInitialized)
 	{
+		vkDestroyInstance(instance, nullptr);
 		SDL_DestroyWindow(window);
 	}
 }
 
-void VulkanEngine::draw()
+void VulkanEngine::render()
 {
 	// TBA
 }
@@ -66,7 +113,7 @@ void VulkanEngine::run()
 		}
 
 		if (isRendering) {
-			draw();
+			render();
 			continue;
 		}
 
