@@ -4,16 +4,16 @@
 
 struct QueueFamilyIndices {
   std::optional<uint32_t> graphicsFamily;
-  bool isSupported() { return graphicsFamily.has_value(); }
+  std::optional<uint32_t> presentFamily;
+  bool isSupported() { return graphicsFamily.has_value() && presentFamily.has_value(); }
 };
 
 class Core {
 public:
-  const std::vector<const char *> REQUIRED_INSTANCE_EXTENSIONS{};
-  const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS{};
-  const std::vector<const char *> OPTIONAL_DEVICE_EXTENSIONS{
-  	"VK_KHR_portability_subset"
+  const std::vector<const char *> REQUIRED_INSTANCE_EXTENSIONS{
+    "VK_KHR_surface"
   };
+  const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS{};
 
   bool isRendering{true};
   bool isRunning{true};
@@ -26,6 +26,9 @@ public:
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   VkDevice device;
   VkQueue graphicsQueue;
+  VkQueue presentQueue;
+
+  VkSurfaceKHR surface;
 
   void initSDL();
   void initVulkan();
@@ -46,4 +49,6 @@ private:
   void initPhysicalDevice();
 
   void initLogicalDevice();
+
+  void initSurface();
 };
