@@ -4,3 +4,6 @@
 [submodule "vendor/sdl"]
 	path = vendor/sdl
 	url = https://github.com/libsdl-org/SDL.git
+[submodule "vendor/vkbootstrap"]
+	path = vendor/vkbootstrap
+	url = https://github.com/charles-lunarg/vk-bootstrap
