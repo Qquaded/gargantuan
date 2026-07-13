@@ -1,12 +1,18 @@
 #include "Core.h"
 #include "SDL.h"
 #include "vulkan/vulkan_core.h"
+#include <cstring>
+#include <stdexcept>
+#include <vector>
 
 #ifdef NDEBUG
 const bool ENABLE_VALIDATION_LAYERS = false;
 #else
 const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
+
+const std::vector<const char *> VALIDATION_LAYERS = {
+    "VK_LAYER_KHRONOS_validation"};
 
 void Core::initSDL() {
   SDL_Init(SDL_INIT_VIDEO);
@@ -26,9 +32,11 @@ void Core::initSDL() {
 void Core::initVulkan() {
   initVulkanInstance();
   initPhysicalDevice();
+  initLogicalDevice();
 }
 
 void Core::cleanup() {
+  vkDestroyDevice(device, nullptr);
   vkDestroyInstance(instance, nullptr);
   SDL_DestroyWindow(window);
 }
@@ -89,7 +97,7 @@ void Core::initVulkanInstance() {
   applicationInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 0);
   applicationInfo.pEngineName = "No Engine";
   applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  applicationInfo.apiVersion = VK_API_VERSION_1_0;
+  applicationInfo.apiVersion = VK_API_VERSION_1_4;
 
   VkInstanceCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -112,14 +120,12 @@ void Core::initVulkanInstance() {
 #if NDEBUG
   createInfo.enabledLayerCount = 0;
 #else
-  const std::vector<const char *> validationLayers = {
-      "VK_LAYER_KHRONOS_validation"};
-  if (!isValidationLayersSupported(validationLayers)) {
+  if (!isValidationLayersSupported(VALIDATION_LAYERS)) {
     throw std::runtime_error("Validation layers unavailable");
   };
 
-  createInfo.enabledLayerCount = validationLayers.size();
-  createInfo.ppEnabledLayerNames = validationLayers.data();
+  createInfo.enabledLayerCount = VALIDATION_LAYERS.size();
+  createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 #endif
 
   VkResult createResult = vkCreateInstance(&createInfo, nullptr, &instance);
@@ -179,10 +185,47 @@ QueueFamilyIndices Core::getQueueFamilies(VkPhysicalDevice device) {
   return indices;
 }
 
+std::vector<VkExtensionProperties>
+Core::getPhysicalDeviceExtensions(VkPhysicalDevice physicalDevice) {
+  uint32_t extensionCount;
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount,
+                                       nullptr);
+
+  std::vector<VkExtensionProperties> extensionProperties(extensionCount);
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount,
+                                       extensionProperties.data());
+  return extensionProperties;
+}
+
+bool Core::isPhysicalDeviceSupportsExtensions(
+    VkPhysicalDevice physicalDevice,
+    const std::vector<const char *> &requiredExtensions) {
+  auto extensionProperties = getPhysicalDeviceExtensions(physicalDevice);
+
+  for (const char *required : requiredExtensions) {
+    bool found = false;
+    for (const auto &extension : extensionProperties) {
+      if (strcmp(required, extension.extensionName) == 0) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      return false;
+  }
+
+  return true;
+}
+
 int Core::scorePhysicalDevice(VkPhysicalDevice device) {
   int score = 0;
 
   if (!getQueueFamilies(device).isSupported())
+    return 0;
+
+  if (!isPhysicalDeviceSupportsExtensions(device,
+                                          Core::REQUIRED_DEVICE_EXTENSIONS))
     return 0;
 
   VkPhysicalDeviceFeatures deviceFeatures;
@@ -222,4 +265,53 @@ void Core::initPhysicalDevice() {
     physicalDevice = candidates.rbegin()->second;
   else
     throw std::runtime_error("No supported devices");
+}
+
+// Logical devices
+
+void Core::initLogicalDevice() {
+  QueueFamilyIndices indices = getQueueFamilies(physicalDevice);
+
+  VkDeviceQueueCreateInfo queueCreateInfo{};
+  queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+  queueCreateInfo.queueCount = 1;
+
+  float queuePriority = 1.0f;
+  queueCreateInfo.pQueuePriorities = &queuePriority;
+
+  VkPhysicalDeviceFeatures deviceFeatures{};
+
+  VkDeviceCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  createInfo.pQueueCreateInfos = &queueCreateInfo;
+  createInfo.queueCreateInfoCount = 1;
+  createInfo.pEnabledFeatures = &deviceFeatures;
+
+  createInfo.enabledLayerCount = 0;
+  createInfo.ppEnabledLayerNames = nullptr;
+
+  std::vector<const char *> extensionNames = Core::REQUIRED_DEVICE_EXTENSIONS;
+  auto availableExtensions = getPhysicalDeviceExtensions(physicalDevice);
+
+  bool hasPortability = false;
+  for (const auto &name : extensionNames) {
+    if (strcmp(name, "VK_KHR_portability_subset") == 0) {
+      hasPortability = true;
+      break;
+    }
+  }
+  if (!hasPortability) extensionNames.emplace_back("VK_KHR_portability_subset");
+
+  createInfo.enabledExtensionCount = extensionNames.size();
+  createInfo.ppEnabledExtensionNames = extensionNames.data();
+
+  VkResult createResult =
+      vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
+  std::string errorMessage = "Failed to create logical device: ";
+  errorMessage.append(string_VkResult(createResult));
+  if (createResult != VK_SUCCESS)
+    throw std::runtime_error(errorMessage);
+
+  vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 }
