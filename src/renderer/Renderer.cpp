@@ -1,10 +1,11 @@
 #include "Renderer.h"
 #include "../VkBootstrap.h"
 #include "SDL2/SDL_vulkan.h"
+#include "vulkan/vk_enum_string_helper.h"
 #include "vulkan/vulkan.h"
 
 template <typename T>
-T unwrapVkbResult(vkb::Result<T> result, const char *baseMessage) {
+T assertVkbResult(vkb::Result<T> result, const char *baseMessage) {
   if (result) {
     return result.value();
   }
@@ -24,22 +25,37 @@ T unwrapVkbResult(vkb::Result<T> result, const char *baseMessage) {
   throw std::runtime_error(errorMessage);
 }
 
+void assertVkResult(VkResult result) {
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error(string_VkResult(result));
+  }
+}
+
 void Renderer::init() {
   createInstance();
   createSurface();
   createDevices();
   createQueues();
   createSwapchain();
+  initCommands();
 
   isInitialized = true;
 }
 
 void Renderer::destroy() {
   if (isInitialized) {
+    vkDeviceWaitIdle(logicalDevice);
+    for (int i = 0; i < FRAME_OVERLAP; i++) {
+      vkDestroyCommandPool(logicalDevice, frames[i].commandPool, nullptr);
+    }
+
     destroySwapchain();
+
     vkb::destroy_surface(vkbInstance, surface);
+
     vkb::destroy_device(vkbLogicalDevice);
     vkb::destroy_instance(vkbInstance);
+
     SDL_DestroyWindow(window);
   }
 }
@@ -83,7 +99,7 @@ void Renderer::createInstance() {
           .build();
 
   vkbInstance =
-      unwrapVkbResult(instanceResult, "Failed to create Vulkan instance");
+      assertVkbResult(instanceResult, "Failed to create Vulkan instance");
 
   instance = vkbInstance.instance;
   debugMessenger = vkbInstance.debug_messenger;
@@ -115,20 +131,20 @@ void Renderer::createDevices() {
                             .set_required_features_12(features12)
                             .select();
   vkbPhysicalDevice =
-      unwrapVkbResult(selectorResult, "Failed to instantiate physical device");
+      assertVkbResult(selectorResult, "Failed to instantiate physical device");
   physicalDevice = vkbPhysicalDevice.physical_device;
 
   vkb::DeviceBuilder logicalBuilder(vkbPhysicalDevice);
   auto logicalResult = logicalBuilder.build();
   vkbLogicalDevice =
-      unwrapVkbResult(logicalResult, "Failed to create logical device");
+      assertVkbResult(logicalResult, "Failed to create logical device");
   logicalDevice = vkbLogicalDevice.device;
 }
 
 void Renderer::createQueues() {
-  auto graphicsResult = vkbLogicalDevice.get_queue(vkb::QueueType::graphics);
-  graphicsQueue =
-      unwrapVkbResult(graphicsResult, "Failed to create graphics queue");
+  graphicsQueue = vkbLogicalDevice.get_queue(vkb::QueueType::graphics).value();
+  graphicsQueueFamily =
+      vkbLogicalDevice.get_queue_index(vkb::QueueType::graphics).value();
 }
 
 void Renderer::createSwapchain() {
@@ -154,5 +170,28 @@ void Renderer::destroySwapchain() {
   vkb::destroy_swapchain(vkbSwapchain);
   for (int i = 0; i < swapchainImageViews.size(); i++) {
     vkDestroyImageView(logicalDevice, swapchainImageViews[i], nullptr);
+  }
+}
+
+void Renderer::initCommands() {
+  VkCommandPoolCreateInfo commandPoolInfo = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = graphicsQueueFamily};
+
+  for (int i = 0; i < FRAME_OVERLAP; i++) {
+    assertVkResult(vkCreateCommandPool(logicalDevice, &commandPoolInfo, nullptr,
+                                       &frames[i].commandPool));
+
+    VkCommandBufferAllocateInfo commandAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = frames[i].commandPool,
+        .commandBufferCount = 1,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY};
+
+    assertVkResult(vkAllocateCommandBuffers(logicalDevice, &commandAllocateInfo,
+                                            &frames[i].mainCommandBuffer));
   }
 }

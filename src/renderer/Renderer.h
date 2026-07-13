@@ -2,6 +2,12 @@
 #include "SDL2/SDL.h"
 #include "vulkan/vulkan.h"
 
+constexpr unsigned int FRAME_OVERLAP = 2;
+struct Frame {
+  VkCommandPool commandPool;
+  VkCommandBuffer mainCommandBuffer;
+};
+
 class Renderer {
 public:
   bool isInitialized{false};
@@ -21,13 +27,21 @@ public:
   vkb::Device vkbLogicalDevice;
   VkDevice logicalDevice;
 
-  VkQueue graphicsQueue;
-
   VkSwapchainKHR swapchain;
   vkb::Swapchain vkbSwapchain;
   VkFormat swapchainImageFormat;
   std::vector<VkImage> swapchainImages;
   std::vector<VkImageView> swapchainImageViews;
+
+  VkCommandPool commandPool;
+  VkCommandBuffer mainCommandBuffer;
+
+  int frameCount = 0;
+  Frame frames[FRAME_OVERLAP];
+  Frame getCurrentFrame() { return frames[frameCount % FRAME_OVERLAP]; };
+
+  VkQueue graphicsQueue;
+  uint32_t graphicsQueueFamily;
 
   void init();
   void destroy();
@@ -41,4 +55,5 @@ private:
   void createQueues();
   void createSwapchain();
   void destroySwapchain();
+  void initCommands();
 };
