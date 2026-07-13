@@ -1,5 +1,6 @@
 #include "renderer/Renderer.h"
 #include <chrono>
+#include <cstdlib>
 #include <thread>
 
 int main(int argc, char *argv[]) {

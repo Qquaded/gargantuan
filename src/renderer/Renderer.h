@@ -23,6 +23,12 @@ public:
 
   VkQueue graphicsQueue;
 
+  VkSwapchainKHR swapchain;
+  vkb::Swapchain vkbSwapchain;
+  VkFormat swapchainImageFormat;
+  std::vector<VkImage> swapchainImages;
+  std::vector<VkImageView> swapchainImageViews;
+
   void init();
   void destroy();
   void render();
@@ -33,4 +39,6 @@ private:
   void createSurface();
   void createDevices();
   void createQueues();
+  void createSwapchain();
+  void destroySwapchain();
 };
