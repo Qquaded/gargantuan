@@ -1,7 +1,0 @@
-{
-  "dependencies": [
-    "vulkan-headers",
-    "vulkan-loader",
-    "vk-bootstrap"
-  ]
-}

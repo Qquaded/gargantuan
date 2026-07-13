@@ -1,16 +1,7 @@
-#include "core/Engine.h"
 
-int main(int argc, char* argv[])
+#include <iostream>
+int main()
 {
-    Engine engine;
-
-    engine.init();
-
-    while (engine.isRunning)
-    {
-        engine.step();
-    };
-
-    engine.destroy();
+    std::cout << "Test";
     return 0;
 }
