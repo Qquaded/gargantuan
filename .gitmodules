@@ -1,0 +1,6 @@
+[submodule "vendor/luau"]
+	path = vendor/luau
+	url = https://github.com/luau-lang/luau.git
+[submodule "vendor/sdl"]
+	path = vendor/sdl
+	url = https://github.com/libsdl-org/SDL.git
