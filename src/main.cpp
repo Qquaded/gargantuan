@@ -1,26 +1,16 @@
-#include "renderer/Renderer.h"
-#include <chrono>
-#include <cstdlib>
-#include <thread>
+#include "core/Engine.h"
 
-int main(int argc, char *argv[]) {
-  Renderer renderer;
+int main(int argc, char* argv[])
+{
+    Engine engine;
 
-  renderer.init();
+    engine.init();
 
-  SDL_Event event;
-  while (renderer.isRunning) {
-    while (SDL_PollEvent(&event)) {
-      renderer.handleEvent(event);
-    }
+    while (engine.isRunning)
+    {
+        engine.step();
+    };
 
-    if (renderer.isRendering) {
-      renderer.render();
-    } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-  }
-
-  renderer.destroy();
-  return 0;
+    engine.destroy();
+    return 0;
 }
