@@ -1,6 +1,6 @@
 # gargantuan
 
-A comprehensive 3D game engine, scriptable using Luau.
+I just made some BULLSHIIITT
 
 ## Development
 

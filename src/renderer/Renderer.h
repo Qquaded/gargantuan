@@ -10,6 +10,8 @@ struct Frame
 {
     VkCommandPool commandPool;
     VkCommandBuffer mainCommandBuffer;
+    VkSemaphore swapchainSemaphore, renderSemaphore;
+    VkFence renderFence;
 };
 
 class Renderer
@@ -19,7 +21,7 @@ public:
 
     int frameCount = 0;
     Frame frames[FRAME_OVERLAP];
-    Frame getCurrentFrame()
+    Frame& getCurrentFrame()
     {
         return frames[frameCount % FRAME_OVERLAP];
     };

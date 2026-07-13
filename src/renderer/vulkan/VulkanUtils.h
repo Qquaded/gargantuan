@@ -46,4 +46,13 @@ VkCommandBufferAllocateInfo createCommandPoolAllocateInfo(
     uint32_t commandBufferCount = 1,
     VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY
 );
+
+VkFenceCreateInfo createFenceCreateInfo(VkFenceCreateFlags flags = 0);
+VkSemaphoreCreateInfo createSemaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0);
+VkCommandBufferBeginInfo createCommandBufferBeginInfo(VkCommandBufferUsageFlags flags = 0);
+VkImageSubresourceRange createImageSubresourceRange(VkImageAspectFlags aspectMask);
+
+VkSemaphoreSubmitInfo createSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
+VkCommandBufferSubmitInfo createCommandBufferSubmitINfo(VkCommandBuffer cmd);
+
 } // namespace VulkanUtils

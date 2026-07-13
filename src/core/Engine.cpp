@@ -21,6 +21,7 @@ void Engine::init()
     backend->initPostInstance(surface);
 
     renderer = std::make_unique<Renderer>(backend.get());
+    renderer->init();
 }
 
 void Engine::step()
