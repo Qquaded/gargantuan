@@ -1,9 +1,10 @@
-#include "vk_engine.h"
+#include "Core.h"
 
 int main(int argc, char *argv[]) {
-  VulkanEngine engine;
-  engine.init();
-  engine.run();
-  engine.cleanup();
+  Core core;
+  core.initSDL();
+  core.initVulkan();
+  core.runLoop();
+  core.cleanup();
   return 0;
 }
