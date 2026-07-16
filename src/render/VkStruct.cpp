@@ -55,7 +55,7 @@ VkCommandBufferBeginInfo CommandBufferBeginInfo(VkCommandBufferUsageFlags flags)
     return info;
 }
 
-VkImageSubresourceRange createImageSubresourceRange(VkImageAspectFlags aspectMask)
+VkImageSubresourceRange ImageSubresourceRange(VkImageAspectFlags aspectMask)
 {
     VkImageSubresourceRange info{};
     info.aspectMask = aspectMask;

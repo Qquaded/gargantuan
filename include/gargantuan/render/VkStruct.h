@@ -5,7 +5,7 @@
 namespace VkStruct
 {
 
-VkCommandPoolCreateInfo CommandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
+VkCommandPoolCreateInfo CommandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags);
 VkCommandBufferAllocateInfo CommandPoolAllocateInfo(
     VkCommandPool commandPool,
     uint32_t commandBufferCount = 1,

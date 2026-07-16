@@ -3,9 +3,10 @@
 #define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
 
 #include "gargantuan/render/VkBackend.h"
-
 #include "gargantuan/render/VkAssert.h"
 #include "gargantuan/render/VkStruct.h"
+#include "gargantuan/render/VkImages.h"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <spdlog/spdlog.h>
@@ -51,7 +52,78 @@ VkBackend::VkBackend()
     spdlog::trace("VkBackend: Finished constructing");
 }
 
-void VkBackend::DrawFrame() {}
+void VkBackend::DrawFrame()
+{
+    auto& currentFrame = GetCurrentFrame();
+    auto renderFence = currentFrame.renderFence;
+
+    assertVkResult(vkWaitForFences(device, 1, &renderFence, true, 1000000000));
+    assertVkResult(vkResetFences(device, 1, &renderFence));
+
+    uint32_t swapchainImageIndex;
+    assertVkResult(
+        vkAcquireNextImageKHR(device, swapchain, 1000000000, currentFrame.swapchainSemaphore, nullptr, &swapchainImageIndex)
+    );
+
+    VkCommandBuffer commands = currentFrame.mainCommandBuffer;
+    assertVkResult(vkResetCommandBuffer(commands, 0));
+
+    auto commandBeginInfo = VkStruct::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    assertVkResult(vkBeginCommandBuffer(commands, &commandBeginInfo));
+
+    auto currentImage = swapchainImages[swapchainImageIndex];
+
+    VkImages::transitionImage(commands, currentImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+    VkClearColorValue clearValue;
+    float flash = std::abs(std::sin(frameCount / 120.0f));
+    clearValue = {{0.0f, 0.0f, flash, 1.0f}};
+
+    auto clearRange = VkStruct::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+
+    vkCmdClearColorImage(commands, currentImage, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
+    VkImages::transitionImage(commands, currentImage, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    assertVkResult(vkEndCommandBuffer(commands));
+
+    // Submission
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pNext = nullptr;
+
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    submitInfo.pWaitDstStageMask = waitStages;
+
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &currentFrame.swapchainSemaphore;
+
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commands;
+
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &currentFrame.renderSemaphore;
+
+    assertVkResult(vkQueueSubmit(graphicsQueue, 1, &submitInfo, currentFrame.renderFence));
+    spdlog::trace("VkBackend: COMMAND SUB END\n");
+
+    // Presentation
+
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.pNext = nullptr;
+    presentInfo.pSwapchains = &(swapchain);
+    presentInfo.swapchainCount = 1;
+
+    presentInfo.pWaitSemaphores = &currentFrame.renderSemaphore;
+    presentInfo.waitSemaphoreCount = 1;
+
+    presentInfo.pImageIndices = &swapchainImageIndex;
+
+    assertVkResult(vkQueuePresentKHR(graphicsQueue, &presentInfo));
+
+    frameCount++;
+}
 
 void VkBackend::CreateInstance()
 {
@@ -59,7 +131,7 @@ void VkBackend::CreateInstance()
     SDL_Init(SDL_INIT_VIDEO);
 
     spdlog::trace("VkBackend: Creating window");
-    window = SDL_CreateWindow("Gargantuan", 480, 320, SDL_WINDOW_VULKAN);
+    window = SDL_CreateWindow("Gargantuan", 480, 320, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
     spdlog::trace("VkBackend: Creating instance");
     vkb::InstanceBuilder instanceBuilder;
@@ -194,8 +266,6 @@ void VkBackend::CreateCommandPool()
         assertVkResult(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frame.swapchainSemaphore));
     }
 }
-
-
 
 void VkBackend::Destroy()
 {

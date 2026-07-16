@@ -25,6 +25,8 @@ int main()
                 break;
             }
         }
+
+        backend.DrawFrame();
     }
 
     backend.Destroy();
