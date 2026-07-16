@@ -16,3 +16,6 @@
 [submodule "vendor/freetype"]
 	path = vendor/freetype
 	url = https://github.com/freetype/freetype.git
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = https://github.com/gabime/spdlog.git

@@ -19,7 +19,6 @@ add_executable(gargantuan ${GARGANTUAN_SOURCES})
 target_include_directories(gargantuan PRIVATE
 	"./"
 	"include"
-	"vendor"
 	"vendor/box3d/include"
 	"vendor/freetype/include"
 	"vendor/glm/glm"
@@ -29,15 +28,16 @@ target_include_directories(gargantuan PRIVATE
 	"vendor/luau/Ast/include"
 	"vendor/luau/CodeGen/include"
 	"vendor/sdl/include"
-	"vendor/vkbootstrap/src"
+	"vendor/spdlog/include"
 )
 
-add_subdirectory(vendor/box3d EXCLUDE_FROM_ALL)
-add_subdirectory(vendor/freetype EXCLUDE_FROM_ALL)
-add_subdirectory(vendor/glm EXCLUDE_FROM_ALL)
-add_subdirectory(vendor/luau EXCLUDE_FROM_ALL)
-add_subdirectory(vendor/sdl EXCLUDE_FROM_ALL) 
-add_subdirectory(vendor/vkbootstrap EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/box3d)
+add_subdirectory(vendor/freetype)
+add_subdirectory(vendor/glm)
+add_subdirectory(vendor/luau)
+add_subdirectory(vendor/sdl) 
+add_subdirectory(vendor/spdlog) 
+add_subdirectory(vendor/vkbootstrap)
 
 find_package(Vulkan REQUIRED)
 
@@ -48,5 +48,6 @@ target_link_libraries(gargantuan
 		box3d
 		freetype
 		glm
-		VulkanBootstrap
+		spdlog::spdlog
+		vk-bootstrap::vk-bootstrap
 )

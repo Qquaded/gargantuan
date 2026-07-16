@@ -1,6 +1,8 @@
 # gargantuan
 
-I just made some BULLSHIIITT
+3D game engine inspired by Kinemiun Engine and ONLY Kinemium Engine.
+
+It's scriptable using Luau!
 
 ## Development
 
