@@ -1,4 +1,4 @@
 build
-vcpkg_installed
+cmake-build-debug
 .DS_Store
 .cache

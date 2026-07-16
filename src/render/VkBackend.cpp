@@ -5,6 +5,7 @@
 #include "gargantuan/render/VkBackend.h"
 
 #include "gargantuan/render/VkAssert.h"
+#include "gargantuan/render/VkStruct.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <spdlog/spdlog.h>
@@ -42,10 +43,15 @@ VkBackend::VkBackend()
     this->CreateSurface();
     this->SelectPhysicalDevice();
     this->CreateLogicalDevice();
-    this->CreateQueues();
     this->CreateAllocator();
+    this->CreateQueues();
+    this->CreateSwapchain();
+    this->CreateCommandPool();
+
     spdlog::trace("VkBackend: Finished constructing");
 }
+
+void VkBackend::DrawFrame() {}
 
 void VkBackend::CreateInstance()
 {
@@ -91,21 +97,10 @@ void VkBackend::SelectPhysicalDevice()
 {
     spdlog::trace("VkBackend: Selecting physical device");
 
-    VkPhysicalDeviceVulkan13Features features13{};
-    features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-    features13.dynamicRendering = true;
-    features13.synchronization2 = true;
-
-    VkPhysicalDeviceVulkan12Features features12{};
-    features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    features12.bufferDeviceAddress = true;
-    features12.descriptorIndexing = true;
 
     vkb::PhysicalDeviceSelector physicalSelector(vkbInstance);
     auto selectorResult = physicalSelector.set_surface(surface)
                               .set_minimum_version(1, 0)
-                              .set_required_features_13(features13)
-                              .set_required_features_12(features12)
                               .select();
 
     vkbPhysicalDevice = assertVkbResult(selectorResult, "Failed to instantiate physical device");
@@ -125,14 +120,6 @@ void VkBackend::CreateLogicalDevice()
     device = vkbDevice.device;
 }
 
-void VkBackend::CreateQueues()
-{
-    spdlog::trace("VkBackend: Creating queues");
-
-    graphicsQueue = assertVkbResult(vkbDevice.get_queue(vkb::QueueType::graphics), "Failed to get graphics queue");
-    graphicsQueueFamily = assertVkbResult(vkbDevice.get_queue_index(vkb::QueueType::graphics), "Failed to get graphics queue index");
-}
-
 void VkBackend::CreateAllocator()
 {
     spdlog::trace("VkBackend: Creating allocator");
@@ -149,7 +136,6 @@ void VkBackend::CreateAllocator()
     allocatorCreateInfo.instance = instance;
     allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
 
-    allocator;
     vmaCreateAllocator(&allocatorCreateInfo, &allocator);
 
     VkBufferCreateInfo bufferInfo{};
@@ -163,14 +149,93 @@ void VkBackend::CreateAllocator()
     vmaCreateBuffer(allocator, &bufferInfo, &allocationInfo, &buffer, &allocation, nullptr);
 }
 
+void VkBackend::CreateQueues()
+{
+    spdlog::trace("VkBackend: Creating queues");
+
+    graphicsQueue = assertVkbResult(vkbDevice.get_queue(vkb::QueueType::graphics), "Failed to get graphics queue");
+    graphicsQueueFamily = assertVkbResult(vkbDevice.get_queue_index(vkb::QueueType::graphics), "Failed to get graphics queue index");
+}
+
+void VkBackend::CreateSwapchain()
+{
+    spdlog::trace("VkBackend: Creating swapchain");
+
+    vkb::SwapchainBuilder swapchainBuilder(vkbDevice, surface);
+    swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+
+    auto swapchainResult = swapchainBuilder.set_desired_format(VkSurfaceFormatKHR{.format = swapchainImageFormat, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
+            .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+            .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+            .build();
+
+    vkbSwapchain = assertVkbResult(swapchainResult, "Failed to instantiate swapchain");
+
+    swapchain = vkbSwapchain.swapchain;
+    swapchainImages = vkbSwapchain.get_images().value();
+    swapchainImageViews = vkbSwapchain.get_image_views().value();
+}
+
+void VkBackend::CreateCommandPool()
+{
+    auto commandPoolInfo = VkStruct::CommandPoolCreateInfo(graphicsQueueFamily, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    auto fenceCreateInfo = VkStruct::FenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+    auto semaphoreCreateInfo = VkStruct::SemaphoreCreateInfo();
+
+    for (auto & frame : frames)
+    {
+        assertVkResult(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &frame.commandPool));
+
+        auto commandAllocateInfo = VkStruct::CommandPoolAllocateInfo(frame.commandPool);
+        assertVkResult(vkAllocateCommandBuffers(device, &commandAllocateInfo, &frame.mainCommandBuffer));
+
+        assertVkResult(vkCreateFence(device, &fenceCreateInfo, nullptr, &frame.renderFence));
+        assertVkResult(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frame.renderSemaphore));
+        assertVkResult(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frame.swapchainSemaphore));
+    }
+}
+
+
+
 void VkBackend::Destroy()
 {
     spdlog::trace("VkBackend: Destroying");
+
     vkDeviceWaitIdle(device);
+
     vmaDestroyBuffer(allocator, buffer, allocation);
     vmaDestroyAllocator(allocator);
+
+    this->DestroySwapchain();
+    this->DestroyCommandPool();
     vkb::destroy_surface(instance, surface);
     vkb::destroy_device(vkbDevice);
     vkb::destroy_instance(vkbInstance);
+
     SDL_DestroyWindow(window);
+}
+
+void VkBackend::DestroySwapchain()
+{
+    spdlog::trace("VkBackend: Destroying swapchain");
+
+    for (auto & swapchainImageView : swapchainImageViews)
+    {
+        vkDestroyImageView(device, swapchainImageView, nullptr);
+    }
+
+    vkb::destroy_swapchain(vkbSwapchain);
+}
+
+void VkBackend::DestroyCommandPool()
+{
+    spdlog::trace("VkBackend: Destroying frames");
+
+    for (auto & frame : frames)
+    {
+        vkDestroyCommandPool(device, frame.commandPool, nullptr);
+        vkDestroyFence(device, frame.renderFence, nullptr);
+        vkDestroySemaphore(device, frame.renderSemaphore, nullptr);
+        vkDestroySemaphore(device, frame.swapchainSemaphore, nullptr);
+    }
 }
