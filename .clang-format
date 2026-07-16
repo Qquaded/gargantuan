@@ -25,7 +25,7 @@ IncludeCategories:
   #     Priority: 3
   #   - Regex: '^["](lua).*'
   #     Priority: 4
-  - Regex: '^["](vulkan/|SDL2/).*'
+  - Regex: "^<*"
     Priority: 5
   - Regex: "^<[^/]*>"
     Priority: 6

@@ -1,10 +1,13 @@
+#define VMA_IMPLEMENTATION
+#define VMA_STATIC_VULKAN_FUNCTIONS 0
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
+
 #include "gargantuan/render/VkBackend.h"
 
 #include "gargantuan/render/VkAssert.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <spdlog/spdlog.h>
-
 #include <VkBootstrap.h>
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -40,6 +43,7 @@ VkBackend::VkBackend()
     this->SelectPhysicalDevice();
     this->CreateLogicalDevice();
     this->CreateQueues();
+    this->CreateAllocator();
     spdlog::trace("VkBackend: Finished constructing");
 }
 
@@ -129,10 +133,44 @@ void VkBackend::CreateQueues()
     graphicsQueueFamily = assertVkbResult(vkbDevice.get_queue_index(vkb::QueueType::graphics), "Failed to get graphics queue index");
 }
 
+void VkBackend::CreateAllocator()
+{
+    spdlog::trace("VkBackend: Creating allocator");
+
+    VmaVulkanFunctions vulkanFunctions = {};
+    vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+    vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+    VmaAllocatorCreateInfo allocatorCreateInfo = {};
+    allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+    allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_0;
+    allocatorCreateInfo.physicalDevice = physicalDevice;
+    allocatorCreateInfo.device = device;
+    allocatorCreateInfo.instance = instance;
+    allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+    allocator;
+    vmaCreateAllocator(&allocatorCreateInfo, &allocator);
+
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = 65536;
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+    VmaAllocationCreateInfo allocationInfo{};
+    allocationInfo.usage = VMA_MEMORY_USAGE_AUTO;
+
+    vmaCreateBuffer(allocator, &bufferInfo, &allocationInfo, &buffer, &allocation, nullptr);
+}
+
 void VkBackend::Destroy()
 {
     spdlog::trace("VkBackend: Destroying");
+    vkDeviceWaitIdle(device);
+    vmaDestroyBuffer(allocator, buffer, allocation);
+    vmaDestroyAllocator(allocator);
     vkb::destroy_surface(instance, surface);
     vkb::destroy_device(vkbDevice);
     vkb::destroy_instance(vkbInstance);
+    SDL_DestroyWindow(window);
 }

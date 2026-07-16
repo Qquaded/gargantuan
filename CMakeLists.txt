@@ -29,6 +29,7 @@ target_include_directories(gargantuan PRIVATE
 	"vendor/luau/CodeGen/include"
 	"vendor/sdl/include"
 	"vendor/spdlog/include"
+	"vendor/vma/include"
 )
 
 add_subdirectory(vendor/box3d)
@@ -38,6 +39,7 @@ add_subdirectory(vendor/luau)
 add_subdirectory(vendor/sdl) 
 add_subdirectory(vendor/spdlog) 
 add_subdirectory(vendor/vkbootstrap)
+add_subdirectory(vendor/vma)
 
 find_package(Vulkan REQUIRED)
 
@@ -50,4 +52,5 @@ target_link_libraries(gargantuan
 		glm
 		spdlog::spdlog
 		vk-bootstrap::vk-bootstrap
+		GPUOpen::VulkanMemoryAllocator
 )

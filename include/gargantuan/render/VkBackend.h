@@ -1,14 +1,8 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-
+#include <vk_mem_alloc.h>
 #include <VkBootstrap.h>
-
-#ifdef NDEBUG
-const bool ENABLE_VALIDATION_LAYERS = false;
-#else
-const bool ENABLE_VALIDATION_LAYERS = true;
-#endif
 
 class VkBackend
 {
@@ -26,6 +20,10 @@ public:
     VkQueue graphicsQueue = VK_NULL_HANDLE;
     uint32_t graphicsQueueFamily = 0;
 
+    VkBuffer buffer;
+    VmaAllocation allocation;
+    VmaAllocator allocator;
+
     void Destroy();
 
 private:
@@ -38,4 +36,5 @@ private:
     void SelectPhysicalDevice();
     void CreateLogicalDevice();
     void CreateQueues();
+    void CreateAllocator();
 };
