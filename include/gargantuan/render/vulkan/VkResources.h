@@ -21,8 +21,14 @@ public:
 
     VkBuffer Push(VkBuffer buffer, VmaAllocation allocation)
     {
-        PushResource(ResourceType::VmaBuffer, reinterpret_cast<uintptr_t>(buffer), reinterpret_cast<uintptr_t>(allocation));
+        PushResource(ResourceType::Buffer, reinterpret_cast<uintptr_t>(buffer), reinterpret_cast<uintptr_t>(allocation));
         return buffer;
+    };
+
+    VkImage Push(VkImage image, VmaAllocation allocation)
+    {
+        PushResource(ResourceType::Image, reinterpret_cast<uintptr_t>(image), reinterpret_cast<uintptr_t>(allocation));
+        return image;
     };
 
     VkImageView Push(VkImageView imageView)
@@ -31,11 +37,13 @@ public:
         return imageView;
     };
 
+
 private:
     enum class ResourceType
     {
-        VmaBuffer,
-        ImageView
+        Buffer,
+        Image,
+        ImageView,
     };
 
     struct Resource

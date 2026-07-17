@@ -1,6 +1,4 @@
 #define VMA_IMPLEMENTATION
-#define VMA_STATIC_VULKAN_FUNCTIONS 0
-#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
 
 #include "gargantuan/render/vulkan/VkBackend.h"
 #include "gargantuan/render/vulkan/VkAssert.h"
@@ -49,13 +47,25 @@ VkBackend::VkBackend(SDL_Window* window)
     this->CreateLogicalDevice();
     this->CreateAllocator();
 
-    this->swapchain = VkSwapchain(this->vkbDevice, this->surface);
+    this->swapchain = std::make_unique<VkSwapchain>(this->vkbDevice, this->surface);
     this->resources = VkResources(device, allocator);
 
     this->CreateQueues();
     this->CreateCommandPool();
+    this->CreateDrawImage();
 
     spdlog::trace("VkBackend: Finished constructing");
+}
+
+void VkBackend::DrawImage(VkCommandBuffer cmd)
+{
+    VkClearColorValue clearValue;
+    float flash = std::abs(std::sin(frameCount / 120.0f));
+    clearValue = {{0.0f, 0.0f, flash, 1.0f}};
+
+    auto clearRange = VkStruct::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+
+    vkCmdClearColorImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
 }
 
 void VkBackend::DrawFrame()
@@ -68,9 +78,12 @@ void VkBackend::DrawFrame()
 
     currentFrame.resources.Flush();
 
+    spdlog::trace("1");
+
     uint32_t swapchainImageIndex;
     auto acquireNextImageResult =
-        vkAcquireNextImageKHR(device, this->swapchain.swapchain, 1000000000, currentFrame.swapchainSemaphore, nullptr, &swapchainImageIndex);
+        vkAcquireNextImageKHR(device, this->swapchain->swapchain, 1000000000, currentFrame.swapchainSemaphore, nullptr, &swapchainImageIndex);
+
 
     // if (acquireNextImageResult == VK_ERROR_OUT_OF_DATE_KHR || acquireNextImageResult == VK_SUBOPTIMAL_KHR)
     // {
@@ -87,26 +100,40 @@ void VkBackend::DrawFrame()
 
     // assertVkResult(vkResetFences(device, 1, &renderFence));
 
-    VkCommandBuffer commands = currentFrame.mainCommandBuffer;
-    assertVkResult(vkResetCommandBuffer(commands, 0));
+    spdlog::trace("2");
+
+    VkCommandBuffer cmd = currentFrame.mainCommandBuffer;
+    assertVkResult(vkResetCommandBuffer(cmd, 0));
+
+    spdlog::trace("3");
 
     auto commandBeginInfo = VkStruct::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    assertVkResult(vkBeginCommandBuffer(commands, &commandBeginInfo));
+    assertVkResult(vkBeginCommandBuffer(cmd, &commandBeginInfo));
 
-    auto currentImage = this->swapchain.images[swapchainImageIndex];
+    spdlog::trace("4");
 
-    VkImages::TransitionImage(commands, currentImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    auto currentImage = this->swapchain->images[swapchainImageIndex];
 
-    VkClearColorValue clearValue;
-    float flash = std::abs(std::sin(frameCount / 120.0f));
-    clearValue = {{0.0f, 0.0f, flash, 1.0f}};
+    drawExtent.width = drawImage.imageExtent.width;
+    drawExtent.height = drawImage.imageExtent.height;
 
-    auto clearRange = VkStruct::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
 
-    vkCmdClearColorImage(commands, currentImage, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
-    VkImages::TransitionImage(commands, currentImage, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    VkImages::TransitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    assertVkResult(vkEndCommandBuffer(commands));
+    DrawImage(cmd);
+
+    VkImages::TransitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    VkImages::TransitionImage(cmd, swapchain->images[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    VkImages::CopyImageToImage(cmd, drawImage.image, swapchain->images[swapchainImageIndex], drawExtent, swapchain->extent);
+
+    VkImages::TransitionImage(cmd, swapchain->images[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    spdlog::trace("5");
+
+    assertVkResult(vkEndCommandBuffer(cmd));
+
+    spdlog::trace("6");
 
     // Submission
 
@@ -121,19 +148,21 @@ void VkBackend::DrawFrame()
     submitInfo.pWaitSemaphores = &currentFrame.swapchainSemaphore;
 
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commands;
+    submitInfo.pCommandBuffers = &cmd;
 
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &currentFrame.renderSemaphore;
 
     assertVkResult(vkQueueSubmit(graphicsQueue, 1, &submitInfo, currentFrame.renderFence));
 
+    spdlog::trace("7");
+
     // Presentation
 
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.pNext = nullptr;
-    presentInfo.pSwapchains = &(this->swapchain.swapchain);
+    presentInfo.pSwapchains = &(this->swapchain->swapchain);
     presentInfo.swapchainCount = 1;
 
     presentInfo.pWaitSemaphores = &currentFrame.renderSemaphore;
@@ -144,6 +173,8 @@ void VkBackend::DrawFrame()
     assertVkResult(vkQueuePresentKHR(graphicsQueue, &presentInfo));
 
     frameCount++;
+
+    spdlog::trace("8");
 }
 
 void VkBackend::CreateInstance()
@@ -242,6 +273,37 @@ void VkBackend::CreateQueues()
     graphicsQueueFamily = assertVkbResult(vkbDevice.get_queue_index(vkb::QueueType::graphics), "Failed to get graphics queue index");
 }
 
+void VkBackend::CreateDrawImage()
+{
+    int width, height;
+    SDL_GetWindowSizeInPixels(window, &width, &height);
+
+    VkExtent3D drawImageExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+
+    drawImage.imageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+    drawImage.imageExtent = drawImageExtent;
+
+    VkImageUsageFlags drawImageUsages{};
+    drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
+    drawImageUsages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    auto imageInfo = VkStruct::ImageCreateInfo(drawImage.imageFormat, drawImageUsages, drawImageExtent);
+
+    VmaAllocationCreateInfo imageAllocationInfo{};
+    imageAllocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    imageAllocationInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    assertVkResult(vmaCreateImage(allocator, &imageInfo, &imageAllocationInfo, &drawImage.image, &drawImage.allocation, nullptr));
+    resources.Push(drawImage.image, drawImage.allocation);
+
+    auto imageViewInfo = VkStruct::ImageViewCreateInfo(drawImage.imageFormat, drawImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    assertVkResult(vkCreateImageView(device, &imageViewInfo, nullptr, &drawImage.imageView));
+    resources.Push(drawImage.imageView);
+}
+
 void VkBackend::CreateCommandPool()
 {
     auto commandPoolInfo = VkStruct::CommandPoolCreateInfo(graphicsQueueFamily, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -280,7 +342,7 @@ void VkBackend::Destroy()
     vmaDestroyBuffer(allocator, buffer, allocation);
     vmaDestroyAllocator(allocator);
 
-    swapchain.Destroy();
+    swapchain->Destroy();
 
     vkb::destroy_surface(instance, surface);
     vkb::destroy_device(vkbDevice);

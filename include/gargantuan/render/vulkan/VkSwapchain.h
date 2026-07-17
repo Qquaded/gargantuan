@@ -20,6 +20,8 @@ public:
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     VkFormat imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
+    VkExtent2D extent;
+
     std::vector<VkImage> images;
     std::vector<VkImageView> imageViews;
 };

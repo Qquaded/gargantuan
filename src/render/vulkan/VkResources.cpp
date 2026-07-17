@@ -24,8 +24,11 @@ void VkResources::Flush()
     {
         switch (resource.type)
         {
-        case VkResources::ResourceType::VmaBuffer:
+        case VkResources::ResourceType::Buffer:
             vmaDestroyBuffer(allocator, reinterpret_cast<VkBuffer>(resource.handle), reinterpret_cast<VmaAllocation>(resource.allocation));
+            break;
+        case VkResources::ResourceType::Image:
+            vmaDestroyImage(allocator, reinterpret_cast<VkImage>(resource.handle), reinterpret_cast<VmaAllocation>(resource.allocation));
             break;
         case VkResources::ResourceType::ImageView:
             vkDestroyImageView(device, reinterpret_cast<VkImageView>(resource.handle), nullptr);

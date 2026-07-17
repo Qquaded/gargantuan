@@ -2,6 +2,7 @@
 
 #include "gargantuan/render/vulkan/VkResources.h"
 #include "gargantuan/render/vulkan/VkSwapchain.h"
+#include "gargantuan/render/vulkan/VkTypes.h"
 
 #include <SDL3/SDL.h>
 #include <vk_mem_alloc.h>
@@ -43,7 +44,9 @@ public:
     VmaAllocation allocation;
     VmaAllocator allocator;
 
-    VkSwapchain swapchain;
+    std::unique_ptr<VkSwapchain> swapchain;
+    VkAllocatedImage drawImage;
+    VkExtent2D drawExtent;
 
     VkResources resources;
 
@@ -54,6 +57,7 @@ public:
         return frames[frameCount % FRAME_OVERLAP];
     };
 
+    void DrawImage(VkCommandBuffer cmd);
     void DrawFrame();
     void Destroy();
 
@@ -71,5 +75,6 @@ private:
     void CreateLogicalDevice();
     void CreateAllocator();
     void CreateQueues();
+    void CreateDrawImage();
     void CreateCommandPool();
 };
