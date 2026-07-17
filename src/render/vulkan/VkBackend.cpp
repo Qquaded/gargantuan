@@ -61,7 +61,7 @@ void VkBackend::DrawImage(VkCommandBuffer cmd)
 {
     VkClearColorValue clearValue;
     float flash = std::abs(std::sin(frameCount / 120.0f));
-    clearValue = {{0.0f, 0.0f, flash, 1.0f}};
+    clearValue = {{flash, 0.0f, 0.0f, 1.0f}};
 
     auto clearRange = VkStruct::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
 

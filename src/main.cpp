@@ -10,7 +10,7 @@ int main()
     SDL_Init(SDL_INIT_VIDEO);
 
     spdlog::trace("VkBackend: Creating window");
-    auto window = SDL_CreateWindow("Gargantuan", 480, 320, SDL_WINDOW_VULKAN); //| SDL_WINDOW_RESIZABLE);
+    auto window = SDL_CreateWindow("Gargantuan", 720, 540, SDL_WINDOW_VULKAN); //| SDL_WINDOW_RESIZABLE);
 
     spdlog::set_level(spdlog::level::trace);
 
