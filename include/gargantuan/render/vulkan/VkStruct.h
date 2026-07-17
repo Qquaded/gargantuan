@@ -20,4 +20,4 @@ VkImageSubresourceRange ImageSubresourceRange(VkImageAspectFlags aspectMask);
 VkSemaphoreSubmitInfo SemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
 VkCommandBufferSubmitInfo CommandBufferSubmitInfo(VkCommandBuffer cmd);
 
-};
+}; // namespace VkStruct

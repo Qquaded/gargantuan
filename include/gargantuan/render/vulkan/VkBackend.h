@@ -1,29 +1,35 @@
 #pragma once
 
+#include "gargantuan/render/vulkan/VkSwapchain.h"
+
 #include <SDL3/SDL.h>
 #include <vk_mem_alloc.h>
 #include <VkBootstrap.h>
 
-constexpr unsigned int FRAME_OVERLAP = 2;
-struct Frame
-{
-    VkCommandPool commandPool;
-    VkCommandBuffer mainCommandBuffer;
-    VkSemaphore swapchainSemaphore, renderSemaphore;
-    VkFence renderFence;
-};
-
 class VkBackend
 {
 public:
-    VkBackend();
-    VkBackend(const VkBackend &) = delete;
-    VkBackend &operator=(const VkBackend &) = delete;
+#if __APPLE__
+    static const unsigned int FRAME_OVERLAP = 3;
+#else
+    static const unsigned int FRAME_OVERLAP = 2;
+#endif
 
-    SDL_Window* window;
+    struct Frame
+    {
+        VkCommandPool commandPool;
+        VkCommandBuffer mainCommandBuffer;
+        VkSemaphore swapchainSemaphore, renderSemaphore;
+        VkFence renderFence;
+    };
+
+    VkBackend(SDL_Window* window);
+    VkBackend(const VkBackend&) = delete;
+    VkBackend& operator=(const VkBackend&) = delete;
 
     VkInstance instance;
 
+    SDL_Window* window;
     VkSurfaceKHR surface = VK_NULL_HANDLE;
 
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -35,10 +41,7 @@ public:
     VmaAllocation allocation;
     VmaAllocator allocator;
 
-    VkSwapchainKHR swapchain;
-    VkFormat swapchainImageFormat;
-    std::vector<VkImage> swapchainImages;
-    std::vector<VkImageView> swapchainImageViews;
+    VkSwapchain swapchain;
 
     int frameCount = 0;
     Frame frames[FRAME_OVERLAP];
@@ -64,10 +67,7 @@ private:
     void CreateLogicalDevice();
     void CreateAllocator();
     void CreateQueues();
+
     void CreateCommandPool();
-
-    void CreateSwapchain();
-    void DestroySwapchain();
-
     void DestroyCommandPool();
 };

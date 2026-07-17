@@ -1,4 +1,4 @@
-#include "gargantuan/render/VkStruct.h"
+#include "gargantuan/render/vulkan/VkStruct.h"
 
 namespace VkStruct
 {

@@ -19,6 +19,9 @@ add_executable(gargantuan ${GARGANTUAN_SOURCES})
 target_include_directories(gargantuan PRIVATE
 	"./"
 	"include"
+)
+
+target_include_directories(gargantuan SYSTEM PRIVATE
 	"vendor/box3d/include"
 	"vendor/freetype/include"
 	"vendor/glm/glm"

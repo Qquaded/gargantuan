@@ -1,10 +1,9 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <VkBootstrap.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
-
-#include <VkBootstrap.h>
 
 inline void assertVkResult(VkResult result)
 {

@@ -2,17 +2,17 @@
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
 #define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
 
-#include "gargantuan/render/VkBackend.h"
-#include "gargantuan/render/VkAssert.h"
-#include "gargantuan/render/VkStruct.h"
-#include "gargantuan/render/VkImages.h"
+#include "gargantuan/render/vulkan/VkBackend.h"
+#include "gargantuan/render/vulkan/VkAssert.h"
+#include "gargantuan/render/vulkan/VkImages.h"
+#include "gargantuan/render/vulkan/VkStruct.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <spdlog/spdlog.h>
 #include <VkBootstrap.h>
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+static VKAPI_ATTR VkBool32 VKAPI_CALL vkDebugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT messageType,
     const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
@@ -38,15 +38,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
-VkBackend::VkBackend()
+VkBackend::VkBackend(SDL_Window* window)
 {
+    this->window = window;
+
     this->CreateInstance();
     this->CreateSurface();
     this->SelectPhysicalDevice();
     this->CreateLogicalDevice();
+
+    this->swapchain = VkSwapchain(this->vkbDevice, this->surface);
+
     this->CreateAllocator();
     this->CreateQueues();
-    this->CreateSwapchain();
     this->CreateCommandPool();
 
     spdlog::trace("VkBackend: Finished constructing");
@@ -61,9 +65,23 @@ void VkBackend::DrawFrame()
     assertVkResult(vkResetFences(device, 1, &renderFence));
 
     uint32_t swapchainImageIndex;
-    assertVkResult(
-        vkAcquireNextImageKHR(device, swapchain, 1000000000, currentFrame.swapchainSemaphore, nullptr, &swapchainImageIndex)
-    );
+    auto acquireNextImageResult =
+        vkAcquireNextImageKHR(device, this->swapchain.swapchain, 1000000000, currentFrame.swapchainSemaphore, nullptr, &swapchainImageIndex);
+
+    // if (acquireNextImageResult == VK_ERROR_OUT_OF_DATE_KHR || acquireNextImageResult == VK_SUBOPTIMAL_KHR)
+    // {
+    //     // FIXME: should recreate all frames' render semaphores here, but im lazy
+    //     vkDeviceWaitIdle(device);
+    //     this->swapchain.Destroy();
+    //     this->swapchain.Create();
+    //     return;
+    // }
+    // else
+    // {
+    assertVkResult(acquireNextImageResult);
+    // }
+
+    // assertVkResult(vkResetFences(device, 1, &renderFence));
 
     VkCommandBuffer commands = currentFrame.mainCommandBuffer;
     assertVkResult(vkResetCommandBuffer(commands, 0));
@@ -71,9 +89,9 @@ void VkBackend::DrawFrame()
     auto commandBeginInfo = VkStruct::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     assertVkResult(vkBeginCommandBuffer(commands, &commandBeginInfo));
 
-    auto currentImage = swapchainImages[swapchainImageIndex];
+    auto currentImage = this->swapchain.images[swapchainImageIndex];
 
-    VkImages::transitionImage(commands, currentImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    VkImages::TransitionImage(commands, currentImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
     VkClearColorValue clearValue;
     float flash = std::abs(std::sin(frameCount / 120.0f));
@@ -82,7 +100,7 @@ void VkBackend::DrawFrame()
     auto clearRange = VkStruct::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
 
     vkCmdClearColorImage(commands, currentImage, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
-    VkImages::transitionImage(commands, currentImage, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    VkImages::TransitionImage(commands, currentImage, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     assertVkResult(vkEndCommandBuffer(commands));
 
@@ -105,14 +123,13 @@ void VkBackend::DrawFrame()
     submitInfo.pSignalSemaphores = &currentFrame.renderSemaphore;
 
     assertVkResult(vkQueueSubmit(graphicsQueue, 1, &submitInfo, currentFrame.renderFence));
-    spdlog::trace("VkBackend: COMMAND SUB END\n");
 
     // Presentation
 
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.pNext = nullptr;
-    presentInfo.pSwapchains = &(swapchain);
+    presentInfo.pSwapchains = &(this->swapchain.swapchain);
     presentInfo.swapchainCount = 1;
 
     presentInfo.pWaitSemaphores = &currentFrame.renderSemaphore;
@@ -127,12 +144,6 @@ void VkBackend::DrawFrame()
 
 void VkBackend::CreateInstance()
 {
-    spdlog::trace("VkBackend: Initializing SDL");
-    SDL_Init(SDL_INIT_VIDEO);
-
-    spdlog::trace("VkBackend: Creating window");
-    window = SDL_CreateWindow("Gargantuan", 480, 320, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-
     spdlog::trace("VkBackend: Creating instance");
     vkb::InstanceBuilder instanceBuilder;
 
@@ -148,7 +159,7 @@ void VkBackend::CreateInstance()
 #ifdef NDEBUG
 #else
                               .request_validation_layers()
-                              .set_debug_callback(debugCallback)
+                              .set_debug_callback(vkDebugCallback)
 #endif
 #ifdef __APPLE__
                               .enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)
@@ -171,9 +182,7 @@ void VkBackend::SelectPhysicalDevice()
 
 
     vkb::PhysicalDeviceSelector physicalSelector(vkbInstance);
-    auto selectorResult = physicalSelector.set_surface(surface)
-                              .set_minimum_version(1, 0)
-                              .select();
+    auto selectorResult = physicalSelector.set_surface(surface).set_minimum_version(1, 0).select();
 
     vkbPhysicalDevice = assertVkbResult(selectorResult, "Failed to instantiate physical device");
     physicalDevice = vkbPhysicalDevice.physical_device;
@@ -229,32 +238,13 @@ void VkBackend::CreateQueues()
     graphicsQueueFamily = assertVkbResult(vkbDevice.get_queue_index(vkb::QueueType::graphics), "Failed to get graphics queue index");
 }
 
-void VkBackend::CreateSwapchain()
-{
-    spdlog::trace("VkBackend: Creating swapchain");
-
-    vkb::SwapchainBuilder swapchainBuilder(vkbDevice, surface);
-    swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
-
-    auto swapchainResult = swapchainBuilder.set_desired_format(VkSurfaceFormatKHR{.format = swapchainImageFormat, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
-            .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-            .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-            .build();
-
-    vkbSwapchain = assertVkbResult(swapchainResult, "Failed to instantiate swapchain");
-
-    swapchain = vkbSwapchain.swapchain;
-    swapchainImages = vkbSwapchain.get_images().value();
-    swapchainImageViews = vkbSwapchain.get_image_views().value();
-}
-
 void VkBackend::CreateCommandPool()
 {
     auto commandPoolInfo = VkStruct::CommandPoolCreateInfo(graphicsQueueFamily, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     auto fenceCreateInfo = VkStruct::FenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
     auto semaphoreCreateInfo = VkStruct::SemaphoreCreateInfo();
 
-    for (auto & frame : frames)
+    for (auto& frame : frames)
     {
         assertVkResult(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &frame.commandPool));
 
@@ -276,7 +266,7 @@ void VkBackend::Destroy()
     vmaDestroyBuffer(allocator, buffer, allocation);
     vmaDestroyAllocator(allocator);
 
-    this->DestroySwapchain();
+    this->swapchain.Destroy();
     this->DestroyCommandPool();
     vkb::destroy_surface(instance, surface);
     vkb::destroy_device(vkbDevice);
@@ -285,23 +275,11 @@ void VkBackend::Destroy()
     SDL_DestroyWindow(window);
 }
 
-void VkBackend::DestroySwapchain()
-{
-    spdlog::trace("VkBackend: Destroying swapchain");
-
-    for (auto & swapchainImageView : swapchainImageViews)
-    {
-        vkDestroyImageView(device, swapchainImageView, nullptr);
-    }
-
-    vkb::destroy_swapchain(vkbSwapchain);
-}
-
 void VkBackend::DestroyCommandPool()
 {
     spdlog::trace("VkBackend: Destroying frames");
 
-    for (auto & frame : frames)
+    for (auto& frame : frames)
     {
         vkDestroyCommandPool(device, frame.commandPool, nullptr);
         vkDestroyFence(device, frame.renderFence, nullptr);
