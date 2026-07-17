@@ -103,7 +103,6 @@ void Game::Step() {
         CameraPosition += glm::vec3(0, CameraSpeed, 0);
     }
 
-    // Shift
     if (keys[SDL_SCANCODE_LSHIFT]) {
         CameraPosition -= glm::vec3(0, CameraSpeed, 0);
     }
