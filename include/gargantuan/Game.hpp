@@ -27,7 +27,7 @@ class Game {
     render::Renderer Renderer;
 
     // TODO: Camera class, and probably implement Instances by then
-    glm::vec3 CameraPosition = glm::vec3(0, 5, 5);
+    glm::vec3 CameraPosition = glm::vec3(0, 0, 5);
     glm::vec3 CameraUpVector;
     glm::vec3 CameraRightVector;
     glm::vec3 CameraLookVector;
