@@ -89,14 +89,6 @@ Renderer::Renderer(SDL_Window *window) {
         std::abort();
     }
 
-    // Vertex vertices[]{
-    //     {glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)},
-    //     {glm::vec3(1.0f, -1.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-    //     {glm::vec3(0.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
-    // };
-
-    // TestMesh = new Mesh(Gpu, vertices, 3);
-
     TestMesh = PrimitiveMeshes::Block(Gpu, glm::vec4(1.0, 1.0, 1.0, 1.0));
 
     int width, height;
@@ -147,9 +139,9 @@ SDL_GPUShader *Renderer::LoadShader(const char *filepath, SDL_GPUShaderStage sta
     return shader;
 }
 
-void Renderer::Draw() {
+void Renderer::Draw(glm::mat4 modelViewProjection) {
     Renderer::DrawContext context;
-    if (!DrawTryStart(context)) {
+    if (!DrawTryStart(context, modelViewProjection)) {
         return;
     }
 
@@ -159,6 +151,10 @@ void Renderer::Draw() {
 }
 
 void Renderer::OnWindowResize(int width, int height) {
+    if (width < 1 || height < 1) {
+        return;
+    }
+
     if (DepthTexture != nullptr) {
         SDL_ReleaseGPUTexture(Gpu, DepthTexture);
     }
@@ -176,7 +172,11 @@ void Renderer::OnWindowResize(int width, int height) {
     DepthTexture = SDL_CreateGPUTexture(Gpu, &depthInfo);
 }
 
-bool Renderer::DrawTryStart(Renderer::DrawContext &context) {
+bool Renderer::DrawTryStart(Renderer::DrawContext &context, glm::mat4 modelViewProjection) {
+    if (DepthTexture == nullptr) {
+        return false;
+    }
+
     context.commands = SDL_AcquireGPUCommandBuffer(Gpu);
     if (context.commands == nullptr) {
         SDL_Log("SDL_AcquireGPUCommandBuffer failed: %s", SDL_GetError());
@@ -195,17 +195,15 @@ bool Renderer::DrawTryStart(Renderer::DrawContext &context) {
         return false;
     }
 
+    context.modelViewProjection = modelViewProjection;
+
     return true;
 }
 
 void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     auto aspectRatio = (float)context.width / (float)context.height;
 
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(4, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 10.0f);
-
-    Renderer::PushUniforms uniforms{.modelViewProjection = projection * view * model};
+    Renderer::PushUniforms uniforms{.modelViewProjection = context.modelViewProjection};
 
     SDL_GPUColorTargetInfo colorTarget = {
         .texture = context.targetTexture,

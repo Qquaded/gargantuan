@@ -17,7 +17,7 @@ class Renderer {
     Renderer(const Renderer &) = delete;
     Renderer &operator=(const Renderer &) = delete;
 
-    void Draw();
+    void Draw(glm::mat4 modelViewProjection);
     void OnWindowResize(int width, int height);
     SDL_GPUShader *LoadShader(const char *shaderPath, SDL_GPUShaderStage stage);
 
@@ -37,13 +37,14 @@ class Renderer {
         SDL_GPUTexture *targetTexture;
         uint32_t width;
         uint32_t height;
+        glm::mat4 modelViewProjection;
     };
 
     struct PushUniforms {
         glm::mat4 modelViewProjection;
     };
 
-    bool DrawTryStart(DrawContext &context);
+    bool DrawTryStart(DrawContext &context, glm::mat4 modelViewProjection);
     void DrawMainPass(DrawContext &context);
     void DrawEnd(DrawContext &context);
 };
