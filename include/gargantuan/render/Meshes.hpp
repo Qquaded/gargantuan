@@ -11,13 +11,13 @@ struct Vertex {
     glm::vec4 rgba;
 };
 
-class StaticMesh {
+class Mesh {
   public:
-    StaticMesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount);
-    ~StaticMesh();
+    Mesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount);
+    ~Mesh();
 
-    StaticMesh(const StaticMesh &) = delete;
-    StaticMesh &operator=(const StaticMesh &) = delete;
+    Mesh(const Mesh &) = delete;
+    Mesh &operator=(const Mesh &) = delete;
 
     SDL_GPUBuffer *VertexBuffer = nullptr;
     uint32_t VertexCount = 0;

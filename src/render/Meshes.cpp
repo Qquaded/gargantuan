@@ -4,8 +4,7 @@
 
 namespace gargantuan::render {
 
-StaticMesh::StaticMesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount)
-    : Gpu(gpu), VertexCount(vertexCount) {
+Mesh::Mesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount) : Gpu(gpu), VertexCount(vertexCount) {
     uint32_t bufferSize = vertexCount * sizeof(Vertex);
     SDL_GPUBufferCreateInfo bufferInfo{.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = bufferSize};
     VertexBuffer = SDL_CreateGPUBuffer(Gpu, &bufferInfo);
@@ -30,7 +29,7 @@ StaticMesh::StaticMesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vert
     SDL_ReleaseGPUTransferBuffer(Gpu, transferBuffer);
 }
 
-StaticMesh::~StaticMesh() {
+Mesh::~Mesh() {
     if (VertexBuffer) {
         SDL_ReleaseGPUBuffer(Gpu, VertexBuffer);
     }

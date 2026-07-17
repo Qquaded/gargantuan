@@ -94,7 +94,7 @@ Renderer::Renderer(SDL_Window *window) {
         {glm::vec3(0.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
     };
 
-    TestMesh = new StaticMesh(Gpu, vertices, 3);
+    TestMesh = new Mesh(Gpu, vertices, 3);
 
     int width, height;
     SDL_GetWindowSizeInPixels(Window, &width, &height);
