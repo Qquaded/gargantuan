@@ -1,14 +1,15 @@
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/render/Meshes.hpp"
 
 #include <SDL3/SDL.h>
+#include <glm/gtc/matrix_transform.hpp>
 
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_gpu.h>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <ext/vector_float3.hpp>
 
 namespace gargantuan::render {
 
@@ -61,16 +62,25 @@ Renderer::Renderer(SDL_Window *window) {
                 .num_vertex_attributes = 2,
             },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .rasterizer_state =
-            SDL_GPURasterizerState{
-                .fill_mode = SDL_GPU_FILLMODE_FILL,
+        .rasterizer_state = SDL_GPURasterizerState{.fill_mode = SDL_GPU_FILLMODE_FILL,
+                                                   .cull_mode = SDL_GPU_CULLMODE_NONE,
+                                                   .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE},
+        .depth_stencil_state =
+            SDL_GPUDepthStencilState{
+                .compare_op = SDL_GPU_COMPAREOP_ALWAYS,
+                .back_stencil_state = {},
+                .front_stencil_state = {},
+                .compare_mask = 0,
+                .write_mask = 0,
+                .enable_depth_test = false,
+                .enable_depth_write = false,
             },
-        .target_info =
-            SDL_GPUGraphicsPipelineTargetInfo{
-                .color_target_descriptions = &colorTarget,
-                .num_color_targets = 1,
-            },
-    };
+        .target_info = SDL_GPUGraphicsPipelineTargetInfo{
+            .color_target_descriptions = &colorTarget,
+            .num_color_targets = 1,
+            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+            .has_depth_stencil_target = true,
+        }};
 
     Pipeline = SDL_CreateGPUGraphicsPipeline(Gpu, &pipelineInfo);
     if (Pipeline == nullptr) {
@@ -79,15 +89,23 @@ Renderer::Renderer(SDL_Window *window) {
     }
 
     Vertex vertices[]{
-        {glm::vec3(0.0f, 0.5f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)},
-        {glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-        {glm::vec3(0.5f, -0.5f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
+        {glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)},
+        {glm::vec3(1.0f, -1.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+        {glm::vec3(0.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
     };
-    TestTriangle = new StaticMesh(Gpu, vertices, 3);
+
+    TestMesh = new StaticMesh(Gpu, vertices, 3);
+
+    int width, height;
+    SDL_GetWindowSizeInPixels(Window, &width, &height);
+    OnWindowResize(width, height);
 }
 
 Renderer::~Renderer() {
     SDL_WaitForGPUIdle(Gpu);
+    if (DepthTexture != nullptr) {
+        SDL_ReleaseGPUTexture(Gpu, DepthTexture);
+    };
     SDL_ReleaseGPUGraphicsPipeline(Gpu, Pipeline);
     SDL_ReleaseGPUShader(Gpu, VertexShader);
     SDL_ReleaseGPUShader(Gpu, FragmentShader);
@@ -112,7 +130,7 @@ SDL_GPUShader *Renderer::LoadShader(const char *filepath, SDL_GPUShaderStage sta
         .num_samplers = 0,
         .num_storage_textures = 0,
         .num_storage_buffers = 0,
-        .num_uniform_buffers = 0,
+        .num_uniform_buffers = stage == SDL_GPU_SHADERSTAGE_VERTEX ? 1u : 0u,
     };
 
     SDL_GPUShader *shader = SDL_CreateGPUShader(Gpu, &createInfo);
@@ -135,6 +153,24 @@ void Renderer::Draw() {
     DrawMainPass(context);
 
     DrawEnd(context);
+}
+
+void Renderer::OnWindowResize(int width, int height) {
+    if (DepthTexture != nullptr) {
+        SDL_ReleaseGPUTexture(Gpu, DepthTexture);
+    }
+
+    SDL_GPUTextureCreateInfo depthInfo{
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+        .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+        .width = (uint32_t)width,
+        .height = (uint32_t)height,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+    };
+
+    DepthTexture = SDL_CreateGPUTexture(Gpu, &depthInfo);
 }
 
 bool Renderer::DrawTryStart(Renderer::DrawContext &context) {
@@ -160,6 +196,14 @@ bool Renderer::DrawTryStart(Renderer::DrawContext &context) {
 }
 
 void Renderer::DrawMainPass(Renderer::DrawContext &context) {
+    auto aspectRatio = (float)context.width / (float)context.height;
+
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::lookAt(glm::vec3(4, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 10.0f);
+
+    Renderer::PushUniforms uniforms{.modelViewProjection = projection * view * model};
+
     SDL_GPUColorTargetInfo colorTarget = {
         .texture = context.targetTexture,
         .clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f},
@@ -167,14 +211,25 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
         .store_op = SDL_GPU_STOREOP_STORE,
     };
 
-    auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, nullptr);
+    SDL_GPUDepthStencilTargetInfo depthTarget = {
+        .texture = DepthTexture,
+        .clear_depth = 1.0f,
+        .load_op = SDL_GPU_LOADOP_CLEAR,
+        .store_op = SDL_GPU_STOREOP_DONT_CARE,
+        .stencil_load_op = SDL_GPU_LOADOP_DONT_CARE,
+        .stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
+    };
+
+    SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
+
+    auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, &depthTarget);
     {
         SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
 
-        SDL_GPUBufferBinding binding{.buffer = TestTriangle->VertexBuffer, .offset = 0};
+        SDL_GPUBufferBinding binding{.buffer = TestMesh->VertexBuffer, .offset = 0};
         SDL_BindGPUVertexBuffers(renderPass, 0, &binding, 1);
 
-        SDL_DrawGPUPrimitives(renderPass, TestTriangle->VertexCount, 1, 0, 0);
+        SDL_DrawGPUPrimitives(renderPass, TestMesh->VertexCount, 1, 0, 0);
     }
     SDL_EndGPURenderPass(renderPass);
 }

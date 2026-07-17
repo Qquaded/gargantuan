@@ -4,9 +4,7 @@
 
 namespace gargantuan {
 
-Game::Game()
-    : Window(SDL_CreateWindow("Gargantuan", 720, 540, SDL_WINDOW_RESIZABLE)),
-      Renderer(Window) {}
+Game::Game() : Window(SDL_CreateWindow("Gargantuan", 720, 540, SDL_WINDOW_RESIZABLE)), Renderer(Window) {}
 
 Game::~Game() { SDL_DestroyWindow(Window); }
 
@@ -24,7 +22,8 @@ void Game::ProcessEvent(SDL_Event event) {
     } break;
 
     case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-    } break;
+    }
+        Renderer.OnWindowResize(event.window.data1, event.window.data2);
     }
 }
 
