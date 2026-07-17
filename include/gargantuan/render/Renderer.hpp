@@ -1,10 +1,13 @@
+#pragma once
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
-namespace Gargantuan {
+namespace gargantuan::render {
 
 class Renderer {
   public:
+    // NOTE: Renderer does not take ownership of `window`
     Renderer(SDL_Window *window);
     ~Renderer();
 
@@ -15,12 +18,12 @@ class Renderer {
     SDL_GPUShader *LoadShader(const char *shaderPath, SDL_GPUShaderStage stage);
 
   private:
-    SDL_Window *window;
-    SDL_GPUDevice *gpu = nullptr;
-    SDL_GPUGraphicsPipeline *pipeline = nullptr;
+    SDL_Window *Window;
+    SDL_GPUDevice *Gpu = nullptr;
+    SDL_GPUGraphicsPipeline *Pipeline = nullptr;
 
-    SDL_GPUShader *vertexShader = nullptr;
-    SDL_GPUShader *fragmentShader = nullptr;
+    SDL_GPUShader *VertexShader = nullptr;
+    SDL_GPUShader *FragmentShader = nullptr;
 };
 
-} // namespace Gargantuan
+} // namespace gargantuan::render
