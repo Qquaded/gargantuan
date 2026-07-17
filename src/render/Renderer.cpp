@@ -2,6 +2,7 @@
 
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/render/Meshes.hpp"
+#include "gargantuan/render/PrimitiveMeshes.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -64,16 +65,16 @@ Renderer::Renderer(SDL_Window *window) {
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
         .rasterizer_state = SDL_GPURasterizerState{.fill_mode = SDL_GPU_FILLMODE_FILL,
                                                    .cull_mode = SDL_GPU_CULLMODE_NONE,
-                                                   .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE},
+                                                   .front_face = SDL_GPU_FRONTFACE_CLOCKWISE},
         .depth_stencil_state =
             SDL_GPUDepthStencilState{
-                .compare_op = SDL_GPU_COMPAREOP_ALWAYS,
+                .compare_op = SDL_GPU_COMPAREOP_LESS,
                 .back_stencil_state = {},
                 .front_stencil_state = {},
                 .compare_mask = 0,
                 .write_mask = 0,
-                .enable_depth_test = false,
-                .enable_depth_write = false,
+                .enable_depth_test = true,
+                .enable_depth_write = true,
             },
         .target_info = SDL_GPUGraphicsPipelineTargetInfo{
             .color_target_descriptions = &colorTarget,
@@ -88,13 +89,15 @@ Renderer::Renderer(SDL_Window *window) {
         std::abort();
     }
 
-    Vertex vertices[]{
-        {glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)},
-        {glm::vec3(1.0f, -1.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-        {glm::vec3(0.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
-    };
+    // Vertex vertices[]{
+    //     {glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)},
+    //     {glm::vec3(1.0f, -1.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+    //     {glm::vec3(0.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
+    // };
 
-    TestMesh = new Mesh(Gpu, vertices, 3);
+    // TestMesh = new Mesh(Gpu, vertices, 3);
+
+    TestMesh = PrimitiveMeshes::Block(Gpu, glm::vec4(1.0, 1.0, 1.0, 1.0));
 
     int width, height;
     SDL_GetWindowSizeInPixels(Window, &width, &height);
