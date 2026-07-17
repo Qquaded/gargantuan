@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+#include <cstdint>
 
 namespace gargantuan::render {
 
@@ -24,6 +25,17 @@ class Renderer {
 
     SDL_GPUShader *VertexShader = nullptr;
     SDL_GPUShader *FragmentShader = nullptr;
+
+    struct DrawContext {
+        SDL_GPUCommandBuffer *commands;
+        SDL_GPUTexture *targetTexture;
+        uint32_t width;
+        uint32_t height;
+    };
+
+    bool DrawTryStart(DrawContext &context);
+    void DrawMainPass(DrawContext &context);
+    void DrawEnd(DrawContext &context);
 };
 
 } // namespace gargantuan::render

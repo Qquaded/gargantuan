@@ -3,6 +3,7 @@
 
 #include <SDL3/SDL.h>
 
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_gpu.h>
 #include <cstddef>
 #include <cstdint>
@@ -28,34 +29,27 @@ Renderer::Renderer(SDL_Window *window) {
 
     SDL_Log("GPU driver: %s", SDL_GetGPUDeviceDriver(Gpu));
 
-    VertexShader = LoadShader("build/shaders/rgbTriangle.vert.spv",
-                              SDL_GPU_SHADERSTAGE_VERTEX);
+    VertexShader = LoadShader("build/shaders/rgbTriangle.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX);
 
-    FragmentShader = LoadShader("build/shaders/rgbTriangle.frag.spv",
-                                SDL_GPU_SHADERSTAGE_FRAGMENT);
+    FragmentShader = LoadShader("build/shaders/rgbTriangle.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT);
 
-    SDL_GPUColorTargetDescription colorTarget = {
-        .format = SDL_GetGPUSwapchainTextureFormat(Gpu, Window)};
+    SDL_GPUColorTargetDescription colorTarget = {.format = SDL_GetGPUSwapchainTextureFormat(Gpu, Window)};
 
-    SDL_GPUVertexAttribute vertexAttributes[]{
-        SDL_GPUVertexAttribute{
-            .location = 0,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-            .offset = offsetof(Vertex, position),
-        },
-        SDL_GPUVertexAttribute{
-            .location = 1,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-            .offset = offsetof(Vertex, rgba),
-        }};
+    SDL_GPUVertexAttribute vertexAttributes[]{SDL_GPUVertexAttribute{
+                                                  .location = 0,
+                                                  .buffer_slot = 0,
+                                                  .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                                                  .offset = offsetof(Vertex, position),
+                                              },
+                                              SDL_GPUVertexAttribute{
+                                                  .location = 1,
+                                                  .buffer_slot = 0,
+                                                  .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+                                                  .offset = offsetof(Vertex, rgba),
+                                              }};
 
-    SDL_GPUVertexBufferDescription vertexBufferDescriptions[]{
-        SDL_GPUVertexBufferDescription{.slot = 0,
-                                       .pitch = sizeof(Vertex),
-                                       .input_rate =
-                                           SDL_GPU_VERTEXINPUTRATE_VERTEX}};
+    SDL_GPUVertexBufferDescription vertexBufferDescriptions[]{SDL_GPUVertexBufferDescription{
+        .slot = 0, .pitch = sizeof(Vertex), .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX}};
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo = {
         .vertex_shader = VertexShader,
@@ -95,8 +89,7 @@ Renderer::~Renderer() {
     SDL_DestroyGPUDevice(Gpu);
 }
 
-SDL_GPUShader *Renderer::LoadShader(const char *filepath,
-                                    SDL_GPUShaderStage stage) {
+SDL_GPUShader *Renderer::LoadShader(const char *filepath, SDL_GPUShaderStage stage) {
     size_t codeSize;
     void *code = SDL_LoadFile(filepath, &codeSize);
     if (code == nullptr) {
@@ -120,8 +113,7 @@ SDL_GPUShader *Renderer::LoadShader(const char *filepath,
     SDL_free(code);
 
     if (shader == nullptr) {
-        SDL_Log("Failed to create shader file %s: %s", filepath,
-                SDL_GetError());
+        SDL_Log("Failed to create shader file %s: %s", filepath, SDL_GetError());
         return nullptr;
     }
 
@@ -130,106 +122,58 @@ SDL_GPUShader *Renderer::LoadShader(const char *filepath,
 
 // TODO: proper pipeline/render passes
 void Renderer::Draw() {
-    Vertex vertices[]{
-        {glm::vec3(0.0f, 0.5f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)},
-        {glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-        {glm::vec3(0.5f, -0.5f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
-    };
-
-    uint32_t verticesSize = sizeof(vertices);
-
-    SDL_GPUBufferCreateInfo bufferInfo{.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-                                       .size = verticesSize};
-    auto vertexBuffer = SDL_CreateGPUBuffer(Gpu, &bufferInfo);
-
-    SDL_GPUTransferBufferCreateInfo transferInfo{
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = verticesSize};
-    auto transferBuffer = SDL_CreateGPUTransferBuffer(Gpu, &transferInfo);
-
-    void *pointer = SDL_MapGPUTransferBuffer(Gpu, transferBuffer, false);
-    memcpy(pointer, vertices, verticesSize);
-    SDL_UnmapGPUTransferBuffer(Gpu, transferBuffer);
-
-    {
-        // Data upload pass
-        auto commands = SDL_AcquireGPUCommandBuffer(Gpu);
-        auto copyPass = SDL_BeginGPUCopyPass(commands);
-
-        SDL_GPUTransferBufferLocation transferLocation{
-            .transfer_buffer = transferBuffer, .offset = 0};
-
-        SDL_GPUBufferRegion bufferRegion{
-            .buffer = vertexBuffer, .offset = 0, .size = verticesSize};
-
-        SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion,
-                              false);
-
-        SDL_EndGPUCopyPass(copyPass);
-
-        // Render pass
-        uint32_t width, height;
-        SDL_GPUTexture *swapchainTexture;
-        if (SDL_AcquireGPUSwapchainTexture(commands, Window, &swapchainTexture,
-                                           &width, &height) &&
-            swapchainTexture != nullptr) {
-
-            SDL_GPUColorTargetInfo colorTarget = {
-                .texture = swapchainTexture,
-                .clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f},
-                .load_op = SDL_GPU_LOADOP_CLEAR,
-                .store_op = SDL_GPU_STOREOP_STORE,
-            };
-
-            SDL_GPURenderPass *renderPass =
-                SDL_BeginGPURenderPass(commands, &colorTarget, 1, nullptr);
-            SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
-
-            SDL_GPUBufferBinding binding{.buffer = vertexBuffer, .offset = 0};
-            SDL_BindGPUVertexBuffers(renderPass, 0, &binding, 1);
-
-            SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-
-            SDL_EndGPURenderPass(renderPass);
-        }
-
-        SDL_SubmitGPUCommandBuffer(commands);
-        SDL_WaitForGPUIdle(Gpu);
+    Renderer::DrawContext context;
+    if (!DrawTryStart(context)) {
+        return;
     }
 
-    SDL_ReleaseGPUTransferBuffer(Gpu, transferBuffer);
-    SDL_ReleaseGPUBuffer(Gpu, vertexBuffer);
+    DrawMainPass(context);
 
-    //     SDL_GPUTexture *swapchainTexture;
-    //     uint32_t width, height;
-    //     if (!SDL_AcquireGPUSwapchainTexture(commands, Window,
-    //     &swapchainTexture,
-    //                                         &width, &height)) {
-    //         SDL_Log("SDL_AcquireGPUSwapchainTexture failed: %s",
-    //         SDL_GetError()); SDL_CancelGPUCommandBuffer(commands); return;
-    //     }
-
-    //     if (swapchainTexture == nullptr) {
-    //         SDL_CancelGPUCommandBuffer(commands);
-    //         return;
-    //     }
-    // }
-
-    // SDL_GPUColorTargetInfo colorTarget = {
-    //     .texture = swapchainTexture,
-    //     .clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f},
-    //     .load_op = SDL_GPU_LOADOP_CLEAR,
-    //     .store_op = SDL_GPU_STOREOP_STORE,
-    // };
-
-    // SDL_GPURenderPass *renderPass =
-    //     SDL_BeginGPURenderPass(commands, &colorTarget, 1, nullptr);
-
-    // SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
-    // SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-
-    // SDL_EndGPURenderPass(renderPass);
-
-    // SDL_SubmitGPUCommandBuffer(commands);
+    DrawEnd(context);
 }
+
+bool Renderer::DrawTryStart(Renderer::DrawContext &context) {
+    context.commands = SDL_AcquireGPUCommandBuffer(Gpu);
+    if (context.commands == nullptr) {
+        SDL_Log("SDL_AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+        return false;
+    }
+
+    if (!SDL_AcquireGPUSwapchainTexture(context.commands, Window, &context.targetTexture, &context.width,
+                                        &context.height)) {
+        SDL_Log("SDL_AcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+        SDL_CancelGPUCommandBuffer(context.commands);
+        return false;
+    }
+
+    if (context.targetTexture == nullptr) {
+        SDL_CancelGPUCommandBuffer(context.commands);
+        return false;
+    }
+
+    return true;
+}
+
+void Renderer::DrawMainPass(Renderer::DrawContext &context) {
+    SDL_GPUColorTargetInfo colorTarget = {
+        .texture = context.targetTexture,
+        .clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f},
+        .load_op = SDL_GPU_LOADOP_CLEAR,
+        .store_op = SDL_GPU_STOREOP_STORE,
+    };
+
+    auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, nullptr);
+    {
+        SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
+
+        // SDL_GPUBufferBinding binding{.buffer = vertexBuffer, .offset = 0};
+        // SDL_BindGPUVertexBuffers(renderPass, 0, &binding, 1);
+
+        SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+    }
+    SDL_EndGPURenderPass(renderPass);
+}
+
+void Renderer::DrawEnd(Renderer::DrawContext &context) { SDL_SubmitGPUCommandBuffer(context.commands); }
 
 } // namespace gargantuan::render
