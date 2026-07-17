@@ -5,6 +5,7 @@
 #include "gargantuan/render/vulkan/VkBackend.h"
 #include "gargantuan/render/vulkan/VkAssert.h"
 #include "gargantuan/render/vulkan/VkImages.h"
+#include "gargantuan/render/vulkan/VkResources.h"
 #include "gargantuan/render/vulkan/VkStruct.h"
 
 #include <SDL3/SDL.h>
@@ -46,10 +47,11 @@ VkBackend::VkBackend(SDL_Window* window)
     this->CreateSurface();
     this->SelectPhysicalDevice();
     this->CreateLogicalDevice();
+    this->CreateAllocator();
 
     this->swapchain = VkSwapchain(this->vkbDevice, this->surface);
+    this->resources = VkResources(device, allocator);
 
-    this->CreateAllocator();
     this->CreateQueues();
     this->CreateCommandPool();
 
@@ -63,6 +65,8 @@ void VkBackend::DrawFrame()
 
     assertVkResult(vkWaitForFences(device, 1, &renderFence, true, 1000000000));
     assertVkResult(vkResetFences(device, 1, &renderFence));
+
+    currentFrame.resources.Flush();
 
     uint32_t swapchainImageIndex;
     auto acquireNextImageResult =
@@ -263,27 +267,24 @@ void VkBackend::Destroy()
 
     vkDeviceWaitIdle(device);
 
-    vmaDestroyBuffer(allocator, buffer, allocation);
-    vmaDestroyAllocator(allocator);
-
-    this->swapchain.Destroy();
-    this->DestroyCommandPool();
-    vkb::destroy_surface(instance, surface);
-    vkb::destroy_device(vkbDevice);
-    vkb::destroy_instance(vkbInstance);
-
-    SDL_DestroyWindow(window);
-}
-
-void VkBackend::DestroyCommandPool()
-{
-    spdlog::trace("VkBackend: Destroying frames");
-
     for (auto& frame : frames)
     {
         vkDestroyCommandPool(device, frame.commandPool, nullptr);
         vkDestroyFence(device, frame.renderFence, nullptr);
         vkDestroySemaphore(device, frame.renderSemaphore, nullptr);
         vkDestroySemaphore(device, frame.swapchainSemaphore, nullptr);
-    }
+        frame.resources.Flush();
+    };
+    resources.Flush();
+
+    vmaDestroyBuffer(allocator, buffer, allocation);
+    vmaDestroyAllocator(allocator);
+
+    swapchain.Destroy();
+
+    vkb::destroy_surface(instance, surface);
+    vkb::destroy_device(vkbDevice);
+    vkb::destroy_instance(vkbInstance);
+
+    SDL_DestroyWindow(window);
 }

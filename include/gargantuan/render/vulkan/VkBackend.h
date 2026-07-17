@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/render/vulkan/VkResources.h"
 #include "gargantuan/render/vulkan/VkSwapchain.h"
 
 #include <SDL3/SDL.h>
@@ -21,6 +22,7 @@ public:
         VkCommandBuffer mainCommandBuffer;
         VkSemaphore swapchainSemaphore, renderSemaphore;
         VkFence renderFence;
+        VkResources resources;
     };
 
     VkBackend(SDL_Window* window);
@@ -42,6 +44,8 @@ public:
     VmaAllocator allocator;
 
     VkSwapchain swapchain;
+
+    VkResources resources;
 
     int frameCount = 0;
     Frame frames[FRAME_OVERLAP];
@@ -67,7 +71,5 @@ private:
     void CreateLogicalDevice();
     void CreateAllocator();
     void CreateQueues();
-
     void CreateCommandPool();
-    void DestroyCommandPool();
 };
