@@ -6,7 +6,6 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_gpu.h>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <ext/vector_float3.hpp>
@@ -78,6 +77,13 @@ Renderer::Renderer(SDL_Window *window) {
         SDL_Log("SDL_CreateGPUGraphicsPipeline failed: %s", SDL_GetError());
         std::abort();
     }
+
+    Vertex vertices[]{
+        {glm::vec3(0.0f, 0.5f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)},
+        {glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+        {glm::vec3(0.5f, -0.5f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)},
+    };
+    TestTriangle = new StaticMesh(Gpu, vertices, 3);
 }
 
 Renderer::~Renderer() {
@@ -120,7 +126,6 @@ SDL_GPUShader *Renderer::LoadShader(const char *filepath, SDL_GPUShaderStage sta
     return shader;
 }
 
-// TODO: proper pipeline/render passes
 void Renderer::Draw() {
     Renderer::DrawContext context;
     if (!DrawTryStart(context)) {
@@ -166,10 +171,10 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     {
         SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
 
-        // SDL_GPUBufferBinding binding{.buffer = vertexBuffer, .offset = 0};
-        // SDL_BindGPUVertexBuffers(renderPass, 0, &binding, 1);
+        SDL_GPUBufferBinding binding{.buffer = TestTriangle->VertexBuffer, .offset = 0};
+        SDL_BindGPUVertexBuffers(renderPass, 0, &binding, 1);
 
-        SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+        SDL_DrawGPUPrimitives(renderPass, TestTriangle->VertexCount, 1, 0, 0);
     }
     SDL_EndGPURenderPass(renderPass);
 }

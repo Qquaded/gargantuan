@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gargantuan/render/Meshes.hpp"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 #include <cstdint>
@@ -25,6 +27,8 @@ class Renderer {
 
     SDL_GPUShader *VertexShader = nullptr;
     SDL_GPUShader *FragmentShader = nullptr;
+
+    StaticMesh *TestTriangle = nullptr;
 
     struct DrawContext {
         SDL_GPUCommandBuffer *commands;
