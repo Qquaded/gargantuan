@@ -7,20 +7,24 @@
 namespace gargantuan::render {
 
 struct Vertex {
-    glm::vec3 position;
-    glm::vec4 rgba;
+  public:
+    glm::vec3 Position;
+    glm::vec4 Rgba;
 };
 
-class Mesh {
+struct Mesh {
   public:
-    Mesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount);
-    ~Mesh();
+    const Vertex *Vertices;
+    uint32_t VertexCount;
+};
 
-    Mesh(const Mesh &) = delete;
-    Mesh &operator=(const Mesh &) = delete;
-
+class GpuMesh : public Mesh {
+  public:
     SDL_GPUBuffer *VertexBuffer = nullptr;
-    uint32_t VertexCount = 0;
+
+    GpuMesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount);
+    GpuMesh(SDL_GPUDevice *gpu, Mesh mesh);
+    ~GpuMesh();
 
   private:
     SDL_GPUDevice *Gpu;

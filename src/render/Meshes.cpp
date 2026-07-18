@@ -4,8 +4,11 @@
 
 namespace gargantuan::render {
 
-Mesh::Mesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount) : Gpu(gpu), VertexCount(vertexCount) {
-    uint32_t bufferSize = vertexCount * sizeof(Vertex);
+GpuMesh::GpuMesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount) : Gpu(gpu) {
+    Vertices = vertices;
+    VertexCount = vertexCount;
+
+    uint32_t bufferSize = VertexCount * sizeof(Vertex);
     SDL_GPUBufferCreateInfo bufferInfo{.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = bufferSize};
     VertexBuffer = SDL_CreateGPUBuffer(Gpu, &bufferInfo);
 
@@ -13,7 +16,7 @@ Mesh::Mesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount) : G
     auto transferBuffer = SDL_CreateGPUTransferBuffer(Gpu, &transferInfo);
 
     void *pointer = SDL_MapGPUTransferBuffer(Gpu, transferBuffer, false);
-    std::memcpy(pointer, vertices, bufferSize);
+    std::memcpy(pointer, Vertices, bufferSize);
     SDL_UnmapGPUTransferBuffer(Gpu, transferBuffer);
 
     auto commands = SDL_AcquireGPUCommandBuffer(Gpu);
@@ -29,7 +32,9 @@ Mesh::Mesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount) : G
     SDL_ReleaseGPUTransferBuffer(Gpu, transferBuffer);
 }
 
-Mesh::~Mesh() {
+GpuMesh::GpuMesh(SDL_GPUDevice *gpu, Mesh mesh) : GpuMesh(gpu, mesh.Vertices, mesh.VertexCount) {}
+
+GpuMesh::~GpuMesh() {
     if (VertexBuffer) {
         SDL_ReleaseGPUBuffer(Gpu, VertexBuffer);
     }

@@ -6,6 +6,6 @@
 
 namespace gargantuan::render::PrimitiveMeshes {
 
-Mesh *Block(SDL_GPUDevice *gpu, glm::vec4 rgba);
+Mesh Block(glm::vec4 rgba);
 
 }

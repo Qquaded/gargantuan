@@ -10,10 +10,10 @@ constexpr auto GREEN = glm::vec4(0.0, 1.0, 0.0, 1.0);
 constexpr auto AQUA = glm::vec4(0.0, 1.0, 1.0, 1.0);
 constexpr auto SETH = glm::vec4(0.75, 0.0, 1.0, 1.0);
 
-Mesh *Block(SDL_GPUDevice *gpu, glm::vec4 rgba) {
+Mesh Block(glm::vec4 rgba) {
     // GPU Programming Gone Too Far?
     // https://discord.com/channels/1303725891259596810/1303725892349984830/1527742812676685875
-    const Vertex vertices[]{
+    static const Vertex vertices[]{
         // Front
         Vertex{glm::vec3(1, 1, 1), BALL_GAME},
         Vertex{glm::vec3(-1, 1, 1), BALL_GAME},
@@ -58,7 +58,7 @@ Mesh *Block(SDL_GPUDevice *gpu, glm::vec4 rgba) {
         Vertex{glm::vec3(-1, -1, 1), SETH},
     };
 
-    return new Mesh(gpu, vertices, 6 * 6);
+    return Mesh{vertices, 6 * 6};
 };
 
 } // namespace gargantuan::render::PrimitiveMeshes

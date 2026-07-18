@@ -40,13 +40,13 @@ Renderer::Renderer(SDL_Window *window) {
                                                   .location = 0,
                                                   .buffer_slot = 0,
                                                   .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                                                  .offset = offsetof(Vertex, position),
+                                                  .offset = offsetof(Vertex, Position),
                                               },
                                               SDL_GPUVertexAttribute{
                                                   .location = 1,
                                                   .buffer_slot = 0,
                                                   .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-                                                  .offset = offsetof(Vertex, rgba),
+                                                  .offset = offsetof(Vertex, Rgba),
                                               }};
 
     SDL_GPUVertexBufferDescription vertexBufferDescriptions[]{SDL_GPUVertexBufferDescription{
@@ -89,7 +89,7 @@ Renderer::Renderer(SDL_Window *window) {
         std::abort();
     }
 
-    TestMesh = PrimitiveMeshes::Block(Gpu, glm::vec4(1.0, 1.0, 1.0, 1.0));
+    TestMesh = new GpuMesh(Gpu, PrimitiveMeshes::Block(glm::vec4(1.0, 1.0, 1.0, 1.0)));
 
     int width, height;
     SDL_GetWindowSizeInPixels(Window, &width, &height);
@@ -204,6 +204,7 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     auto aspectRatio = (float)context.width / (float)context.height;
 
     Renderer::PushUniforms uniforms{.modelViewProjection = context.modelViewProjection};
+    SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
 
     SDL_GPUColorTargetInfo colorTarget = {
         .texture = context.targetTexture,
@@ -220,8 +221,6 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
         .stencil_load_op = SDL_GPU_LOADOP_DONT_CARE,
         .stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
     };
-
-    SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
 
     auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, &depthTarget);
     {

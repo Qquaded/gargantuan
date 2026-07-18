@@ -30,7 +30,7 @@ class Renderer {
     SDL_GPUShader *VertexShader = nullptr;
     SDL_GPUShader *FragmentShader = nullptr;
 
-    Mesh *TestMesh = nullptr;
+    GpuMesh *TestMesh = nullptr;
 
     struct DrawContext {
         SDL_GPUCommandBuffer *commands;
