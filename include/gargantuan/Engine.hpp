@@ -3,6 +3,7 @@
 #include "gargantuan/instances/list/DataModel.hpp"
 #include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
+#include "gargantuan/scripting/ScriptEngine.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,21 +12,18 @@
 
 namespace gargantuan {
 
-class Game {
+class Engine {
   public:
-    Game();
-    ~Game();
+    Engine();
+    ~Engine();
+
+    scripting::ScriptEngine ScriptEngine;
 
     std::shared_ptr<instances::DataModel> dataModel;
-
     glm::vec2 ViewportSize = glm::vec2(720, 540);
     bool IsRunning = true;
-
-    lua_State *Lua;
-
     void ProcessEvent(SDL_Event event);
     void Step();
-
     float GetDeltaTime() { return (CurrentTick - LastTick) / 1000.0f; };
 
   private:

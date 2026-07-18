@@ -1,4 +1,4 @@
-#include "gargantuan/Game.hpp"
+#include "gargantuan/Engine.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/instances/list/Part.hpp"
@@ -9,22 +9,19 @@
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_timer.h>
-#include <ext/vector_float3.hpp>
-#include <geometric.hpp>
+#include <cstdlib>
+#include <cstring>
+#include <glm/glm.hpp>
 #include <lua.h>
+#include <luacode.h>
 #include <lualib.h>
-#include <stdexcept>
 
 namespace gargantuan {
 
-Game::Game()
-    : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window) {
+Engine::Engine()
+    : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window),
+      ScriptEngine() {
     dataModel = std::make_shared<instances::DataModel>();
-
-    Lua = luaL_newstate();
-    if (Lua == nullptr) {
-        throw std::runtime_error("Failed to initialize Luau");
-    };
 
     auto baseplate = std::make_shared<instances::Part>();
     baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
@@ -48,8 +45,7 @@ Game::Game()
     SDL_Log("DataModel has %d descendants", (int)dataModel->GetDescendants().size());
 }
 
-Game::~Game() {
-    lua_close(Lua);
+Engine::~Engine() {
     if (dataModel) {
         dataModel->Children.clear();
         dataModel.reset();
@@ -57,7 +53,7 @@ Game::~Game() {
     SDL_DestroyWindow(Window);
 }
 
-void Game::ProcessEvent(SDL_Event event) {
+void Engine::ProcessEvent(SDL_Event event) {
     switch (event.type) {
 
     case SDL_EVENT_QUIT:
@@ -111,7 +107,7 @@ void Game::ProcessEvent(SDL_Event event) {
     }
 }
 
-void Game::Step() {
+void Engine::Step() {
     CurrentTick = SDL_GetTicks();
     if (!LastTick) {
         LastTick = SDL_GetTicks();
@@ -151,9 +147,9 @@ void Game::Step() {
         CameraPosition += glm::vec3(0, CameraSpeed * deltaTime, 0);
     }
 
-    // if (keys[SDL_SCANCODE_LSHIFT]) {
-    //     CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
-    // }
+    if (keys[SDL_SCANCODE_LSHIFT]) {
+        CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
+    }
 
     constexpr float CYCLE_DURATION = 5;
     float timeSec = (float)CurrentTick / 1000.0f;
@@ -165,7 +161,6 @@ void Game::Step() {
     cube->Color = datatypes::Color3::fromHSV(cubeHue, 1, 1);
     cube->UploadGeometry(Renderer.Gpu);
 
-    // SDL_Log("FPS: %0.f", 1 / GetDeltaTime());
     Renderer.Draw(render::Renderer::DrawInfo{
         .worldModel = dataModel,
         .projectionMatrix = GetProjectionMatrix(),
@@ -173,6 +168,8 @@ void Game::Step() {
     });
 
     LastTick = CurrentTick;
+
+    ScriptEngine.Step();
 }
 
 } // namespace gargantuan

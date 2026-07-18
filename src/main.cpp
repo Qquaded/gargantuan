@@ -1,4 +1,4 @@
-#include "gargantuan/Game.hpp"
+#include "gargantuan/Engine.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
@@ -11,10 +11,9 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     std::atexit(SDL_Quit);
 
-    gargantuan::Game game;
-
-    while (game.IsRunning) {
-        game.Step();
+    gargantuan::Engine engine;
+    while (engine.IsRunning) {
+        engine.Step();
     }
 
     return 0;
