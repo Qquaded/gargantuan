@@ -1,4 +1,4 @@
-#include "gargantuan/instances/Part.hpp"
+#include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/render/PrimitiveMeshes.hpp"
 
 namespace gargantuan::instances {

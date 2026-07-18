@@ -1,7 +1,7 @@
 #include "gargantuan/Game.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
-#include "gargantuan/instances/Part.hpp"
+#include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL_events.h>

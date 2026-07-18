@@ -1,10 +1,10 @@
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/instances/Instance.hpp"
 
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
 
-namespace gargantuan::datatypes {
+namespace gargantuan::instances {
 
 void Instance::SetParent(std::shared_ptr<Instance> newParent) {
     auto newParentInstance = newParent.get();
@@ -49,4 +49,4 @@ void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>> &descen
     }
 }
 
-} // namespace gargantuan::datatypes
+} // namespace gargantuan::instances

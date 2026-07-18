@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace gargantuan::datatypes {
+namespace gargantuan::instances {
 
 class Instance : public std::enable_shared_from_this<Instance> {
   public:
@@ -25,4 +25,4 @@ class Instance : public std::enable_shared_from_this<Instance> {
     void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
 };
 
-} // namespace gargantuan::datatypes
+} // namespace gargantuan::instances

@@ -2,14 +2,14 @@
 
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/instances/Instance.hpp"
 #include "gargantuan/render/Meshes.hpp"
 
 #include <glm/glm.hpp>
 
 namespace gargantuan::instances {
 
-class BasePart : public gargantuan::datatypes::Instance {
+class BasePart : public Instance {
   public:
     const char *CLASS_NAME = "BasePart";
 

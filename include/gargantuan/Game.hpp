@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gargantuan/instances/DataModel.hpp"
-#include "gargantuan/instances/Part.hpp"
+#include "gargantuan/instances/list/DataModel.hpp"
+#include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL.h>

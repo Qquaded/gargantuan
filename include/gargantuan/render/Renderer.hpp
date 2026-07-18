@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/instances/Instance.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
@@ -19,7 +19,7 @@ class Renderer {
     Renderer &operator=(const Renderer &) = delete;
 
     struct DrawInfo {
-        std::shared_ptr<datatypes::Instance> worldModel;
+        std::shared_ptr<instances::Instance> worldModel;
         glm::mat4 projectionMatrix;
         glm::mat4 viewMatrix;
     };

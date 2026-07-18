@@ -1,3 +1,3 @@
-#include "gargantuan/instances/BasePart.hpp"
+#include "gargantuan/instances/list/BasePart.hpp"
 
 namespace gargantuan::instances {} // namespace gargantuan::instances

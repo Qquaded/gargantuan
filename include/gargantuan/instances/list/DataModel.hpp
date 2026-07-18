@@ -1,10 +1,10 @@
 #pragma once
 
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/instances/Instance.hpp"
 
 namespace gargantuan::instances {
 
-class DataModel : public gargantuan::datatypes::Instance {
+class DataModel : public Instance {
     const char *CLASS_NAME = "DataModel";
 };
 
