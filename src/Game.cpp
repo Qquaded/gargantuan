@@ -23,7 +23,7 @@ void Game::ProcessEvent(SDL_Event event) {
         IsRunning = false;
         return;
 
-    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+    case SDL_EVENT_WINDOW_RESIZED:
         ViewportSize.x = event.window.data1;
         ViewportSize.y = event.window.data2;
         SDL_Log("Resizing: %0.fx%0.f", ViewportSize.x, ViewportSize.y);
