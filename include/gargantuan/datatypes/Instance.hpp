@@ -6,18 +6,23 @@
 
 namespace gargantuan::datatypes {
 
-class Instance {
+class Instance : public std::enable_shared_from_this<Instance> {
   public:
-    std::string Name;
-    std::string ClassName;
+    const std::string CLASS_NAME = "Instance";
+
+    virtual ~Instance() = default;
 
     Instance *Parent = nullptr;
     std::vector<std::shared_ptr<Instance>> Children;
 
-    Instance(std::string className) : Name(className), ClassName(className) {}
-    virtual ~Instance() = default;
+    void SetParent(std::shared_ptr<Instance> newParent);
+    std::vector<std::shared_ptr<Instance>> GetDescendants();
 
-    void SetParent(Instance *newParent);
+    template <typename T> bool IsA() const { return dynamic_cast<const T *>(this) != nullptr; }
+    template <typename T> const T *Cast() const { return dynamic_cast<const T *>(this); }
+
+  private:
+    void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
 };
 
 } // namespace gargantuan::datatypes

@@ -1,10 +1,12 @@
 #pragma once
 
+#include "gargantuan/instances/DataModel.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL_video.h>
 #include <ext/vector_float2.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <memory>
 
 namespace gargantuan {
 
@@ -12,6 +14,8 @@ class Game {
   public:
     Game();
     ~Game();
+
+    std::shared_ptr<instances::DataModel> dataModel;
 
     glm::vec2 ViewportSize = glm::vec2(720, 540);
     bool IsRunning = true;
@@ -36,7 +40,7 @@ class Game {
     float CameraYaw = -90.0f;
     float CameraPitch = 0.0f;
     float CameraSensitivity = 0.2f;
-    float CameraSpeed = 0.1f;
+    float CameraSpeed = 5.0f;
     float CameraFieldOfView = 45.0f;
 
     glm::mat4 ModelProjectionView() {

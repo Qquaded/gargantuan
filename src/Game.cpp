@@ -1,5 +1,7 @@
 #include "gargantuan/Game.hpp"
+#include "gargantuan/instances/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
+
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_log.h>
@@ -11,7 +13,16 @@
 namespace gargantuan {
 
 Game::Game()
-    : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window) {}
+    : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window) {
+    dataModel = std::make_shared<instances::DataModel>();
+
+    auto cube = std::make_shared<instances::Part>();
+    cube->Color = glm::vec3(1, 0, 0);
+    cube->Transparency = 1.0;
+    cube->SetParent(dataModel);
+
+    SDL_Log("datamodel has %d descendants", (int)dataModel->GetDescendants().size());
+}
 
 Game::~Game() { SDL_DestroyWindow(Window); }
 
@@ -28,6 +39,7 @@ void Game::ProcessEvent(SDL_Event event) {
         ViewportSize.y = event.window.data2;
         SDL_Log("Resizing: %0.fx%0.f", ViewportSize.x, ViewportSize.y);
         Renderer.OnWindowResize(ViewportSize.x, ViewportSize.y);
+        break;
 
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
         if (event.button.button == SDL_BUTTON_RIGHT) {
@@ -86,33 +98,34 @@ void Game::Step() {
     int numKeys;
     auto keys = SDL_GetKeyboardState(&numKeys);
     auto worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    auto deltaTime = GetDeltaTime();
 
     if (keys[SDL_SCANCODE_W]) {
-        CameraPosition += CameraLookVector * CameraSpeed;
+        CameraPosition += CameraLookVector * CameraSpeed * deltaTime;
     }
 
     if (keys[SDL_SCANCODE_S]) {
-        CameraPosition -= CameraLookVector * CameraSpeed;
+        CameraPosition -= CameraLookVector * CameraSpeed * deltaTime;
     }
 
     if (keys[SDL_SCANCODE_A]) {
-        CameraPosition -= CameraRightVector * CameraSpeed;
+        CameraPosition -= CameraRightVector * CameraSpeed * deltaTime;
     }
 
     if (keys[SDL_SCANCODE_D]) {
-        CameraPosition += CameraRightVector * CameraSpeed;
+        CameraPosition += CameraRightVector * CameraSpeed * deltaTime;
     }
 
-    if (keys[SDL_SCANCODE_SPACE]) {
-        CameraPosition += glm::vec3(0, CameraSpeed, 0);
-    }
+    // if (keys[SDL_SCANCODE_SPACE]) {
+    //     CameraPosition += glm::vec3(0, CameraSpeed * deltaTime, 0);
+    // }
 
-    if (keys[SDL_SCANCODE_LSHIFT]) {
-        CameraPosition -= glm::vec3(0, CameraSpeed, 0);
-    }
+    // if (keys[SDL_SCANCODE_LSHIFT]) {
+    //     CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
+    // }
 
     // SDL_Log("FPS: %0.f", 1 / GetDeltaTime());
-    Renderer.Draw(ModelProjectionView());
+    Renderer.Draw(render::Renderer::DrawInfo{.worldModel = dataModel, .modelViewProjection = ModelProjectionView()});
 
     LastTick = CurrentTick;
 }

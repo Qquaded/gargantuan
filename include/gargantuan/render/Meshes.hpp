@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 #include <glm.hpp>
+#include <vector>
 
 namespace gargantuan::render {
 
@@ -15,15 +16,18 @@ struct Vertex {
 
 struct Mesh {
   public:
-    const Vertex *Vertices;
-    uint32_t VertexCount;
+    std::vector<Vertex> Vertices;
+    std::vector<uint32_t> Indices;
 };
 
 class GpuMesh : public Mesh {
   public:
     SDL_GPUBuffer *VertexBuffer = nullptr;
+    SDL_GPUBuffer *IndexBuffer = nullptr;
+    uint32_t VertexCount;
+    uint32_t IndexCount;
 
-    GpuMesh(SDL_GPUDevice *gpu, const Vertex *vertices, uint32_t vertexCount);
+    GpuMesh(SDL_GPUDevice *gpu, std::vector<Vertex> vertices, std::vector<uint32_t> indices);
     GpuMesh(SDL_GPUDevice *gpu, Mesh mesh);
     ~GpuMesh();
 

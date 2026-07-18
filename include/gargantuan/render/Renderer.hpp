@@ -1,9 +1,10 @@
 #pragma once
 
-#include "gargantuan/render/Meshes.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_gpu.h>
+#include <glm/glm.hpp>
+
 #include <cstdint>
 
 namespace gargantuan::render {
@@ -17,7 +18,12 @@ class Renderer {
     Renderer(const Renderer &) = delete;
     Renderer &operator=(const Renderer &) = delete;
 
-    void Draw(glm::mat4 modelViewProjection);
+    struct DrawInfo {
+        std::shared_ptr<datatypes::Instance> worldModel;
+        glm::mat4 modelViewProjection;
+    };
+
+    void Draw(DrawInfo info);
     void OnWindowResize(int width, int height);
     SDL_GPUShader *LoadShader(const char *shaderPath, SDL_GPUShaderStage stage);
 
@@ -30,21 +36,19 @@ class Renderer {
     SDL_GPUShader *VertexShader = nullptr;
     SDL_GPUShader *FragmentShader = nullptr;
 
-    GpuMesh *TestMesh = nullptr;
-
     struct DrawContext {
+        DrawInfo info;
         SDL_GPUCommandBuffer *commands;
         SDL_GPUTexture *targetTexture;
         uint32_t width;
         uint32_t height;
-        glm::mat4 modelViewProjection;
     };
 
     struct PushUniforms {
         glm::mat4 modelViewProjection;
     };
 
-    bool DrawTryStart(DrawContext &context, glm::mat4 modelViewProjection);
+    bool DrawTryStart(DrawContext &context);
     void DrawMainPass(DrawContext &context);
     void DrawEnd(DrawContext &context);
 };

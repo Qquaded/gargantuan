@@ -1,8 +1,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include "gargantuan/render/Renderer.hpp"
+#include "gargantuan/instances/Part.hpp"
 #include "gargantuan/render/Meshes.hpp"
-#include "gargantuan/render/PrimitiveMeshes.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -95,8 +95,6 @@ Renderer::Renderer(SDL_Window *window) {
         std::abort();
     }
 
-    TestMesh = new GpuMesh(Gpu, PrimitiveMeshes::Block(glm::vec4(1.0, 1.0, 1.0, 1.0)));
-
     int width, height;
     SDL_GetWindowSizeInPixels(Window, &width, &height);
     OnWindowResize(width, height);
@@ -145,9 +143,10 @@ SDL_GPUShader *Renderer::LoadShader(const char *filepath, SDL_GPUShaderStage sta
     return shader;
 }
 
-void Renderer::Draw(glm::mat4 modelViewProjection) {
-    Renderer::DrawContext context;
-    if (!DrawTryStart(context, modelViewProjection)) {
+void Renderer::Draw(Renderer::DrawInfo info) {
+    Renderer::DrawContext context{.info = info};
+
+    if (!DrawTryStart(context)) {
         return;
     }
 
@@ -180,7 +179,7 @@ void Renderer::OnWindowResize(int width, int height) {
     DepthTexture = SDL_CreateGPUTexture(Gpu, &depthInfo);
 }
 
-bool Renderer::DrawTryStart(Renderer::DrawContext &context, glm::mat4 modelViewProjection) {
+bool Renderer::DrawTryStart(Renderer::DrawContext &context) {
     if (DepthTexture == nullptr) {
         return false;
     }
@@ -203,16 +202,11 @@ bool Renderer::DrawTryStart(Renderer::DrawContext &context, glm::mat4 modelViewP
         return false;
     }
 
-    context.modelViewProjection = modelViewProjection;
-
     return true;
 }
 
 void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     auto aspectRatio = (float)context.width / (float)context.height;
-
-    Renderer::PushUniforms uniforms{.modelViewProjection = context.modelViewProjection};
-    SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
 
     SDL_GPUColorTargetInfo colorTarget = {
         .texture = context.targetTexture,
@@ -231,13 +225,32 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     };
 
     auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, &depthTarget);
+    SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
     {
-        SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
 
-        SDL_GPUBufferBinding binding{.buffer = TestMesh->VertexBuffer, .offset = 0};
-        SDL_BindGPUVertexBuffers(renderPass, 0, &binding, 1);
+        Renderer::PushUniforms uniforms{.modelViewProjection = context.info.modelViewProjection};
+        SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
 
-        SDL_DrawGPUPrimitives(renderPass, TestMesh->VertexCount, 1, 0, 0);
+        for (auto ptr : context.info.worldModel->GetDescendants()) {
+            auto instance = ptr.get();
+
+            if (instance->IsA<instances::Part>()) {
+                auto part = instance->Cast<instances::Part>();
+                if (!part->RenderMesh) {
+                    const_cast<instances::Part *>(part)->UploadGeometry(Gpu);
+                }
+
+                auto *mesh = part->RenderMesh.get();
+
+                SDL_GPUBufferBinding vertexBinding{.buffer = mesh->VertexBuffer, .offset = 0};
+                SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
+
+                SDL_GPUBufferBinding indexBinding{.buffer = mesh->IndexBuffer, .offset = 0};
+                SDL_BindGPUIndexBuffer(renderPass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+                SDL_DrawGPUIndexedPrimitives(renderPass, mesh->IndexCount, 1, 0, 0, 0);
+            }
+        }
     }
     SDL_EndGPURenderPass(renderPass);
 }

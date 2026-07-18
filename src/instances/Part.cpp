@@ -3,7 +3,7 @@
 
 namespace gargantuan::instances {
 
-render::Mesh Part::GetMesh() {
+render::Mesh Part::GetMesh() const {
     auto rgba = glm::vec4(Color, Transparency);
 
     switch (Shape) {
