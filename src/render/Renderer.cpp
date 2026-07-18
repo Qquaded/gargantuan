@@ -45,6 +45,12 @@ Renderer::Renderer(SDL_Window *window) {
                                               SDL_GPUVertexAttribute{
                                                   .location = 1,
                                                   .buffer_slot = 0,
+                                                  .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                                                  .offset = offsetof(Vertex, Normal),
+                                              },
+                                              SDL_GPUVertexAttribute{
+                                                  .location = 2,
+                                                  .buffer_slot = 0,
                                                   .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
                                                   .offset = offsetof(Vertex, Rgba),
                                               }};
@@ -60,7 +66,7 @@ Renderer::Renderer(SDL_Window *window) {
                 .vertex_buffer_descriptions = vertexBufferDescriptions,
                 .num_vertex_buffers = 1,
                 .vertex_attributes = vertexAttributes,
-                .num_vertex_attributes = 2,
+                .num_vertex_attributes = 3,
             },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
         .rasterizer_state = SDL_GPURasterizerState{.fill_mode = SDL_GPU_FILLMODE_FILL,
@@ -154,6 +160,8 @@ void Renderer::OnWindowResize(int width, int height) {
     if (width < 1 || height < 1) {
         return;
     }
+
+    SDL_SetGPUSwapchainParameters(Gpu, Window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC);
 
     if (DepthTexture != nullptr) {
         SDL_ReleaseGPUTexture(Gpu, DepthTexture);

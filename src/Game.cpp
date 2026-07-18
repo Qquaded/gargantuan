@@ -10,16 +10,24 @@
 
 namespace gargantuan {
 
-Game::Game() : Window(SDL_CreateWindow("Gargantuan", 720, 540, SDL_WINDOW_RESIZABLE)), Renderer(Window) {}
+Game::Game()
+    : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window) {}
 
 Game::~Game() { SDL_DestroyWindow(Window); }
 
 void Game::ProcessEvent(SDL_Event event) {
     switch (event.type) {
+
     case SDL_EVENT_QUIT:
         SDL_Log("Stopping");
         IsRunning = false;
         return;
+
+    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+        ViewportSize.x = event.window.data1;
+        ViewportSize.y = event.window.data2;
+        SDL_Log("Resizing: %0.fx%0.f", ViewportSize.x, ViewportSize.y);
+        Renderer.OnWindowResize(ViewportSize.x, ViewportSize.y);
 
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
         if (event.button.button == SDL_BUTTON_RIGHT) {
@@ -57,10 +65,6 @@ void Game::ProcessEvent(SDL_Event event) {
             CameraUpVector = glm::normalize(glm::cross(CameraRightVector, CameraLookVector));
         };
         return;
-
-    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-    }
-        Renderer.OnWindowResize(event.window.data1, event.window.data2);
     }
 }
 
@@ -107,7 +111,7 @@ void Game::Step() {
         CameraPosition -= glm::vec3(0, CameraSpeed, 0);
     }
 
-    SDL_Log("FPS: %0.f", 1 / GetDeltaTime());
+    // SDL_Log("FPS: %0.f", 1 / GetDeltaTime());
     Renderer.Draw(ModelProjectionView());
 
     LastTick = CurrentTick;

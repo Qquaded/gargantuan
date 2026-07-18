@@ -3,6 +3,7 @@
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL_video.h>
+#include <ext/vector_float2.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace gargantuan {
@@ -12,6 +13,7 @@ class Game {
     Game();
     ~Game();
 
+    glm::vec2 ViewportSize = glm::vec2(720, 540);
     bool IsRunning = true;
 
     void ProcessEvent(SDL_Event event);
@@ -38,9 +40,12 @@ class Game {
     float CameraFieldOfView = 45.0f;
 
     glm::mat4 ModelProjectionView() {
+        float aspect = ViewportSize.x / ViewportSize.y;
+
         auto model = glm::mat4(1.0f);
-        auto projection = glm::perspective(glm::radians(CameraFieldOfView), 4.0f / 3.0f, 0.1f, 100.0f);
+        auto projection = glm::perspective(glm::radians(CameraFieldOfView), aspect, 0.1f, 100.0f);
         auto view = glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector);
+
         return projection * view * model;
     }
 };
