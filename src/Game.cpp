@@ -1,4 +1,5 @@
 #include "gargantuan/Game.hpp"
+#include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/instances/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
@@ -27,14 +28,20 @@ Game::Game()
 
     auto baseplate = std::make_shared<instances::Part>();
     baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
-    baseplate->Position = glm::vec3(0, -20, 0);
-    baseplate->Size = glm::vec3(1000, 20, 1000);
+    baseplate->CFrame = datatypes::CFrame(0, -30, 0);
+    baseplate->Size = glm::vec3(50, 20, 50);
     baseplate->Transparency = 1.0;
     baseplate->SetParent(dataModel);
 
+    auto lmao = std::make_shared<instances::Part>();
+    lmao->Color = datatypes::Color3::fromRGB(100, 0, 0);
+    lmao->CFrame = datatypes::CFrame(-10, 5, 0);
+    lmao->Transparency = 1.0;
+    lmao->SetParent(dataModel);
+
     cube = std::make_shared<instances::Part>();
     cube->Color = datatypes::Color3::fromHSV(1, 1, 1);
-    cube->Position = glm::vec3(0, 5, 0);
+    cube->CFrame = datatypes::CFrame(0, 5, 0);
     cube->Transparency = 1.0;
     cube->SetParent(dataModel);
 
@@ -144,13 +151,17 @@ void Game::Step() {
         CameraPosition += glm::vec3(0, CameraSpeed * deltaTime, 0);
     }
 
-    if (keys[SDL_SCANCODE_LSHIFT]) {
-        CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
-    }
+    // if (keys[SDL_SCANCODE_LSHIFT]) {
+    //     CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
+    // }
 
     constexpr float CYCLE_DURATION = 5;
+    float timeSec = (float)CurrentTick / 1000.0f;
+
     auto cubeHue = glm::mod((float)CurrentTick / 1000.0f, CYCLE_DURATION) / CYCLE_DURATION;
-    SDL_Log("Cube hue: %f", cubeHue);
+    glm::vec3 cubePosition = glm::vec3(0.0f, 5.0f, 0.0f);
+    glm::vec3 lookTarget = cubePosition + glm::vec3(glm::cos(timeSec), glm::cos(timeSec), glm::sin(timeSec));
+    cube->CFrame = datatypes::CFrame(cubePosition, lookTarget);
     cube->Color = datatypes::Color3::fromHSV(cubeHue, 1, 1);
     cube->UploadGeometry(Renderer.Gpu);
 

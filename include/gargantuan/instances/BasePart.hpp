@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Meshes.hpp"
@@ -12,8 +13,8 @@ class BasePart : public gargantuan::datatypes::Instance {
   public:
     const char *CLASS_NAME = "BasePart";
 
-    glm::vec3 Position = glm::vec3(0, 0, 0);
     glm::vec3 Size = glm::vec3(2, 1, 4);
+    datatypes::CFrame CFrame = datatypes::CFrame();
     datatypes::Color3 Color = datatypes::Color3();
     float Transparency = 0.0;
 

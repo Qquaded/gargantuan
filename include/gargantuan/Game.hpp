@@ -43,8 +43,8 @@ class Game {
     float CameraYaw = -90.0f;
     float CameraPitch = 0.0f;
     float CameraSensitivity = 0.2f;
-    float CameraSpeed = 5.0f;
-    float CameraFieldOfView = 45.0f;
+    float CameraSpeed = 10.0f;
+    float CameraFieldOfView = 70.0f;
 
     glm::mat4 GetProjectionMatrix() {
         float aspect = ViewportSize.x / ViewportSize.y;
