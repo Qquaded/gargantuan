@@ -33,7 +33,7 @@ class Game {
     render::Renderer Renderer;
 
     // TODO: Camera class, and probably implement Instances by then
-    glm::vec3 CameraPosition = glm::vec3(0, 0, 5);
+    glm::vec3 CameraPosition = glm::vec3(0, 0, 10);
     glm::vec3 CameraUpVector;
     glm::vec3 CameraRightVector;
     glm::vec3 CameraLookVector;
@@ -43,15 +43,12 @@ class Game {
     float CameraSpeed = 5.0f;
     float CameraFieldOfView = 45.0f;
 
-    glm::mat4 ModelProjectionView() {
+    glm::mat4 GetProjectionMatrix() {
         float aspect = ViewportSize.x / ViewportSize.y;
-
-        auto model = glm::mat4(1.0f);
-        auto projection = glm::perspective(glm::radians(CameraFieldOfView), aspect, 0.1f, 100.0f);
-        auto view = glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector);
-
-        return projection * view * model;
+        return glm::perspective(glm::radians(CameraFieldOfView), aspect, 0.1f, 100.0f);
     }
+
+    glm::mat4 GetViewMatrix() { return glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector); }
 };
 
 } // namespace gargantuan

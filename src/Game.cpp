@@ -16,15 +16,29 @@ Game::Game()
     : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window) {
     dataModel = std::make_shared<instances::DataModel>();
 
+    auto baseplate = std::make_shared<instances::Part>();
+    baseplate->Color = glm::vec3(0.5, 0.5, 0.5);
+    baseplate->Position = glm::vec3(0, -20, 0);
+    baseplate->Size = glm::vec3(1000, 20, 1000);
+    baseplate->Transparency = 1.0;
+    baseplate->SetParent(dataModel);
+
     auto cube = std::make_shared<instances::Part>();
     cube->Color = glm::vec3(1, 0, 0);
+    cube->Position = glm::vec3(0, 5, 0);
     cube->Transparency = 1.0;
     cube->SetParent(dataModel);
 
-    SDL_Log("datamodel has %d descendants", (int)dataModel->GetDescendants().size());
+    SDL_Log("DataModel has %d descendants", (int)dataModel->GetDescendants().size());
 }
 
-Game::~Game() { SDL_DestroyWindow(Window); }
+Game::~Game() {
+    if (dataModel) {
+        dataModel->Children.clear();
+        dataModel.reset();
+    }
+    SDL_DestroyWindow(Window);
+}
 
 void Game::ProcessEvent(SDL_Event event) {
     switch (event.type) {
@@ -116,16 +130,20 @@ void Game::Step() {
         CameraPosition += CameraRightVector * CameraSpeed * deltaTime;
     }
 
-    // if (keys[SDL_SCANCODE_SPACE]) {
-    //     CameraPosition += glm::vec3(0, CameraSpeed * deltaTime, 0);
-    // }
+    if (keys[SDL_SCANCODE_SPACE]) {
+        CameraPosition += glm::vec3(0, CameraSpeed * deltaTime, 0);
+    }
 
-    // if (keys[SDL_SCANCODE_LSHIFT]) {
-    //     CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
-    // }
+    if (keys[SDL_SCANCODE_LSHIFT]) {
+        CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
+    }
 
     // SDL_Log("FPS: %0.f", 1 / GetDeltaTime());
-    Renderer.Draw(render::Renderer::DrawInfo{.worldModel = dataModel, .modelViewProjection = ModelProjectionView()});
+    Renderer.Draw(render::Renderer::DrawInfo{
+        .worldModel = dataModel,
+        .projectionMatrix = GetProjectionMatrix(),
+        .viewMatrix = GetViewMatrix(),
+    });
 
     LastTick = CurrentTick;
 }

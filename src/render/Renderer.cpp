@@ -228,9 +228,6 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
     {
 
-        Renderer::PushUniforms uniforms{.modelViewProjection = context.info.modelViewProjection};
-        SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
-
         for (auto ptr : context.info.worldModel->GetDescendants()) {
             auto instance = ptr.get();
 
@@ -241,6 +238,15 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
                 }
 
                 auto *mesh = part->RenderMesh.get();
+
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, part->Position);
+                model = glm::scale(model, part->Size);
+
+                glm::mat4 modelViewProjection = context.info.projectionMatrix * context.info.viewMatrix * model;
+
+                Renderer::PushUniforms uniforms{.modelViewProjection = modelViewProjection};
+                SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
 
                 SDL_GPUBufferBinding vertexBinding{.buffer = mesh->VertexBuffer, .offset = 0};
                 SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);

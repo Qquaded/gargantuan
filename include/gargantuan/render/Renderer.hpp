@@ -20,7 +20,8 @@ class Renderer {
 
     struct DrawInfo {
         std::shared_ptr<datatypes::Instance> worldModel;
-        glm::mat4 modelViewProjection;
+        glm::mat4 projectionMatrix;
+        glm::mat4 viewMatrix;
     };
 
     void Draw(DrawInfo info);

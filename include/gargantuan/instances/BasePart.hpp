@@ -12,6 +12,7 @@ class BasePart : public gargantuan::datatypes::Instance {
     const char *CLASS_NAME = "BasePart";
 
     glm::vec3 Position = glm::vec3(0, 0, 0);
+    glm::vec3 Size = glm::vec3(2, 1, 4);
     glm::vec3 Color = glm::vec3(0, 0, 0);
     float Transparency = 0.0;
 
