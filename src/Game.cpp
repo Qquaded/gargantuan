@@ -1,4 +1,5 @@
 #include "gargantuan/Game.hpp"
+#include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/instances/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
@@ -17,14 +18,14 @@ Game::Game()
     dataModel = std::make_shared<instances::DataModel>();
 
     auto baseplate = std::make_shared<instances::Part>();
-    baseplate->Color = glm::vec3(0.5, 0.5, 0.5);
+    baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
     baseplate->Position = glm::vec3(0, -20, 0);
     baseplate->Size = glm::vec3(1000, 20, 1000);
     baseplate->Transparency = 1.0;
     baseplate->SetParent(dataModel);
 
-    auto cube = std::make_shared<instances::Part>();
-    cube->Color = glm::vec3(1, 0, 0);
+    cube = std::make_shared<instances::Part>();
+    cube->Color = datatypes::Color3::fromHSV(1, 1, 1);
     cube->Position = glm::vec3(0, 5, 0);
     cube->Transparency = 1.0;
     cube->SetParent(dataModel);
@@ -137,6 +138,12 @@ void Game::Step() {
     if (keys[SDL_SCANCODE_LSHIFT]) {
         CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
     }
+
+    constexpr float CYCLE_DURATION = 5;
+    auto cubeHue = glm::mod((float)CurrentTick / 1000.0f, CYCLE_DURATION) / CYCLE_DURATION;
+    SDL_Log("Cube hue: %f", cubeHue);
+    cube->Color = datatypes::Color3::fromHSV(cubeHue, 1, 1);
+    cube->UploadGeometry(Renderer.Gpu);
 
     // SDL_Log("FPS: %0.f", 1 / GetDeltaTime());
     Renderer.Draw(render::Renderer::DrawInfo{

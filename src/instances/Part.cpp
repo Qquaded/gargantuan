@@ -4,7 +4,8 @@
 namespace gargantuan::instances {
 
 render::Mesh Part::GetMesh() const {
-    auto rgba = glm::vec4(Color, Transparency);
+    glm::vec3 color = Color;
+    auto rgba = glm::vec4(color, Transparency);
 
     switch (Shape) {
     case gargantuan::instances::Shape::Block:

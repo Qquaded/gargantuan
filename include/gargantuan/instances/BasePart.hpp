@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Meshes.hpp"
 
@@ -13,7 +14,7 @@ class BasePart : public gargantuan::datatypes::Instance {
 
     glm::vec3 Position = glm::vec3(0, 0, 0);
     glm::vec3 Size = glm::vec3(2, 1, 4);
-    glm::vec3 Color = glm::vec3(0, 0, 0);
+    datatypes::Color3 Color = datatypes::Color3();
     float Transparency = 0.0;
 
     virtual render::Mesh GetMesh() const = 0;

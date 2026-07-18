@@ -28,7 +28,6 @@ class Renderer {
     void OnWindowResize(int width, int height);
     SDL_GPUShader *LoadShader(const char *shaderPath, SDL_GPUShaderStage stage);
 
-  private:
     SDL_Window *Window = nullptr;
     SDL_GPUDevice *Gpu = nullptr;
     SDL_GPUGraphicsPipeline *Pipeline = nullptr;

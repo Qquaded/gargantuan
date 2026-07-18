@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gargantuan/instances/DataModel.hpp"
+#include "gargantuan/instances/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL_video.h>
@@ -49,6 +50,8 @@ class Game {
     }
 
     glm::mat4 GetViewMatrix() { return glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector); }
+
+    std::shared_ptr<instances::Part> cube;
 };
 
 } // namespace gargantuan
