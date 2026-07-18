@@ -4,9 +4,9 @@
 #include "gargantuan/instances/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
-#include <SDL3/SDL_video.h>
-#include <ext/vector_float2.hpp>
+#include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <lua.h>
 #include <memory>
 
 namespace gargantuan {
@@ -20,6 +20,8 @@ class Game {
 
     glm::vec2 ViewportSize = glm::vec2(720, 540);
     bool IsRunning = true;
+
+    lua_State *Lua;
 
     void ProcessEvent(SDL_Event event);
     void Step();

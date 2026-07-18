@@ -45,14 +45,16 @@ target_include_directories(gargantuan PRIVATE
 	"include"
 )
 
-target_include_directories(gargantuan SYSTEM PRIVATE
+target_include_directories(gargantuan SYSTEM PUBLIC
 	"vendor/box3d/include"
 	"vendor/freetype/include"
 	"vendor/glm/glm"
 	"vendor/luau/Common/include"
-	"vendor/luau/VM/include"
 	"vendor/luau/Compiler/include"
 	"vendor/luau/Ast/include"
+	"vendor/luau/VM/include"
+	"vendor/luau/Require/include"
+	"vendor/luau/Config/include"
 	"vendor/luau/CodeGen/include"
 	"vendor/sdl/include"
 	"vendor/spdlog/include"
@@ -72,4 +74,10 @@ target_link_libraries(gargantuan
 		freetype
 		glm
 		spdlog::spdlog
+		Luau.Compiler
+		Luau.CodeGen
+		Luau.Ast
+		Luau.VM
+		Luau.Require
+		Luau.Config
 )

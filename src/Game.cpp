@@ -10,12 +10,20 @@
 #include <SDL3/SDL_timer.h>
 #include <ext/vector_float3.hpp>
 #include <geometric.hpp>
+#include <lua.h>
+#include <lualib.h>
+#include <stdexcept>
 
 namespace gargantuan {
 
 Game::Game()
     : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window) {
     dataModel = std::make_shared<instances::DataModel>();
+
+    Lua = luaL_newstate();
+    if (Lua == nullptr) {
+        throw std::runtime_error("Failed to initialize Luau");
+    };
 
     auto baseplate = std::make_shared<instances::Part>();
     baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
@@ -34,6 +42,7 @@ Game::Game()
 }
 
 Game::~Game() {
+    lua_close(Lua);
     if (dataModel) {
         dataModel->Children.clear();
         dataModel.reset();
