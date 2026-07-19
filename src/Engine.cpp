@@ -3,6 +3,7 @@
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
+#include "gargantuan/scripting/Runtime.hpp"
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keyboard.h>
@@ -22,6 +23,11 @@ Engine::Engine()
     : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window),
       ScriptEngine() {
     dataModel = std::make_shared<instances::DataModel>();
+
+    // temporary
+    scripting::runtime::PushInstance(ScriptEngine.L, dataModel.get());
+    lua_pushvalue(ScriptEngine.L, -1);
+    lua_setglobal(ScriptEngine.L, "game");
 
     auto baseplate = std::make_shared<instances::Part>();
     baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
@@ -161,11 +167,13 @@ void Engine::Step() {
     cube->Color = datatypes::Color3::fromHSV(cubeHue, 1, 1);
     cube->UploadGeometry(Renderer.Gpu);
 
-    Renderer.Draw(render::Renderer::DrawInfo{
-        .worldModel = dataModel,
-        .projectionMatrix = GetProjectionMatrix(),
-        .viewMatrix = GetViewMatrix(),
-    });
+    Renderer.Draw(
+        render::Renderer::DrawInfo{
+            .worldModel = dataModel,
+            .projectionMatrix = GetProjectionMatrix(),
+            .viewMatrix = GetViewMatrix(),
+        }
+    );
 
     LastTick = CurrentTick;
 

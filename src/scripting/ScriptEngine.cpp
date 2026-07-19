@@ -1,4 +1,5 @@
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/scripting/Runtime.hpp"
 
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
@@ -16,17 +17,7 @@ ScriptEngine::ScriptEngine() : L(luaL_newstate()) {
     }
 
     luaL_openlibs(L);
-
-    lua_newtable(L);
-    lua_pushstring(L, "gargantuan");
-    lua_setfield(L, -2, "name");
-    lua_pushstring(L, "https://gargantuan.teamfireworks.org/");
-    lua_setfield(L, -2, "url");
-    lua_setreadonly(L, -1, true);
-    lua_pushvalue(L, -1);
-    lua_setglobal(L, "_RUNTIME");
-
-    luaL_sandbox(L);
+    runtime::Open(L);
 
     testbedThread = lua_newthread(L);
     size_t fileSize;
