@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/instances/ClassDefinition.hpp"
 #include "gargantuan/instances/list/BasePart.hpp"
 
 namespace gargantuan::instances {
@@ -7,9 +8,9 @@ namespace gargantuan::instances {
 enum class Shape { Block };
 
 class Part : public BasePart {
-    const char *CLASS_NAME = "Part";
-
   public:
+    static const ClassDefinition DEFINITION;
+
     Shape Shape = Shape::Block;
 
     std::unique_ptr<render::GpuMesh> RenderMesh = nullptr;

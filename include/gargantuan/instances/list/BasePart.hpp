@@ -11,7 +11,7 @@ namespace gargantuan::instances {
 
 class BasePart : public Instance {
   public:
-    const char *CLASS_NAME = "BasePart";
+    static const ClassDefinition DEFINITION;
 
     glm::vec3 Size = glm::vec3(2, 1, 4);
     datatypes::CFrame CFrame = datatypes::CFrame();

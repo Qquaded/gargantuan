@@ -5,7 +5,8 @@
 namespace gargantuan::instances {
 
 class DataModel : public Instance {
-    const char *CLASS_NAME = "DataModel";
+  public:
+    static const ClassDefinition DEFINITION;
 };
 
 } // namespace gargantuan::instances

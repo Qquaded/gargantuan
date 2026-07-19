@@ -1,14 +1,18 @@
 #pragma once
 
+#include "gargantuan/instances/ClassDefinition.hpp"
+
 #include <memory>
-#include <string>
+#include <string_view>
 #include <vector>
 
 namespace gargantuan::instances {
 
 class Instance : public std::enable_shared_from_this<Instance> {
   public:
-    const std::string CLASS_NAME = "Instance";
+    static const ClassDefinition DEFINITION;
+
+    std::string_view Name = "Instance";
 
     virtual ~Instance() = default;
 

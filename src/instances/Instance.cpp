@@ -1,10 +1,19 @@
 #include "gargantuan/instances/Instance.hpp"
+#include "gargantuan/instances/ClassDefinition.hpp"
+#include "gargantuan/scripting/ScriptType.hpp"
 
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
 
 namespace gargantuan::instances {
+
+const ClassDefinition Instance::DEFINITION = {
+    .Name = "Instance",
+    .Properties = {
+        DEFINE_SIMPLE_PROPERTY(Instance, Name, scripting::TYPE_STRING),
+    }
+};
 
 void Instance::SetParent(std::shared_ptr<Instance> newParent) {
     auto newParentInstance = newParent.get();
@@ -21,8 +30,9 @@ void Instance::SetParent(std::shared_ptr<Instance> newParent) {
         auto &oldChildren = Parent->Children;
         auto lastChild = oldChildren.end();
 
-        auto it = std::find_if(oldChildren.begin(), lastChild,
-                               [this](const std::shared_ptr<Instance> &child) { return child.get() == this; });
+        auto it = std::find_if(oldChildren.begin(), lastChild, [this](const std::shared_ptr<Instance> &child) {
+            return child.get() == this;
+        });
 
         if (it != lastChild) {
             oldChildren.erase(it);
