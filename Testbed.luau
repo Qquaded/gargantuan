@@ -5,13 +5,15 @@ print("runtime:", _RUNTIME)
 print("runtime name:", _RUNTIME.name)
 print("runtime url:", _RUNTIME.url)
 
-print(game.Cube.ClassName)
+local test = Instance.new("Part")
+-- test.Name = "Test"
+-- test.Parent = game
 
--- local last = os.clock()
--- while true do
--- 	if os.clock() - last > 1 then
--- 		last = os.clock()
--- 		print("its been 1 second since last print:", last)
--- 	end
--- 	coroutine.yield()
--- end
+for _, child in game:GetChildren() do
+	print("Child named", child.Name, "of class", child.ClassName)
+end
+
+while true do
+	game.Cube.Transparency = os.clock() % 1
+	coroutine.yield()
+end

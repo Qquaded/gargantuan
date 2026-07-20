@@ -41,35 +41,37 @@ class Instance : public std::enable_shared_from_this<Instance> {
 
 } // namespace gargantuan::instances
 
-namespace gargantuan::scripting {
+namespace gargantuan::Types {
 
-static const ScriptType<instances::Instance *> TYPE_INSTANCE = {
+static const Type<std::shared_ptr<instances::Instance>> INSTANCE = {
     .Name = "Instance",
     .LuauTypeAlias = "Instance",
     .IsStackValue = [](lua_State *L, int idx) -> bool {
-        return lua_userdatatag(L, idx) == (int)UserdataTags::Instance;
+        return lua_userdatatag(L, idx) == (int)scripting::UserdataTags::Instance;
     },
-    .FromStackValue = [](lua_State *L, int idx) -> instances::Instance * {
-        auto **userdata = static_cast<instances::Instance **>(lua_touserdata(L, idx));
-        if (!userdata || !*userdata) {
-            return nullptr;
-        };
+    .FromStackValue = [](lua_State *L, int idx) -> std::shared_ptr<instances::Instance> {
+        auto *ptr = static_cast<std::shared_ptr<instances::Instance> *>(
+            lua_touserdatatagged(L, idx, (int)scripting::UserdataTags::Instance)
+        );
 
-        instances::Instance *instance = *userdata;
-        return instance;
+        if (!ptr || !(*ptr)) {
+            return nullptr;
+        }
+
+        return ptr->get()->shared_from_this();
     },
-    .PushStackValue = [](lua_State *L, instances::Instance *value) -> void {
+    .PushStackValue = [](lua_State *L, std::shared_ptr<instances::Instance> value) -> void {
         if (!value) {
             lua_pushnil(L);
             return;
-        };
+        }
 
-        auto **userdata = static_cast<instances::Instance **>(
-            lua_newuserdatataggedwithmetatable(L, sizeof(instances::Instance *), (int)UserdataTags::Instance)
+        void *userdata = lua_newuserdatataggedwithmetatable(
+            L, sizeof(std::shared_ptr<instances::Instance>), (int)scripting::UserdataTags::Instance
         );
 
-        *userdata = value;
+        new (userdata) std::shared_ptr<instances::Instance>(std::move(value));
     },
 };
 
-} // namespace gargantuan::scripting
+} // namespace gargantuan::Types

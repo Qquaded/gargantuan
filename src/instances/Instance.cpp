@@ -1,7 +1,7 @@
 #include "gargantuan/instances/Instance.hpp"
+#include "gargantuan/Types.hpp"
 #include "gargantuan/instances/ClassDefinition.hpp"
 #include "gargantuan/instances/ClassRegistry.hpp"
-#include "gargantuan/scripting/ScriptType.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -15,28 +15,54 @@ namespace gargantuan::instances {
 
 const ClassDefinition Instance::DEFINITION = {
     .Name = "Instance",
-    .Properties = {
-        DEFINE_SIMPLE_PROPERTY(Instance, Name, scripting::TYPE_STRING),
+    .Properties =
         {
-            "ClassName",
-            PropertyDefinition{
-                .Name = "ClassName",
-                .Type = scripting::TYPE_STRING,
-                .Read = [](Instance *instance) -> std::any { return ClassRegistry::GetDefinition(instance)->Name; },
+            READWRITE_PROPERTY_PAIR(Instance, Name, Types::STRING),
+            {
+                "ClassName",
+                PropertyDefinition{
+                    .Name = "ClassName",
+                    .Type = Types::STRING,
+                    .Read = [](Instance *instance) -> std::any { return ClassRegistry::GetDefinition(instance)->Name; },
+                },
+            },
+            {
+                "Parent",
+                PropertyDefinition{
+                    .Name = "Parent",
+                    .Type = Types::INSTANCE,
+                    .Read = [](Instance *instance) -> std::any { return instance->Parent; },
+                    .Write = [](Instance *instance, const std::any &value) -> void {
+                        auto newParent = std::any_cast<Instance *>(value);
+                        instance->SetParent(newParent ? newParent->shared_from_this() : nullptr);
+                    },
+                },
+            },
+        },
+    .Methods = {
+        {
+            "GetFullName",
+            MethodDefinition{
+                .Returns = {MethodReturn{.Type = Types::STRING}},
+                .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
+                    return {instance->GetFullName()};
+                },
             },
         },
         {
-            "Parent",
-            PropertyDefinition{
-                .Name = "Parent",
-                .Type = scripting::TYPE_INSTANCE,
-                .Read = [](Instance *instance) -> std::any { return instance->Parent; },
-                .Write = [](Instance *instance, const std::any &value) -> void {
-                    auto newParent = std::any_cast<Instance *>(value);
-                    instance->SetParent(newParent->shared_from_this());
+            "GetChildren",
+            MethodDefinition{
+                .Returns = {MethodReturn{.Type = Types::Array(Types::INSTANCE)}},
+                .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
+                    std::vector<Instance *> result;
+                    result.reserve(instance->Children.size());
+                    for (auto &instance : instance->Children) {
+                        result.emplace_back(instance.get());
+                    }
+                    return {result};
                 },
             },
-        }
+        },
     }
 };
 
@@ -47,19 +73,22 @@ void Instance::SetParent(std::shared_ptr<Instance> newParent) {
         return;
     }
 
-    if (Parent == this) {
+    if (newParentInstance == this) {
         throw std::runtime_error("Cannot set parent to itself");
+    }
+
+    std::shared_ptr<Instance> self = weak_from_this().lock();
+    if (!self) {
+        throw std::runtime_error("Instance must be managed by std::shared_ptr before setting a parent");
     }
 
     if (Parent != nullptr) {
         auto &oldChildren = Parent->Children;
-        auto lastChild = oldChildren.end();
-
-        auto it = std::find_if(oldChildren.begin(), lastChild, [this](const std::shared_ptr<Instance> &child) {
+        auto it = std::find_if(oldChildren.begin(), oldChildren.end(), [this](const std::shared_ptr<Instance> &child) {
             return child.get() == this;
         });
 
-        if (it != lastChild) {
+        if (it != oldChildren.end()) {
             oldChildren.erase(it);
         }
     }
@@ -67,15 +96,16 @@ void Instance::SetParent(std::shared_ptr<Instance> newParent) {
     Parent = newParentInstance;
 
     if (Parent != nullptr) {
-        Parent->Children.push_back(shared_from_this());
+        Parent->Children.emplace_back(self);
     }
 }
 
 std::string Instance::GetFullName() {
     std::vector<std::string_view> path;
+
     // Start from -1 to omit a trailing period
-    size_t totalLength = -1;
-    instances::Instance *current = this->Parent;
+    size_t totalLength = 0;
+    instances::Instance *current = this;
 
     while (current) {
         auto &name = current->Name;
@@ -86,6 +116,10 @@ std::string Instance::GetFullName() {
 
     if (path.empty()) {
         return "";
+    }
+
+    if (totalLength > 0) {
+        totalLength--;
     }
 
     std::string fullName;

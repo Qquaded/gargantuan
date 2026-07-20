@@ -30,7 +30,6 @@ ClassDefinition *GetDefinition(Instance *instance) {
     if (!instance)
         return nullptr;
     auto &map = GetDefinitionsMap();
-    SDL_Log("???: %s", typeid(*instance).name());
     auto it = map.find(std::type_index(typeid(*instance)));
     if (it != map.end()) {
         return &it->second;
@@ -76,6 +75,26 @@ std::unordered_map<std::string_view, PropertyDefinition> GetProperties(ClassDefi
     std::unordered_map<std::string_view, PropertyDefinition> props;
     CollectProperties(definition, props);
     return props;
+}
+
+void CollectMethods(ClassDefinition *definition, std::unordered_map<std::string_view, MethodDefinition> &methods) {
+    for (auto method : definition->Methods) {
+        methods.emplace(method);
+    }
+
+    auto superclass = definition->Superclass;
+    if (superclass) {
+        auto superclassDefinition = GetDefinitionByName(superclass.value());
+        if (superclassDefinition) {
+            CollectMethods(superclassDefinition, methods);
+        }
+    }
+}
+
+std::unordered_map<std::string_view, MethodDefinition> GetMethods(ClassDefinition *definition) {
+    std::unordered_map<std::string_view, MethodDefinition> methods;
+    CollectMethods(definition, methods);
+    return methods;
 }
 
 } // namespace gargantuan::instances::ClassRegistry

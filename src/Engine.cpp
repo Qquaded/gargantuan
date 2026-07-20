@@ -1,6 +1,7 @@
 #include "gargantuan/Engine.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
+#include "gargantuan/instances/Instance.hpp"
 #include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/Runtime.hpp"
@@ -26,7 +27,7 @@ Engine::Engine()
     dataModel->Name = "Welcome To Hell";
 
     // temporary
-    scripting::runtime::PushInstance(ScriptEngine.L, dataModel.get());
+    Types::INSTANCE.PushStackValue(ScriptEngine.L, dataModel);
     lua_pushvalue(ScriptEngine.L, -1);
     lua_setglobal(ScriptEngine.L, "game");
 

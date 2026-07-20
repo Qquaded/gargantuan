@@ -22,7 +22,11 @@ template <typename T> ClassDefinition *GetDefinition() {
 ClassDefinition *GetDefinition(Instance *instance);
 ClassDefinition *GetDefinitionByName(std::string_view name);
 std::vector<std::string_view> GetClassNames();
+
 void CollectProperties(ClassDefinition *definition, std::unordered_map<std::string_view, PropertyDefinition> &props);
 std::unordered_map<std::string_view, PropertyDefinition> GetProperties(ClassDefinition *definition);
+
+void CollectMethods(ClassDefinition *definition, std::unordered_map<std::string_view, MethodDefinition> &methods);
+std::unordered_map<std::string_view, MethodDefinition> GetMethods(ClassDefinition *definition);
 
 } // namespace gargantuan::instances::ClassRegistry
