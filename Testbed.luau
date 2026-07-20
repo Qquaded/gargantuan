@@ -6,6 +6,7 @@ print("runtime name:", _RUNTIME.name)
 print("runtime url:", _RUNTIME.url)
 
 local test = Instance.new("Part")
+-- FIXME: setting properties to test segfaults the program?????
 -- test.Name = "Test"
 -- test.Parent = game
 

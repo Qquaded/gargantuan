@@ -27,7 +27,7 @@ Engine::Engine()
     dataModel->Name = "Welcome To Hell";
 
     // temporary
-    Types::INSTANCE.PushStackValue(ScriptEngine.L, dataModel);
+    Types::INSTANCE.PushStackValue(ScriptEngine.L, dataModel.get());
     lua_pushvalue(ScriptEngine.L, -1);
     lua_setglobal(ScriptEngine.L, "game");
 

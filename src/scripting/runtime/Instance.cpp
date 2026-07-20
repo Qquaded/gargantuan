@@ -25,12 +25,12 @@ int instance_gc(lua_State *L) {
 }
 
 int instance_index(lua_State *L) {
-    std::shared_ptr<instances::Instance> instance = Types::INSTANCE.FromStackValue(L, -2);
+    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, -2);
     if (!instance) {
         return 0;
     };
 
-    auto *classDefinition = instances::ClassRegistry::GetDefinition(instance.get());
+    auto *classDefinition = instances::ClassRegistry::GetDefinition(instance);
     if (!classDefinition) {
         return 0;
     }
@@ -47,13 +47,13 @@ int instance_index(lua_State *L) {
     if (property != properties.end()) {
         auto &propertyDefinition = property->second;
         if (propertyDefinition.Read) {
-            propertyDefinition.Type.PushStackValue(L, propertyDefinition.Read(instance.get()));
+            propertyDefinition.Type.PushStackValue(L, propertyDefinition.Read(instance));
             return 1;
         }
     } else {
         auto child = instance->FindFirstChild(key);
         if (child) {
-            Types::INSTANCE.PushStackValue(L, child);
+            Types::INSTANCE.PushStackValue(L, child.get());
             return 1;
         }
     }
@@ -64,12 +64,12 @@ int instance_index(lua_State *L) {
 }
 
 int instance_newindex(lua_State *L) {
-    std::shared_ptr<instances::Instance> instance = Types::INSTANCE.FromStackValue(L, -3);
+    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, -3);
     if (!instance) {
         return 0;
     };
 
-    auto *classDefinition = instances::ClassRegistry::GetDefinition(instance.get());
+    auto *classDefinition = instances::ClassRegistry::GetDefinition(instance);
     if (!classDefinition) {
         return 0;
     }
@@ -97,7 +97,7 @@ int instance_newindex(lua_State *L) {
         };
 
         auto value = propertyDefinition.Type.FromStackValue(L, -1);
-        propertyDefinition.Write(instance.get(), value);
+        propertyDefinition.Write(instance, value);
         return 0;
     }
 
@@ -105,14 +105,14 @@ int instance_newindex(lua_State *L) {
 }
 
 int instance_namecall(lua_State *L) {
-    std::shared_ptr<instances::Instance> instance = Types::INSTANCE.FromStackValue(L, 1);
+    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, 1);
     if (!instance) {
         luaL_error(L, "Instance already destroyed");
         return 0;
     };
 
     const char *key = lua_namecallatom(L, nullptr);
-    auto classDefinition = instances::ClassRegistry::GetDefinition(instance.get());
+    auto classDefinition = instances::ClassRegistry::GetDefinition(instance);
     auto methods = instances::ClassRegistry::GetMethods(classDefinition);
 
     auto methodIt = methods.find(key);
@@ -140,7 +140,7 @@ int instance_namecall(lua_State *L) {
         arguments.push_back(argumentDefinition.Type.FromStackValue(L, stackIndex));
     }
 
-    std::vector<std::any> returnValues = methodDefinition.Invoke(instance.get(), std::move(arguments));
+    std::vector<std::any> returnValues = methodDefinition.Invoke(instance, std::move(arguments));
 
     auto returnCount = methodDefinition.Returns.size();
     for (int i = 0; i < returnCount; i++) {
@@ -152,7 +152,7 @@ int instance_namecall(lua_State *L) {
 }
 
 int instance_tostring(lua_State *L) {
-    std::shared_ptr<instances::Instance> instance = Types::INSTANCE.FromStackValue(L, -1);
+    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, -1);
     if (!instance) {
         return 0;
     };
@@ -201,7 +201,7 @@ int libInstance_new(lua_State *L) {
     }
 
     auto instance = classDefinition->Constructor();
-    Types::INSTANCE.PushStackValue(L, instance);
+    Types::INSTANCE.PushStackValue(L, instance.get());
     return 1;
 }
 

@@ -12,52 +12,35 @@
 namespace gargantuan::instances {
 
 class Instance;
-
-namespace internal {
-template <typename MemberType> void WriteProperty(MemberType &member, const std::any &value) {
-    if constexpr (std::is_same_v<MemberType, std::shared_ptr<gargantuan::instances::Instance>>) {
-        if (const auto *sharedPtr = std::any_cast<std::shared_ptr<gargantuan::instances::Instance>>(&value)) {
-            member = *sharedPtr;
-        } else if (auto *rawPtr =
-                       std::any_cast<std::enable_shared_from_this<gargantuan::instances::Instance> *>(&value)) {
-            member = *rawPtr ? (*rawPtr)->shared_from_this() : nullptr;
-        }
-    } else {
-        if (const auto *valPtr = std::any_cast<MemberType>(&value)) {
-            member = *valPtr;
-        }
-    }
-}
-} // namespace internal
-
 #define READONLY_PROPERTY_DEFINITION(classType, name, propertyType)                                                    \
     PropertyDefinition {                                                                                               \
-        .Name = #name, .Type = propertyType, .Read = [](Instance *instance) {                                          \
+        .Name = #name, .Type = propertyType, .Read = [](Instance *instance) -> std::any {                              \
             const auto *concrete = static_cast<const classType *>(instance);                                           \
             return std::any(concrete->*(&classType::name));                                                            \
-        },                                                                                                             \
+        }                                                                                                              \
     }
 
 #define WRITEONLY_PROPERTY_DEFINITION(classType, name, propertyType)                                                   \
     PropertyDefinition {                                                                                               \
         .Name = #name, .Type = propertyType, .Write = [](Instance *instance, const std::any &value) {                  \
             auto *concrete = static_cast<classType *>(instance);                                                       \
-            internal::WriteProperty(concrete->*(&classType::name), value);                                             \
-        },                                                                                                             \
+            using MemberType = std::decay_t<decltype(concrete->*(&classType::name))>;                                  \
+            concrete->*(&classType::name) = std::any_cast<MemberType>(value);                                          \
+        }                                                                                                              \
     }
 
 #define READWRITE_PROPERTY_DEFINITION(classType, name, propertyType)                                                   \
     PropertyDefinition {                                                                                               \
         .Name = #name, .Type = propertyType,                                                                           \
-        .Read =                                                                                                        \
-            [](Instance *instance) {                                                                                   \
-                const auto *concrete = static_cast<const classType *>(instance);                                       \
-                return std::any(concrete->*(&classType::name));                                                        \
-            },                                                                                                         \
+        .Read = [](Instance *instance) -> std::any {                                                                   \
+            const auto *concrete = static_cast<const classType *>(instance);                                           \
+            return std::any(concrete->*(&classType::name));                                                            \
+        },                                                                                                             \
         .Write = [](Instance *instance, const std::any &value) {                                                       \
             auto *concrete = static_cast<classType *>(instance);                                                       \
-            internal::WriteProperty(concrete->*(&classType::name), value);                                             \
-        },                                                                                                             \
+            using MemberType = std::decay_t<decltype(concrete->*(&classType::name))>;                                  \
+            concrete->*(&classType::name) = std::any_cast<MemberType>(value);                                          \
+        }                                                                                                              \
     }
 
 #define READONLY_PROPERTY_PAIR(classType, name, propertyType)                                                          \
