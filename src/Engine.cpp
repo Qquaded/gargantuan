@@ -23,6 +23,7 @@ Engine::Engine()
     : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window),
       ScriptEngine() {
     dataModel = std::make_shared<instances::DataModel>();
+    dataModel->Name = "Welcome To Hell";
 
     // temporary
     scripting::runtime::PushInstance(ScriptEngine.L, dataModel.get());
@@ -30,19 +31,15 @@ Engine::Engine()
     lua_setglobal(ScriptEngine.L, "game");
 
     auto baseplate = std::make_shared<instances::Part>();
+    baseplate->Name = "Baseplate";
     baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
     baseplate->CFrame = datatypes::CFrame(0, -30, 0);
     baseplate->Size = glm::vec3(50, 20, 50);
     baseplate->Transparency = 1.0;
     baseplate->SetParent(dataModel);
 
-    auto lmao = std::make_shared<instances::Part>();
-    lmao->Color = datatypes::Color3::fromRGB(100, 0, 0);
-    lmao->CFrame = datatypes::CFrame(-10, 5, 0);
-    lmao->Transparency = 1.0;
-    lmao->SetParent(dataModel);
-
     cube = std::make_shared<instances::Part>();
+    cube->Name = "Cube";
     cube->Color = datatypes::Color3::fromHSV(1, 1, 1);
     cube->CFrame = datatypes::CFrame(0, 5, 0);
     cube->Transparency = 1.0;

@@ -42,14 +42,14 @@ struct PropertyDefinition {
 };
 
 struct MethodDefinition {
-    // TODO
+    std::string_view Name;
 };
 
 struct ClassDefinition {
     std::string_view Name;
     std::optional<std::string_view> Superclass;
     std::unordered_map<std::string_view, PropertyDefinition> Properties = {};
-    std::unordered_map<std::string_view, PropertyDefinition> Methods = {};
+    std::unordered_map<std::string_view, MethodDefinition> Methods = {};
 };
 
 } // namespace gargantuan::instances

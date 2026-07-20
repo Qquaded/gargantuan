@@ -38,8 +38,15 @@ int InstanceIndex(lua_State *L) {
             propertyDefinition.Type.PushStackValue(L, propertyDefinition.Read(instance));
             return 1;
         }
+    } else {
+        auto child = instance->FindFirstChild(key);
+        if (child) {
+            TYPE_INSTANCE.PushStackValue(L, child.get());
+            return 1;
+        }
     }
-    // ??
+
+    luaL_error(L, "Unknown member %s of class %s", key.data(), classDefinition->Name.data());
 
     return 0;
 }

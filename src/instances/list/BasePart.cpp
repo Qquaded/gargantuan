@@ -4,7 +4,7 @@
 namespace gargantuan::instances {
 
 const ClassDefinition BasePart::DEFINITION = {
-    .Name = "Part",
+    .Name = "BasePart",
     .Superclass = "Instance",
     .Properties = {
         // DEFINE_SIMPLE_PROPERTY(BasePart, CFrame, scripting::TYPE_CFRAME),

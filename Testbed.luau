@@ -5,7 +5,7 @@ print("runtime:", _RUNTIME)
 print("runtime name:", _RUNTIME.name)
 print("runtime url:", _RUNTIME.url)
 
-print(game.ClassName)
+print(game.Cube.ClassName)
 
 -- local last = os.clock()
 -- while true do

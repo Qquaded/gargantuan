@@ -22,10 +22,18 @@ class Instance : public std::enable_shared_from_this<Instance> {
     std::vector<std::shared_ptr<Instance>> Children;
 
     void SetParent(std::shared_ptr<Instance> newParent);
-    std::vector<std::shared_ptr<Instance>> GetDescendants();
 
     template <typename T> bool IsA() const { return dynamic_cast<const T *>(this) != nullptr; }
     template <typename T> const T *Cast() const { return dynamic_cast<const T *>(this); }
+
+    std::string GetFullName();
+    std::vector<std::shared_ptr<Instance>> GetDescendants();
+    std::shared_ptr<Instance> FindFirstChild(std::string_view name, bool recursive = false);
+    std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className);
+    std::shared_ptr<Instance> FindFirstChildWhichIsA(std::string_view className);
+    std::shared_ptr<Instance> FindFirstDescendant(std::string_view name);
+    std::shared_ptr<Instance> FindFirstDescendantOfClass(std::string_view className);
+    std::shared_ptr<Instance> FindFirstDescendantWhichIsA(std::string_view className);
 
   private:
     void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
