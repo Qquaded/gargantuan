@@ -60,8 +60,12 @@ static const ScriptType<std::string_view> TYPE_STRING = {
     .Name = "String",
     .LuauTypeAlias = "string",
     .IsStackValue = [](lua_State *L, int idx) -> bool { return lua_isstring(L, idx); },
-    .FromStackValue = [](lua_State *L, int idx) -> std::string_view { return lua_tostring(L, idx); },
-    .PushStackValue = [](lua_State *L, std::string_view value) { lua_pushstring(L, value.data()); }
+    .FromStackValue = [](lua_State *L, int idx) -> std::string_view {
+        size_t len;
+        const char *str = lua_tolstring(L, idx, &len);
+        return std::string_view(str, len);
+    },
+    .PushStackValue = [](lua_State *L, std::string_view value) { lua_pushlstring(L, value.data(), value.size()); }
 };
 
 } // namespace gargantuan::scripting

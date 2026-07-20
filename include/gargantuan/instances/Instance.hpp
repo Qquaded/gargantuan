@@ -1,7 +1,9 @@
 #pragma once
 
 #include "gargantuan/instances/ClassDefinition.hpp"
+#include "gargantuan/scripting/UserdataTags.hpp"
 
+#include <lua.h>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -30,3 +32,36 @@ class Instance : public std::enable_shared_from_this<Instance> {
 };
 
 } // namespace gargantuan::instances
+
+namespace gargantuan::scripting {
+
+static const ScriptType<instances::Instance *> TYPE_INSTANCE = {
+    .Name = "Instance",
+    .LuauTypeAlias = "Instance",
+    .IsStackValue = [](lua_State *L, int idx) -> bool {
+        return lua_userdatatag(L, idx) == (int)UserdataTags::Instance;
+    },
+    .FromStackValue = [](lua_State *L, int idx) -> instances::Instance * {
+        auto **userdata = static_cast<instances::Instance **>(lua_touserdata(L, idx));
+        if (!userdata || !*userdata) {
+            return nullptr;
+        };
+
+        instances::Instance *instance = *userdata;
+        return instance;
+    },
+    .PushStackValue = [](lua_State *L, instances::Instance *value) -> void {
+        if (!value) {
+            lua_pushnil(L);
+            return;
+        };
+
+        auto **userdata = static_cast<instances::Instance **>(
+            lua_newuserdatataggedwithmetatable(L, sizeof(instances::Instance *), (int)UserdataTags::Instance)
+        );
+
+        *userdata = value;
+    },
+};
+
+} // namespace gargantuan::scripting

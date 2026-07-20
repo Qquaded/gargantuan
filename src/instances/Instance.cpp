@@ -1,5 +1,6 @@
 #include "gargantuan/instances/Instance.hpp"
 #include "gargantuan/instances/ClassDefinition.hpp"
+#include "gargantuan/instances/ClassRegistry.hpp"
 #include "gargantuan/scripting/ScriptType.hpp"
 
 #include <algorithm>
@@ -12,6 +13,26 @@ const ClassDefinition Instance::DEFINITION = {
     .Name = "Instance",
     .Properties = {
         DEFINE_SIMPLE_PROPERTY(Instance, Name, scripting::TYPE_STRING),
+        {
+            "ClassName",
+            PropertyDefinition{
+                .Name = "ClassName",
+                .Type = scripting::TYPE_STRING,
+                .Read = [](Instance *instance) -> std::any { return ClassRegistry::GetDefinition(instance)->Name; },
+            },
+        },
+        {
+            "Parent",
+            PropertyDefinition{
+                .Name = "Parent",
+                .Type = scripting::TYPE_INSTANCE,
+                .Read = [](Instance *instance) -> std::any { return instance->Parent; },
+                .Write = [](Instance *instance, const std::any &value) -> void {
+                    auto newParent = std::any_cast<Instance *>(value);
+                    instance->SetParent(newParent->shared_from_this());
+                },
+            },
+        }
     }
 };
 

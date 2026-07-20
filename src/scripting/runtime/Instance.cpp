@@ -34,8 +34,8 @@ int InstanceIndex(lua_State *L) {
     auto property = properties.find(key);
     if (property != properties.end()) {
         auto &propertyDefinition = property->second;
-        if (propertyDefinition.Get) {
-            propertyDefinition.Type.PushStackValue(L, propertyDefinition.Get(instance));
+        if (propertyDefinition.Read) {
+            propertyDefinition.Type.PushStackValue(L, propertyDefinition.Read(instance));
             return 1;
         }
     }
@@ -61,13 +61,21 @@ int InstanceNewIndex(lua_State *L) {
     auto property = properties.find(key);
     if (property != properties.end()) {
         auto &propertyDefinition = property->second;
-        if (propertyDefinition.Set) {
-            auto value = propertyDefinition.Type.FromStackValue(L, -1);
-            propertyDefinition.Set(instance, value);
-            return 0;
+        if (!propertyDefinition.Write) {
+            luaL_error(L, "Cannot write to %s", propertyDefinition.Name.data());
         }
+
+        if (!propertyDefinition.Type.IsStackValue(L, -1)) {
+            luaL_error(
+                L, "Cannot write to %s as it expects a value of type %s", propertyDefinition.Name.data(),
+                propertyDefinition.Type.LuauTypeAlias.data()
+            );
+        };
+
+        auto value = propertyDefinition.Type.FromStackValue(L, -1);
+        propertyDefinition.Write(instance, value);
+        return 0;
     }
-    // ??
 
     return 0;
 }

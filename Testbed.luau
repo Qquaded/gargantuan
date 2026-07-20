@@ -5,8 +5,7 @@ print("runtime:", _RUNTIME)
 print("runtime name:", _RUNTIME.name)
 print("runtime url:", _RUNTIME.url)
 
-game.Name = "Welcome To Hell"
-print(game.Name)
+print(game.ClassName)
 
 -- local last = os.clock()
 -- while true do

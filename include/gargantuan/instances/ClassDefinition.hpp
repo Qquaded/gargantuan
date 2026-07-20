@@ -18,8 +18,8 @@ struct PropertyDefinition {
     std::string_view Name;
     scripting::AnyScriptType Type;
 
-    std::function<std::any(Instance *instance)> Get;
-    std::function<void(Instance *instance, const std::any &value)> Set;
+    std::function<std::any(Instance *instance)> Read;
+    std::function<void(Instance *instance, const std::any &value)> Write;
 
     template <typename ClassType, typename MemberType>
     static PropertyDefinition
@@ -27,12 +27,12 @@ struct PropertyDefinition {
         return PropertyDefinition{
             .Name = name,
             .Type = type,
-            .Get =
+            .Read =
                 [member](Instance *instance) {
                     const auto *concrete = static_cast<const ClassType *>(instance);
                     return std::any(concrete->*member);
                 },
-            .Set =
+            .Write =
                 [member](Instance *instance, const std::any &value) {
                     auto *concrete = static_cast<ClassType *>(instance);
                     concrete->*member = std::any_cast<MemberType>(value);
