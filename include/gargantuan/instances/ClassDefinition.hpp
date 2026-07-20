@@ -2,6 +2,7 @@
 
 #include "gargantuan/scripting/ScriptType.hpp"
 
+#include <optional>
 #include <string_view>
 #include <unordered_map>
 
@@ -46,7 +47,7 @@ struct MethodDefinition {
 
 struct ClassDefinition {
     std::string_view Name;
-    std::string_view Superclass;
+    std::optional<std::string_view> Superclass;
     std::unordered_map<std::string_view, PropertyDefinition> Properties = {};
     std::unordered_map<std::string_view, PropertyDefinition> Methods = {};
 };

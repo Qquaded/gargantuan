@@ -1,8 +1,6 @@
 # gargantuan
 
-3D game engine inspired by Kinemiun Engine and ONLY Kinemium Engine.
-
-It's scriptable using Luau!
+Gargantuan is a 3D game-engine scriptable using Luau.
 
 ## Development
 

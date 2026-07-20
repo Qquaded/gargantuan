@@ -1,4 +1,6 @@
 #include "gargantuan/instances/Instance.hpp"
+#include "gargantuan/instances/ClassDefinition.hpp"
+#include "gargantuan/instances/ClassRegistry.hpp"
 #include "gargantuan/scripting/Runtime.hpp"
 #include "gargantuan/scripting/UserdataTags.hpp"
 
@@ -19,19 +21,68 @@ int InstanceIndex(lua_State *L) {
     auto **userdata = static_cast<instances::Instance **>(lua_touserdata(L, -2));
     if (!userdata || !*userdata)
         return 0;
-    instances::Instance *instance = *userdata;
 
-    std::string key = luaL_checkstring(L, -1);
-    SDL_Log("No fucking shot: Instance.%s", key.c_str());
+    instances::Instance *instance = *userdata;
+    auto *classDefinition = instances::ClassRegistry::GetDefinition(instance);
+    if (!classDefinition) {
+        return 0;
+    }
+
+    auto properties = instances::ClassRegistry::GetProperties(classDefinition);
+
+    std::string_view key = luaL_checkstring(L, -1);
+    auto property = properties.find(key);
+    if (property != properties.end()) {
+        auto &propertyDefinition = property->second;
+        if (propertyDefinition.Get) {
+            propertyDefinition.Type.PushStackValue(L, propertyDefinition.Get(instance));
+            return 1;
+        }
+    }
+    // ??
+
+    return 0;
+}
+
+int InstanceNewIndex(lua_State *L) {
+    auto **userdata = static_cast<instances::Instance **>(lua_touserdata(L, -3));
+    if (!userdata || !*userdata)
+        return 0;
+
+    instances::Instance *instance = *userdata;
+    auto *classDefinition = instances::ClassRegistry::GetDefinition(instance);
+    if (!classDefinition) {
+        return 0;
+    }
+
+    auto properties = instances::ClassRegistry::GetProperties(classDefinition);
+
+    std::string_view key = luaL_checkstring(L, -2);
+    auto property = properties.find(key);
+    if (property != properties.end()) {
+        auto &propertyDefinition = property->second;
+        if (propertyDefinition.Set) {
+            auto value = propertyDefinition.Type.FromStackValue(L, -1);
+            propertyDefinition.Set(instance, value);
+            return 0;
+        }
+    }
+    // ??
 
     return 0;
 }
 
 int OpenInstance(lua_State *L) {
     lua_newtable(L);
+
     lua_pushcfunction(L, InstanceIndex, "Instance.__index");
     lua_setfield(L, -2, "__index");
+
+    lua_pushcfunction(L, InstanceNewIndex, "Instance.__newindex");
+    lua_setfield(L, -2, "__newindex");
+
     lua_setuserdatametatable(L, (int)UserdataTags::Instance);
+
     return 0;
 }
 
