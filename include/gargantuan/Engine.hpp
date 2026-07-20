@@ -46,7 +46,7 @@ class Engine {
 
     glm::mat4 GetProjectionMatrix() {
         float aspect = ViewportSize.x / ViewportSize.y;
-        return glm::perspective(glm::radians(CameraFieldOfView), aspect, 0.1f, 100.0f);
+        return glm::perspective(glm::radians(CameraFieldOfView), aspect, 0.1f, 100000.0f);
     }
 
     glm::mat4 GetViewMatrix() { return glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector); }

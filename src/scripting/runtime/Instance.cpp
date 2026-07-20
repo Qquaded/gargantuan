@@ -14,8 +14,7 @@
 namespace gargantuan::scripting::runtime {
 
 int instance_gc(lua_State *L) {
-    auto *ptr =
-        static_cast<std::shared_ptr<instances::Instance> *>(lua_touserdatatagged(L, 1, (int)UserdataTags::Instance));
+    auto *ptr = static_cast<instances::InstancePointer *>(lua_touserdatatagged(L, 1, (int)UserdataTags::Instance));
 
     if (ptr) {
         ptr->~shared_ptr();
@@ -25,10 +24,15 @@ int instance_gc(lua_State *L) {
 }
 
 int instance_index(lua_State *L) {
-    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, -2);
-    if (!instance) {
+    instances::InstancePointer ptr = Types::INSTANCE.FromStackValue(L, -2);
+    if (!ptr) {
         return 0;
     };
+
+    instances::Instance *instance = ptr.get();
+    if (!instance) {
+        return 0;
+    }
 
     auto *classDefinition = instances::ClassRegistry::GetDefinition(instance);
     if (!classDefinition) {
@@ -53,7 +57,7 @@ int instance_index(lua_State *L) {
     } else {
         auto child = instance->FindFirstChild(key);
         if (child) {
-            Types::INSTANCE.PushStackValue(L, child.get());
+            Types::INSTANCE.PushStackValue(L, child);
             return 1;
         }
     }
@@ -64,10 +68,15 @@ int instance_index(lua_State *L) {
 }
 
 int instance_newindex(lua_State *L) {
-    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, -3);
-    if (!instance) {
+    instances::InstancePointer ptr = Types::INSTANCE.FromStackValue(L, -3);
+    if (!ptr) {
         return 0;
     };
+
+    instances::Instance *instance = ptr.get();
+    if (!instance) {
+        return 0;
+    }
 
     auto *classDefinition = instances::ClassRegistry::GetDefinition(instance);
     if (!classDefinition) {
@@ -105,11 +114,17 @@ int instance_newindex(lua_State *L) {
 }
 
 int instance_namecall(lua_State *L) {
-    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, 1);
-    if (!instance) {
+    instances::InstancePointer ptr = Types::INSTANCE.FromStackValue(L, 1);
+    if (!ptr) {
         luaL_error(L, "Instance already destroyed");
         return 0;
     };
+
+    instances::Instance *instance = ptr.get();
+    if (!instance) {
+        luaL_error(L, "Instance already destroyed");
+        return 0;
+    }
 
     const char *key = lua_namecallatom(L, nullptr);
     auto classDefinition = instances::ClassRegistry::GetDefinition(instance);
@@ -152,7 +167,12 @@ int instance_namecall(lua_State *L) {
 }
 
 int instance_tostring(lua_State *L) {
-    instances::Instance *instance = Types::INSTANCE.FromStackValue(L, -1);
+    instances::InstancePointer ptr = Types::INSTANCE.FromStackValue(L, -1);
+    if (!ptr) {
+        return 0;
+    };
+
+    instances::Instance *instance = ptr.get();
     if (!instance) {
         return 0;
     };
@@ -201,7 +221,7 @@ int libInstance_new(lua_State *L) {
     }
 
     auto instance = classDefinition->Constructor();
-    Types::INSTANCE.PushStackValue(L, instance.get());
+    Types::INSTANCE.PushStackValue(L, instance);
     return 1;
 }
 

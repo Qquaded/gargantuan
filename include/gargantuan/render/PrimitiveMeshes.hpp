@@ -6,6 +6,9 @@
 
 namespace gargantuan::render::PrimitiveMeshes {
 
-Mesh Block(glm::vec4 rgba);
+Mesh Cube(glm::vec4 rgba);
+Mesh Wedge(glm::vec4 rgba);
+Mesh Sphere(glm::vec4 rgba);
+Mesh Cylinder(glm::vec4 rgba);
 
-}
+} // namespace gargantuan::render::PrimitiveMeshes

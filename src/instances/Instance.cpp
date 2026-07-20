@@ -4,8 +4,10 @@
 #include "gargantuan/instances/ClassRegistry.hpp"
 
 #include <algorithm>
+#include <any>
 #include <cstddef>
 #include <memory>
+#include <objc/objc.h>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -31,21 +33,40 @@ const ClassDefinition Instance::DEFINITION = {
                 PropertyDefinition{
                     .Name = "Parent",
                     .Type = Types::INSTANCE,
-                    .Read = [](Instance *instance) -> std::any { return instance->Parent; },
+                    .Read = [](Instance *instance) -> std::any {
+                        if (auto parent = instance->Parent) {
+                            return parent->shared_from_this();
+                        };
+                        return nullptr;
+                    },
                     .Write = [](Instance *instance, const std::any &value) -> void {
-                        auto newParent = std::any_cast<Instance *>(value);
-                        instance->SetParent(newParent ? newParent->shared_from_this() : nullptr);
+                        InstancePointer newParent = std::any_cast<InstancePointer>(value);
+                        instance->SetParent(newParent);
                     },
                 },
             },
         },
     .Methods = {
         {
-            "GetFullName",
+            "IsA",
             MethodDefinition{
-                .Returns = {MethodReturn{.Type = Types::STRING}},
+                .Arguments = {MethodArgument{.Name = "className", .Type = Types::STRING}},
+                .Returns = {MethodReturn{.Type = Types::BOOLEAN}},
                 .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
-                    return {instance->GetFullName()};
+                    auto className = std::any_cast<std::string_view>(arguments[0]);
+                    auto currentDefinition = ClassRegistry::GetDefinition(instance);
+                    while (true) {
+                        if (currentDefinition->Name == className) {
+                            return {true};
+                        }
+
+                        auto superclass = currentDefinition->Superclass;
+                        if (superclass.has_value()) {
+                            currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+                        } else {
+                            return {false};
+                        }
+                    }
                 },
             },
         },
@@ -60,6 +81,30 @@ const ClassDefinition Instance::DEFINITION = {
                         result.emplace_back(instance.get());
                     }
                     return {result};
+                },
+            },
+        },
+        {
+            "GetDescendants",
+            MethodDefinition{
+                .Returns = {MethodReturn{.Type = Types::Array(Types::INSTANCE)}},
+                .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
+                    auto descendants = instance->GetDescendants();
+                    std::vector<Instance *> result;
+                    result.reserve(descendants.size());
+                    for (auto &instance : descendants) {
+                        result.emplace_back(instance.get());
+                    }
+                    return {result};
+                },
+            },
+        },
+        {
+            "GetFullName",
+            MethodDefinition{
+                .Returns = {MethodReturn{.Type = Types::STRING}},
+                .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
+                    return {instance->GetFullName()};
                 },
             },
         },

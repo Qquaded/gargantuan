@@ -1,8 +1,9 @@
+#include <SDL3/SDL_gpu.h>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/render/Meshes.hpp"
+#include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -34,29 +35,47 @@ Renderer::Renderer(SDL_Window *window) {
 
     FragmentShader = LoadShader("build/shaders/rgbTriangle.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT);
 
-    SDL_GPUColorTargetDescription colorTarget = {.format = SDL_GetGPUSwapchainTextureFormat(Gpu, Window)};
+    SDL_GPUColorTargetDescription colorTarget = {
+        .format = SDL_GetGPUSwapchainTextureFormat(Gpu, Window),
+        .blend_state = SDL_GPUColorTargetBlendState{
+            .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+            .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            .color_blend_op = SDL_GPU_BLENDOP_ADD,
+            .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+            .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+            .enable_blend = true
+        }
+    };
 
-    SDL_GPUVertexAttribute vertexAttributes[]{SDL_GPUVertexAttribute{
-                                                  .location = 0,
-                                                  .buffer_slot = 0,
-                                                  .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                                                  .offset = offsetof(Vertex, Position),
-                                              },
-                                              SDL_GPUVertexAttribute{
-                                                  .location = 1,
-                                                  .buffer_slot = 0,
-                                                  .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                                                  .offset = offsetof(Vertex, Normal),
-                                              },
-                                              SDL_GPUVertexAttribute{
-                                                  .location = 2,
-                                                  .buffer_slot = 0,
-                                                  .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-                                                  .offset = offsetof(Vertex, Rgba),
-                                              }};
+    SDL_GPUVertexAttribute vertexAttributes[]{
+        SDL_GPUVertexAttribute{
+            .location = 0,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = offsetof(Vertex, Position),
+        },
+        SDL_GPUVertexAttribute{
+            .location = 1,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = offsetof(Vertex, Normal),
+        },
+        SDL_GPUVertexAttribute{
+            .location = 2,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+            .offset = offsetof(Vertex, Rgba),
+        },
+    };
 
-    SDL_GPUVertexBufferDescription vertexBufferDescriptions[]{SDL_GPUVertexBufferDescription{
-        .slot = 0, .pitch = sizeof(Vertex), .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX}};
+    SDL_GPUVertexBufferDescription vertexBufferDescriptions[]{
+        SDL_GPUVertexBufferDescription{
+            .slot = 0,
+            .pitch = sizeof(Vertex),
+            .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+        },
+    };
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo = {
         .vertex_shader = VertexShader,
@@ -69,9 +88,12 @@ Renderer::Renderer(SDL_Window *window) {
                 .num_vertex_attributes = 3,
             },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .rasterizer_state = SDL_GPURasterizerState{.fill_mode = SDL_GPU_FILLMODE_FILL,
-                                                   .cull_mode = SDL_GPU_CULLMODE_NONE,
-                                                   .front_face = SDL_GPU_FRONTFACE_CLOCKWISE},
+        .rasterizer_state =
+            SDL_GPURasterizerState{
+                .fill_mode = SDL_GPU_FILLMODE_FILL,
+                .cull_mode = SDL_GPU_CULLMODE_BACK,
+                .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
+            },
         .depth_stencil_state =
             SDL_GPUDepthStencilState{
                 .compare_op = SDL_GPU_COMPAREOP_LESS,
@@ -87,7 +109,8 @@ Renderer::Renderer(SDL_Window *window) {
             .num_color_targets = 1,
             .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
             .has_depth_stencil_target = true,
-        }};
+        }
+    };
 
     Pipeline = SDL_CreateGPUGraphicsPipeline(Gpu, &pipelineInfo);
     if (Pipeline == nullptr) {
@@ -190,8 +213,9 @@ bool Renderer::DrawTryStart(Renderer::DrawContext &context) {
         return false;
     }
 
-    if (!SDL_AcquireGPUSwapchainTexture(context.commands, Window, &context.targetTexture, &context.width,
-                                        &context.height)) {
+    if (!SDL_AcquireGPUSwapchainTexture(
+            context.commands, Window, &context.targetTexture, &context.width, &context.height
+        )) {
         SDL_Log("SDL_AcquireGPUSwapchainTexture failed: %s", SDL_GetError());
         SDL_CancelGPUCommandBuffer(context.commands);
         return false;
@@ -227,15 +251,14 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, &depthTarget);
     SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
     {
-
         for (auto ptr : context.info.worldModel->GetDescendants()) {
             auto instance = ptr.get();
 
             if (instance->IsA<instances::Part>()) {
                 auto part = instance->Cast<instances::Part>();
-                if (!part->RenderMesh) {
-                    const_cast<instances::Part *>(part)->UploadGeometry(Gpu);
-                }
+                // if (!part->RenderMesh) {
+                const_cast<instances::Part *>(part)->UploadGeometry(Gpu);
+                // }
 
                 auto *mesh = part->RenderMesh.get();
 

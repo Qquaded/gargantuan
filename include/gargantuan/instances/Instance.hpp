@@ -39,36 +39,38 @@ class Instance : public std::enable_shared_from_this<Instance> {
     void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
 };
 
+typedef std::shared_ptr<Instance> InstancePointer;
+
 } // namespace gargantuan::instances
 
 namespace gargantuan::Types {
 
-static const Type<instances::Instance *> INSTANCE = {
+static const Type<instances::InstancePointer> INSTANCE = {
     .Name = "Instance",
     .LuauTypeAlias = "Instance",
     .IsStackValue = [](lua_State *L, int idx) -> bool {
         return lua_userdatatag(L, idx) == (int)scripting::UserdataTags::Instance;
     },
-    .FromStackValue = [](lua_State *L, int idx) -> instances::Instance * {
-        auto **userdata = static_cast<instances::Instance **>(lua_touserdata(L, idx));
-        if (!userdata || !*userdata) {
+    .FromStackValue = [](lua_State *L, int idx) -> instances::InstancePointer {
+        auto *userdata = static_cast<std::shared_ptr<instances::Instance> *>(lua_touserdata(L, idx));
+        if (!userdata) {
             return nullptr;
         };
 
-        instances::Instance *instance = *userdata;
+        instances::InstancePointer instance = *userdata;
         return instance;
     },
-    .PushStackValue = [](lua_State *L, instances::Instance *value) -> void {
+    .PushStackValue = [](lua_State *L, instances::InstancePointer value) -> void {
         if (!value) {
             lua_pushnil(L);
             return;
         };
 
-        auto **userdata = static_cast<instances::Instance **>(
-            lua_newuserdatataggedwithmetatable(L, sizeof(instances::Instance *), (int)scripting::UserdataTags::Instance)
-        );
+        auto *userdata = static_cast<instances::InstancePointer *>(lua_newuserdatataggedwithmetatable(
+            L, sizeof(instances::InstancePointer), (int)scripting::UserdataTags::Instance
+        ));
 
-        *userdata = value;
+        new (userdata) instances::InstancePointer(value);
     },
 };
 

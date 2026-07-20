@@ -5,13 +5,13 @@
 
 namespace gargantuan::instances {
 
-enum class Shape { Block };
+enum class Shape { Cube, Wedge, Sphere, Cylinder };
 
 class Part : public BasePart {
   public:
     static const ClassDefinition DEFINITION;
 
-    Shape Shape = Shape::Block;
+    Shape Shape = Shape::Cube;
 
     std::unique_ptr<render::GpuMesh> RenderMesh = nullptr;
 

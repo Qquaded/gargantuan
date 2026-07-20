@@ -13,6 +13,7 @@
 #include <SDL3/SDL_timer.h>
 #include <cstdlib>
 #include <cstring>
+#include <fwd.hpp>
 #include <glm/glm.hpp>
 #include <lua.h>
 #include <luacode.h>
@@ -27,7 +28,7 @@ Engine::Engine()
     dataModel->Name = "Welcome To Hell";
 
     // temporary
-    Types::INSTANCE.PushStackValue(ScriptEngine.L, dataModel.get());
+    Types::INSTANCE.PushStackValue(ScriptEngine.L, dataModel);
     lua_pushvalue(ScriptEngine.L, -1);
     lua_setglobal(ScriptEngine.L, "game");
 
@@ -35,15 +36,33 @@ Engine::Engine()
     baseplate->Name = "Baseplate";
     baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
     baseplate->CFrame = datatypes::CFrame(0, -30, 0);
-    baseplate->Size = glm::vec3(50, 20, 50);
-    baseplate->Transparency = 1.0;
+    baseplate->Size = glm::vec3(2048, 20, 2048);
+    baseplate->Transparency = 0.0;
     baseplate->SetParent(dataModel);
+
+    auto wedge = std::make_shared<instances::Part>();
+    wedge->Name = "Wedge";
+    wedge->Color = datatypes::Color3::fromHSV(1, 1, 1);
+    wedge->CFrame = datatypes::CFrame(5, 5, 0);
+    wedge->Size = glm::vec3(2, 2, 2);
+    wedge->Shape = instances::Shape::Wedge;
+    wedge->Transparency = 0.0;
+    wedge->SetParent(dataModel);
+
+    auto sphere = std::make_shared<instances::Part>();
+    sphere->Name = "Sphere";
+    sphere->Color = datatypes::Color3::fromHSV(1, 1, 1);
+    sphere->CFrame = datatypes::CFrame(-10, 5, 0);
+    sphere->Size = glm::vec3(10, 10, 10);
+    sphere->Shape = instances::Shape::Sphere;
+    sphere->Transparency = 0.0;
+    sphere->SetParent(dataModel);
 
     cube = std::make_shared<instances::Part>();
     cube->Name = "Cube";
     cube->Color = datatypes::Color3::fromHSV(1, 1, 1);
     cube->CFrame = datatypes::CFrame(0, 5, 0);
-    cube->Transparency = 1.0;
+    cube->Transparency = 0.0;
     cube->SetParent(dataModel);
 
     SDL_Log("DataModel has %d descendants", (int)dataModel->GetDescendants().size());

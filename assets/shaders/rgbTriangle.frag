@@ -1,8 +1,8 @@
 #version 450
 
 layout(location = 0) in vec3 fragmentNormal;
-layout(location = 1) in vec3 fragmentColor;
-layout(location = 0) out vec4 outputColor;
+layout(location = 1) in vec4 fragmentRgba;
+layout(location = 0) out vec4 outputRgba;
 
 // TODO: proper lighting infra
 void main() {
@@ -12,5 +12,5 @@ void main() {
     float ambientFactor = 0.15;
     float totalLight = ambientFactor + diffuseFactor;
 
-    outputColor = vec4(fragmentColor.rgb * totalLight, 1.0);
+    outputRgba = vec4(fragmentRgba.rgb * totalLight, fragmentRgba.a);
 }

@@ -1,6 +1,7 @@
 #include "gargantuan/instances/list/Part.hpp"
 #include "gargantuan/instances/ClassDefinition.hpp"
 #include "gargantuan/render/PrimitiveMeshes.hpp"
+#include <stdexcept>
 
 namespace gargantuan::instances {
 
@@ -17,11 +18,17 @@ const ClassDefinition Part::DEFINITION = {
 
 render::Mesh Part::GetMesh() const {
     glm::vec3 color = Color;
-    auto rgba = glm::vec4(color, Transparency);
+    auto rgba = glm::vec4(color, 1.0f - Transparency);
 
     switch (Shape) {
-    case gargantuan::instances::Shape::Block:
-        return render::PrimitiveMeshes::Block(rgba);
+    case gargantuan::instances::Shape::Cube:
+        return render::PrimitiveMeshes::Cube(rgba);
+    case gargantuan::instances::Shape::Wedge:
+        return render::PrimitiveMeshes::Wedge(rgba);
+    case gargantuan::instances::Shape::Sphere:
+        return render::PrimitiveMeshes::Sphere(rgba);
+    default:
+        throw std::runtime_error("Unimplemented");
     }
 };
 

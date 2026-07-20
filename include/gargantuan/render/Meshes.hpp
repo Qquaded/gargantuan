@@ -12,6 +12,7 @@ struct Vertex {
     glm::vec3 Position;
     glm::vec3 Normal;
     glm::vec4 Rgba;
+    glm::vec2 UV;
 };
 
 struct Mesh {
