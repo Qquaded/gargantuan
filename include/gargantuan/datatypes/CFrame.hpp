@@ -36,4 +36,6 @@ struct CFrame : public Userdata<CFrame> {
     static glm::mat3 BuildLookRotation(glm::vec3 position, glm::vec3 target, glm::vec3 up = glm::vec3(0, 1, 0));
 };
 
+USERDATA_STACKVALUE(CFrame);
+
 } // namespace gargantuan

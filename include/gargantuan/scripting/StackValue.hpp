@@ -11,7 +11,7 @@ template <typename T> struct StackValue {
     static inline std::string_view ReflectedTypedef();
     static bool Is(lua_State *L, int idx);
     static T From(lua_State *L, int idx);
-    static void Push(lua_State *L, const T &value);
+    static void Push(lua_State *L, T value);
 
   private:
     // i hope NOBODY has to see the original error message

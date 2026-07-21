@@ -193,11 +193,15 @@ int Instance::UserdataIndex(lua_State *L) {
         auto property = instance->FindProperty(key);
         if (property.has_value()) {
             if (property->Read) {
-                return property->Read(L, instance.get());
+                lua_remove(L, 1);
+                lua_remove(L, 1);
+                property->Read(L, instance.get());
+                return 1;
             } else {
                 luaL_error(L, "Property %s is write-only", key);
             }
         } else if (auto child = instance->FindFirstChild(key)) {
+            lua_settop(L, 0);
             StackValue<Instance::Pointer>::Push(L, child);
             return 1;
         }

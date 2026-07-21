@@ -22,4 +22,6 @@ struct Color3 : public Userdata<Color3> {
     operator glm::vec3() const { return {R, G, B}; }
 };
 
+USERDATA_STACKVALUE(Color3);
+
 } // namespace gargantuan

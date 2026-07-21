@@ -10,9 +10,9 @@ const Instance::ClassDefinition BasePart::DEFINITION = {
     .Name = "BasePart",
     .Superclass = "Instance",
     .Properties = {
-        // USERDATA_READWRITE_PROP(BasePart, CFrame, CFrame),
-        // USERDATA_READWRITE_PROP(BasePart, Color, Color3),
-        // USERDATA_READWRITE_PROP(BasePart, Transparency, float),
+        USERDATA_READWRITE_PROP(BasePart, CFrame, gargantuan::CFrame),
+        USERDATA_READWRITE_PROP(BasePart, Color, gargantuan::Color3),
+        USERDATA_READWRITE_PROP(BasePart, Transparency, float),
     }
 };
 } // namespace gargantuan

@@ -6,7 +6,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <string_view>
-#include <tuple>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
@@ -26,58 +25,36 @@ template <typename Class, typename StoredAs = Class> class Userdata {
       public:
         int (*Call)(lua_State *L, Class *instance);
 
-      private:
-        // I don't even know atp
-        template <typename... Arguments, std::size_t... Indices>
-        static std::tuple<Arguments...> ExtractArguments(lua_State *L, std::index_sequence<Indices...>) {
-            // stack indices start from 2 to account for the self parameter
-            return std::make_tuple(StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...);
+        template <auto MethodPointer, typename Returns, typename... Arguments>
+        static Method Wrap(Returns (Class::*)(Arguments...)) {
+            return {[](lua_State *L, Class *instance) -> int {
+                return WrappedCall<MethodPointer, Arguments...>(L, instance, std::index_sequence_for<Arguments...>{});
+            }};
         }
 
-        template <typename T> struct MethodInfo;
-        template <typename R, typename C, typename... A> struct MethodInfo<R (C::*)(A...)> {
-            using Returns = R;
-            using Arguments = std::tuple<A...>;
-        };
-        template <typename R, typename C, typename... A> struct MethodInfo<R (C::*)(A...) const> {
-            using Returns = R;
-            using Arguments = std::tuple<A...>;
-        };
-
-        template <auto MethodPointer, typename Returns, typename Tuple> struct Wrapper;
-        template <auto MethodPointer, typename Returns, typename... Arguments>
-        struct Wrapper<MethodPointer, Returns, std::tuple<Arguments...>> {
-            static int Call(lua_State *L, Class *instance) {
-                auto arguments = ExtractArguments<Arguments...>(L, std::index_sequence_for<Arguments...>{});
-                if constexpr (std::is_void_v<Returns>) {
-                    std::apply(
-                        [instance](auto &&...unpackedArgs) {
-                            (instance->*MethodPointer)(std::forward<decltype(unpackedArgs)>(unpackedArgs)...);
-                        },
-                        arguments
-                    );
-                    return 0;
-                } else {
-                    Returns result = std::apply(
-                        [instance](auto &&...unpackedArgs) {
-                            return (instance->*MethodPointer)(std::forward<decltype(unpackedArgs)>(unpackedArgs)...);
-                        },
-                        arguments
-                    );
-                    StackValue<Returns>::Push(L, result);
-                    return 1;
-                }
-            }
-        };
-
-      public:
-        template <auto MethodPointer> static Method Wrap() {
+        template <auto MethodPointer, typename R, typename... Arguments>
+        static Method Wrap(R (Class::*)(Arguments...) const) {
             return {[](lua_State *L, Class *instance) -> int {
-                using Info = MethodInfo<decltype(MethodPointer)>;
-                using Returns = typename Info::Returns;
-                using TupleArguments = typename Info::Arguments;
-                return Wrapper<MethodPointer, Returns, TupleArguments>::Call(L, instance);
+                return WrappedCall<MethodPointer, Arguments...>(L, instance, std::index_sequence_for<Arguments...>{});
             }};
+        }
+
+        template <auto MethodPointer> static Method Wrap() { return Wrap<MethodPointer>(MethodPointer); }
+
+      private:
+        template <auto MethodPointer, typename... Arguments, std::size_t... Indices>
+        static int WrappedCall(lua_State *L, Class *instance, std::index_sequence<Indices...>) {
+            using Ret = std::invoke_result_t<decltype(MethodPointer), Class *, std::decay_t<Arguments>...>;
+
+            if constexpr (std::is_void_v<Ret>) {
+                std::invoke(MethodPointer, instance, StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...);
+                return 0;
+            } else {
+                auto &&res =
+                    std::invoke(MethodPointer, instance, StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...);
+                StackValue<std::decay_t<Ret>>::Push(L, std::forward<decltype(res)>(res));
+                return 1;
+            }
         }
     };
 
@@ -98,9 +75,13 @@ template <typename Class, typename StoredAs = Class> class Userdata {
             return 0;
         }
 
-        if (auto it = USERDATA_PROPERTIES.find(key); it != USERDATA_PROPERTIES.end()) {
+        if (auto it = Class::USERDATA_PROPERTIES.find(key); it != Class::USERDATA_PROPERTIES.end()) {
             const Property &property = it->second;
-            return property.Read ? property.Read(L, instance) : 0;
+            if (property.Read) {
+                property.Read(L, instance);
+                return 1;
+            }
+            return 0;
         }
 
         return 0;
@@ -114,14 +95,14 @@ template <typename Class, typename StoredAs = Class> class Userdata {
             return 0;
         }
 
-        if (auto it = USERDATA_PROPERTIES.find(key); it != USERDATA_PROPERTIES.end()) {
+        if (auto it = Class::USERDATA_PROPERTIES.find(key); it != Class::USERDATA_PROPERTIES.end()) {
             const Property &property = it->second;
             if (property.Write) {
-                return property.Write(L, instance);
+                property.Write(L, instance);
             } else {
                 luaL_error(L, "%s is read-only", key);
-                return 0;
             }
+            return 0;
         }
 
         return 0;
@@ -134,7 +115,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
             return 0;
         }
 
-        if (auto it = USERDATA_METHODS.find(key); it != USERDATA_METHODS.end()) {
+        if (auto it = Class::USERDATA_METHODS.find(key); it != Class::USERDATA_METHODS.end()) {
             const Method &method = it->second;
             return method.Call(L, instance);
         }
@@ -143,14 +124,14 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     };
 
     static int UserdataTostring(lua_State *L) {
-        lua_pushstring(L, USERDATA_TYPE.data());
+        lua_pushstring(L, Class::USERDATA_TYPE.data());
         return 1;
     };
 
     static void CreateUserdataMetatable(lua_State *L) {
         lua_createtable(L, 0, 5);
 
-        lua_pushstring(L, USERDATA_TYPE.data());
+        lua_pushstring(L, Class::USERDATA_TYPE.data());
         lua_setfield(L, -2, "__type");
 
         lua_pushcfunction(L, Class::UserdataIndex, "__index");
@@ -166,7 +147,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
         lua_setfield(L, -2, "__tostring");
 
         lua_setreadonly(L, -1, true);
-        lua_setuserdatametatable(L, (int)USERDATA_TAG);
+        lua_setuserdatametatable(L, (int)Class::USERDATA_TAG);
     };
 
   private:
@@ -174,7 +155,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     template <typename T> struct HasGetter<T, std::void_t<decltype(std::declval<T>().get())>> : std::true_type {};
 
     static Class *fromStackValue(lua_State *L, int idx) {
-        StoredAs *instancePointer = static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)USERDATA_TAG));
+        StoredAs *instancePointer = static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Class::USERDATA_TAG));
         if (!instancePointer) {
             return nullptr;
         };
@@ -200,7 +181,8 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
     };
 
     static StoredAs From(lua_State *L, int idx) {
-        StoredAs *userdata = static_cast<StoredAs *>(lua_touserdata(L, idx));
+        StoredAs *userdata =
+            static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Userdata<Class, StoredAs>::USERDATA_TAG));
         return userdata ? *userdata : StoredAs{};
     };
 
@@ -213,36 +195,68 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
 };
 
 #define USERDATA_READONLY_PROP_IMPL(classType, propertyName, valueType)                                                \
-    [](lua_State *L, classType *instance) -> int {                                                                     \
-        using gargantuan::StackValue;                                                                                  \
-        StackValue<valueType>::Push(L, instance->propertyName);                                                        \
+    [](lua_State *L, void *rawInstance) -> int {                                                                       \
+        auto *instance = static_cast<classType *>(rawInstance);                                                        \
+        ::gargantuan::StackValue<valueType>::Push(L, instance->propertyName);                                          \
         return 1;                                                                                                      \
     }
 
 #define USERDATA_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)                                               \
-    [](lua_State *L, classType *instance) -> int {                                                                     \
-        using gargantuan::StackValue;                                                                                  \
-        valueType value = StackValue<valueType>::From(L, -1);                                                          \
+    [](lua_State *L, void *rawInstance) -> int {                                                                       \
+        auto *instance = static_cast<classType *>(rawInstance);                                                        \
+        valueType value = ::gargantuan::StackValue<valueType>::From(L, -1);                                            \
         instance->propertyName = value;                                                                                \
         return 0;                                                                                                      \
     }
 
-#define USERDATA_READONLY_PROP(classType, propertyType, valueType)                                                     \
+#define USERDATA_READONLY_PROP(classType, propertyName, valueType)                                                     \
     {                                                                                                                  \
-        #propertyType, { *USERDATA_READONLY_PROP_IMPL(classType, propertyType, valueType), nullptr }                   \
-    }
-
-#define USERDATA_WRITEONLY_PROP(classType, propertyType, valueType)                                                    \
-    {                                                                                                                  \
-        #propertyType, { nullptr, *USERDATA_WRITEONLY_PROP_IMPL(classType, propertyType, valueType) }                  \
-    }
-
-#define USERDATA_READWRITE_PROP(classType, propertyType, valueType)                                                    \
-    {                                                                                                                  \
-        #propertyType, {                                                                                               \
-            *USERDATA_READONLY_PROP_IMPL(classType, propertyType, valueType),                                          \
-                *USERDATA_WRITEONLY_PROP_IMPL(classType, propertyType, valueType)                                      \
+        #propertyName, {                                                                                               \
+            [](lua_State *L, auto *inst) -> int {                                                                      \
+                return USERDATA_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                       \
+            },                                                                                                         \
+                nullptr                                                                                                \
         }                                                                                                              \
     }
+
+#define USERDATA_WRITEONLY_PROP(classType, propertyName, valueType)                                                    \
+    {                                                                                                                  \
+        #propertyName, {                                                                                               \
+            nullptr, [](lua_State *L, auto *inst) -> int {                                                             \
+                return USERDATA_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                      \
+            }                                                                                                          \
+        }                                                                                                              \
+    }
+
+#define USERDATA_READWRITE_PROP(classType, propertyName, valueType)                                                    \
+    {                                                                                                                  \
+        #propertyName, {                                                                                               \
+            [](lua_State *L, auto *inst) -> int {                                                                      \
+                return USERDATA_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                       \
+            },                                                                                                         \
+                [](lua_State *L, auto *inst) -> int {                                                                  \
+                    return USERDATA_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                  \
+                }                                                                                                      \
+        }                                                                                                              \
+    }
+
+#define USERDATA_STACKVALUE_WITH_STORED(classType, storedType)                                                         \
+    template <> struct StackValue<storedType> {                                                                        \
+        static inline std::string_view ReflectedTypedef() {                                                            \
+            return StackValue<Userdata<classType, storedType>>::ReflectedTypedef();                                    \
+        };                                                                                                             \
+                                                                                                                       \
+        static bool Is(lua_State *L, int idx) { return StackValue<Userdata<classType, storedType>>::Is(L, idx); };     \
+                                                                                                                       \
+        static storedType From(lua_State *L, int idx) {                                                                \
+            return StackValue<Userdata<classType, storedType>>::From(L, idx);                                          \
+        };                                                                                                             \
+                                                                                                                       \
+        static void Push(lua_State *L, storedType value) {                                                             \
+            return StackValue<Userdata<classType, storedType>>::Push(L, value);                                        \
+        };                                                                                                             \
+    };
+
+#define USERDATA_STACKVALUE(classType) USERDATA_STACKVALUE_WITH_STORED(classType, classType)
 
 } // namespace gargantuan

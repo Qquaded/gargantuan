@@ -5,18 +5,18 @@
 
 namespace gargantuan {
 
-template <> UserdataTag Color3::Userdata::USERDATA_TAG = UserdataTag::Color3;
-template <> std::string_view Color3::Userdata::USERDATA_TYPE = "Color3";
+template <> UserdataTag Color3::This::USERDATA_TAG = UserdataTag::Color3;
+template <> std::string_view Color3::This::USERDATA_TYPE = "Color3";
 
 template <>
-Color3::UserdataProperties Color3::Userdata::USERDATA_PROPERTIES = {
+Color3::UserdataProperties Color3::This::USERDATA_PROPERTIES = {
     USERDATA_READONLY_PROP(Color3, R, float),
     USERDATA_READONLY_PROP(Color3, G, float),
     USERDATA_READONLY_PROP(Color3, B, float),
 };
 
 template <>
-Color3::UserdataMethods Color3::Userdata::USERDATA_METHODS = {
+Color3::UserdataMethods Color3::This::USERDATA_METHODS = {
 
 };
 
