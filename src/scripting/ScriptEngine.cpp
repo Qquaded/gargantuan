@@ -1,5 +1,7 @@
 #include "gargantuan/scripting/ScriptEngine.hpp"
-#include "gargantuan/scripting/Runtime.hpp"
+#include "gargantuan/datatypes/CFrame.hpp"
+#include "gargantuan/datatypes/Color3.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
@@ -9,7 +11,7 @@
 #include <stdexcept>
 #include <sys/stat.h>
 
-namespace gargantuan::scripting {
+namespace gargantuan {
 
 ScriptEngine::ScriptEngine() : L(luaL_newstate()) {
     if (L == nullptr) {
@@ -17,7 +19,9 @@ ScriptEngine::ScriptEngine() : L(luaL_newstate()) {
     }
 
     luaL_openlibs(L);
-    runtime::Open(L);
+    CFrame::CreateUserdataMetatable(L);
+    Color3::CreateUserdataMetatable(L);
+    Instance::CreateUserdataMetatable(L);
 
     testbedThread = lua_newthread(L);
     size_t fileSize;
@@ -62,4 +66,4 @@ void ScriptEngine::Step() {
     }
 }
 
-} // namespace gargantuan::scripting
+} // namespace gargantuan

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "gargantuan/instances/Instance.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
 
 #include <cstdint>
 
-namespace gargantuan::render {
+namespace gargantuan {
 
 class Renderer {
   public:
@@ -19,7 +19,7 @@ class Renderer {
     Renderer &operator=(const Renderer &) = delete;
 
     struct DrawInfo {
-        std::shared_ptr<instances::Instance> worldModel;
+        Instance::Pointer worldModel;
         glm::mat4 projectionMatrix;
         glm::mat4 viewMatrix;
     };
@@ -53,4 +53,4 @@ class Renderer {
     void DrawEnd(DrawContext &context);
 };
 
-} // namespace gargantuan::render
+} // namespace gargantuan

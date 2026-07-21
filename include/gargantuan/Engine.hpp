@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gargantuan/instances/list/DataModel.hpp"
-#include "gargantuan/instances/list/Part.hpp"
+#include "gargantuan/classes/list/DataModel.hpp"
+#include "gargantuan/classes/list/Part.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 
@@ -17,9 +17,9 @@ class Engine {
     Engine();
     ~Engine();
 
-    scripting::ScriptEngine ScriptEngine;
+    ScriptEngine ScriptEngine;
 
-    std::shared_ptr<instances::DataModel> dataModel;
+    std::shared_ptr<DataModel> dataModel;
     glm::vec2 ViewportSize = glm::vec2(720, 540);
     bool IsRunning = true;
     void ProcessEvent(SDL_Event event);
@@ -31,7 +31,7 @@ class Engine {
     uint64_t LastTick;
 
     SDL_Window *Window;
-    render::Renderer Renderer;
+    Renderer Renderer;
 
     // TODO: Camera class, and probably implement Instances by then
     glm::vec3 CameraPosition = glm::vec3(0, 0, 10);
@@ -51,7 +51,7 @@ class Engine {
 
     glm::mat4 GetViewMatrix() { return glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector); }
 
-    std::shared_ptr<instances::Part> cube;
+    std::shared_ptr<Part> cube;
 };
 
 } // namespace gargantuan

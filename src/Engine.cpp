@@ -1,10 +1,10 @@
 #include "gargantuan/Engine.hpp"
+#include "gargantuan/classes/list/Part.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
-#include "gargantuan/instances/Instance.hpp"
-#include "gargantuan/instances/list/Part.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
-#include "gargantuan/scripting/Runtime.hpp"
+#include "gargantuan/scripting/StackValue.hpp"
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keyboard.h>
@@ -24,44 +24,44 @@ namespace gargantuan {
 Engine::Engine()
     : Window(SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE)), Renderer(Window),
       ScriptEngine() {
-    dataModel = std::make_shared<instances::DataModel>();
+    dataModel = std::make_shared<DataModel>();
     dataModel->Name = "Welcome To Hell";
 
     // temporary
-    Types::INSTANCE.PushStackValue(ScriptEngine.L, dataModel);
+    StackValue<Instance::Pointer>::Push(ScriptEngine.L, dataModel);
     lua_pushvalue(ScriptEngine.L, -1);
     lua_setglobal(ScriptEngine.L, "game");
 
-    auto baseplate = std::make_shared<instances::Part>();
+    auto baseplate = std::make_shared<Part>();
     baseplate->Name = "Baseplate";
-    baseplate->Color = datatypes::Color3::fromHSV(0, 0, 0.5);
-    baseplate->CFrame = datatypes::CFrame(0, -30, 0);
+    baseplate->Color = Color3::fromHSV(0, 0, 0.5);
+    baseplate->CFrame = CFrame(0, -30, 0);
     baseplate->Size = glm::vec3(2048, 20, 2048);
     baseplate->Transparency = 0.0;
     baseplate->SetParent(dataModel);
 
-    auto wedge = std::make_shared<instances::Part>();
+    auto wedge = std::make_shared<Part>();
     wedge->Name = "Wedge";
-    wedge->Color = datatypes::Color3::fromHSV(1, 1, 1);
-    wedge->CFrame = datatypes::CFrame(5, 5, 0);
+    wedge->Color = Color3::fromHSV(1, 1, 1);
+    wedge->CFrame = CFrame(5, 5, 0);
     wedge->Size = glm::vec3(2, 2, 2);
-    wedge->Shape = instances::Shape::Wedge;
+    wedge->Shape = Part::Shape::Wedge;
     wedge->Transparency = 0.0;
     wedge->SetParent(dataModel);
 
-    auto sphere = std::make_shared<instances::Part>();
+    auto sphere = std::make_shared<Part>();
     sphere->Name = "Sphere";
-    sphere->Color = datatypes::Color3::fromHSV(1, 1, 1);
-    sphere->CFrame = datatypes::CFrame(-10, 5, 0);
+    sphere->Color = Color3::fromHSV(1, 1, 1);
+    sphere->CFrame = CFrame(-10, 5, 0);
     sphere->Size = glm::vec3(10, 10, 10);
-    sphere->Shape = instances::Shape::Sphere;
+    sphere->Shape = Part::Shape::Sphere;
     sphere->Transparency = 0.0;
     sphere->SetParent(dataModel);
 
-    cube = std::make_shared<instances::Part>();
+    cube = std::make_shared<Part>();
     cube->Name = "Cube";
-    cube->Color = datatypes::Color3::fromHSV(1, 1, 1);
-    cube->CFrame = datatypes::CFrame(0, 5, 0);
+    cube->Color = Color3::fromHSV(1, 1, 1);
+    cube->CFrame = CFrame(0, 5, 0);
     cube->Transparency = 0.0;
     cube->SetParent(dataModel);
 
@@ -180,12 +180,12 @@ void Engine::Step() {
     auto cubeHue = glm::mod((float)CurrentTick / 1000.0f, CYCLE_DURATION) / CYCLE_DURATION;
     glm::vec3 cubePosition = glm::vec3(0.0f, 5.0f, 0.0f);
     glm::vec3 lookTarget = cubePosition + glm::vec3(glm::cos(timeSec), glm::cos(timeSec), glm::sin(timeSec));
-    cube->CFrame = datatypes::CFrame(cubePosition, lookTarget);
-    cube->Color = datatypes::Color3::fromHSV(cubeHue, 1, 1);
+    cube->CFrame = CFrame(cubePosition, lookTarget);
+    cube->Color = Color3::fromHSV(cubeHue, 1, 1);
     cube->UploadGeometry(Renderer.Gpu);
 
     Renderer.Draw(
-        render::Renderer::DrawInfo{
+        Renderer::DrawInfo{
             .worldModel = dataModel,
             .projectionMatrix = GetProjectionMatrix(),
             .viewMatrix = GetViewMatrix(),

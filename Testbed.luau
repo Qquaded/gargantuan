@@ -1,6 +1,8 @@
 --!nolint
 --!nocheck
 
-local ass = Instance.new("Part")
-ass.Name = "ass"
-ass.Parent = game
+-- local ass = Instance.new("Part")
+-- ass.Name = "ass"
+-- ass.Parent = game
+
+print(game.Name)

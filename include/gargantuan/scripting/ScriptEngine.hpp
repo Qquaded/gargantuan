@@ -5,7 +5,7 @@
 #include <luacode.h>
 #include <lualib.h>
 
-namespace gargantuan::scripting {
+namespace gargantuan {
 class ScriptEngine {
   public:
     ScriptEngine();
@@ -19,4 +19,4 @@ class ScriptEngine {
   private:
     bool testbedFinished = false;
 };
-} // namespace gargantuan::scripting
+} // namespace gargantuan

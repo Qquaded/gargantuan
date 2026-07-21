@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace gargantuan::render::PrimitiveMeshes {
+namespace gargantuan::PrimitiveMeshes {
 
 static constexpr glm::vec2 UV_00{0.0f, 1.0f};
 static constexpr glm::vec2 UV_01{0.0f, 1.0f};
@@ -125,4 +125,4 @@ Mesh Sphere(glm::vec4 rgba) {
     return Mesh{std::move(vertices), std::move(indices)};
 }
 
-} // namespace gargantuan::render::PrimitiveMeshes
+} // namespace gargantuan::PrimitiveMeshes

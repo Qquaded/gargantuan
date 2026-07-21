@@ -3,7 +3,7 @@
 #include <SDL3/SDL.h>
 #include <cstdint>
 
-namespace gargantuan::render {
+namespace gargantuan {
 
 GpuMesh::GpuMesh(SDL_GPUDevice *gpu, std::vector<Vertex> vertices, std::vector<uint32_t> indices) : Gpu(gpu) {
     Vertices = vertices;
@@ -20,8 +20,9 @@ GpuMesh::GpuMesh(SDL_GPUDevice *gpu, std::vector<Vertex> vertices, std::vector<u
     SDL_GPUBufferCreateInfo indexBufferInfo{.usage = SDL_GPU_BUFFERUSAGE_INDEX, .size = indexBufferSize};
     IndexBuffer = SDL_CreateGPUBuffer(Gpu, &indexBufferInfo);
 
-    SDL_GPUTransferBufferCreateInfo transferInfo{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-                                                 .size = vertexBufferSize + indexBufferSize};
+    SDL_GPUTransferBufferCreateInfo transferInfo{
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = vertexBufferSize + indexBufferSize
+    };
     auto transferBuffer = SDL_CreateGPUTransferBuffer(Gpu, &transferInfo);
 
     void *pointer = SDL_MapGPUTransferBuffer(Gpu, transferBuffer, false);
@@ -58,4 +59,4 @@ GpuMesh::~GpuMesh() {
     }
 }
 
-} // namespace gargantuan::render
+} // namespace gargantuan

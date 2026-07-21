@@ -2,7 +2,14 @@
 
 #include <glm/glm.hpp>
 
-namespace gargantuan::datatypes {
+namespace gargantuan {
+
+template <> UserdataTag CFrame::Userdata::USERDATA_TAG = UserdataTag::CFrame;
+template <> std::string_view CFrame::Userdata::USERDATA_TYPE = "CFrame";
+
+template <> CFrame::UserdataProperties CFrame::Userdata::USERDATA_PROPERTIES = {};
+
+template <> CFrame::UserdataMethods CFrame::Userdata::USERDATA_METHODS = {};
 
 glm::vec3 CFrame::SafeUnit(glm::vec3 vec, glm::vec3 fallback) {
     auto magSq = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
@@ -31,8 +38,10 @@ CFrame::CFrame(glm::vec3 position) : Position(position), Rotation(CFrame::DEFAUL
 CFrame::CFrame(float x, float y, float z) : Position(x, y, z), Rotation(CFrame::DEFAULT_ROTATION) {};
 CFrame::CFrame(glm::vec3 position, glm::vec3 target)
     : Position(position), Rotation(BuildLookRotation(position, target)) {};
-CFrame::CFrame(float x, float y, float z, float r00, float r01, float r02, float r10, float r11, float r12, float r20,
-               float r21, float r22)
+CFrame::CFrame(
+    float x, float y, float z, float r00, float r01, float r02, float r10, float r11, float r12, float r20, float r21,
+    float r22
+)
     : Position(x, y, z), Rotation(r00, r01, r02, r10, r11, r12, r20, r21, r22) {};
 
 glm::vec3 CFrame::GetRightVector() { return glm::vec3(Rotation[0][0], Rotation[1][0], Rotation[2][0]); }
@@ -87,4 +96,4 @@ glm::quat CFrame::ToQuaternion() {
     return glm::quat(x, y, z, w);
 }
 
-} // namespace gargantuan::datatypes
+} // namespace gargantuan

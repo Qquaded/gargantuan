@@ -1,7 +1,7 @@
 #include <SDL3/SDL_gpu.h>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include "gargantuan/instances/list/Part.hpp"
+#include "gargantuan/classes/list/Part.hpp"
 #include "gargantuan/render/Meshes.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace gargantuan::render {
+namespace gargantuan {
 
 Renderer::Renderer(SDL_Window *window) {
     this->Window = window;
@@ -254,10 +254,10 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
         for (auto ptr : context.info.worldModel->GetDescendants()) {
             auto instance = ptr.get();
 
-            if (instance->IsA<instances::Part>()) {
-                auto part = instance->Cast<instances::Part>();
+            if (instance->IsA<Part>()) {
+                auto part = instance->Cast<Part>();
                 // if (!part->RenderMesh) {
-                const_cast<instances::Part *>(part)->UploadGeometry(Gpu);
+                const_cast<Part *>(part)->UploadGeometry(Gpu);
                 // }
 
                 auto *mesh = part->RenderMesh.get();
@@ -286,4 +286,4 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
 
 void Renderer::DrawEnd(Renderer::DrawContext &context) { SDL_SubmitGPUCommandBuffer(context.commands); }
 
-} // namespace gargantuan::render
+} // namespace gargantuan

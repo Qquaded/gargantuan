@@ -1,9 +1,27 @@
 #include "gargantuan/datatypes/Color3.hpp"
+
 #include <common.hpp>
+#include <string_view>
 
-namespace gargantuan::datatypes {
+namespace gargantuan {
 
-Color3::Color3() : Color3(0.0f, 0.0f, 0.0f) {}
+template <> UserdataTag Color3::Userdata::USERDATA_TAG = UserdataTag::Color3;
+template <> std::string_view Color3::Userdata::USERDATA_TYPE = "Color3";
+
+template <>
+Color3::UserdataProperties Color3::Userdata::USERDATA_PROPERTIES = {
+    USERDATA_READONLY_PROP(Color3, R, float),
+    USERDATA_READONLY_PROP(Color3, G, float),
+    USERDATA_READONLY_PROP(Color3, B, float),
+};
+
+template <>
+Color3::UserdataMethods Color3::Userdata::USERDATA_METHODS = {
+
+};
+
+Color3::Color3() : R(0.0f), G(0.0f), B(0.0f) {};
+
 Color3::Color3(float r, float g, float b)
     : R(glm::clamp(r, 0.0f, 1.0f)), G(glm::clamp(g, 0.0f, 1.0f)), B(glm::clamp(b, 0.0f, 1.0f)) {}
 
@@ -31,4 +49,4 @@ Color3 Color3::fromHSV(float h, float s, float v) {
                       : Color3(v, p, q);
 }
 
-} // namespace gargantuan::datatypes
+} // namespace gargantuan

@@ -5,7 +5,7 @@
 #include <glm.hpp>
 #include <vector>
 
-namespace gargantuan::render {
+namespace gargantuan {
 
 struct Vertex {
   public:
@@ -36,4 +36,4 @@ class GpuMesh : public Mesh {
     SDL_GPUDevice *Gpu;
 };
 
-} // namespace gargantuan::render
+} // namespace gargantuan

@@ -1,11 +1,12 @@
-#include "gargantuan/instances/list/Part.hpp"
-#include "gargantuan/instances/ClassDefinition.hpp"
+#include "gargantuan/classes/list/Part.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/PrimitiveMeshes.hpp"
+
 #include <stdexcept>
 
-namespace gargantuan::instances {
+namespace gargantuan {
 
-const ClassDefinition Part::DEFINITION = {
+const Instance::ClassDefinition Part::DEFINITION = {
     .Name = "Part",
     .Superclass = "BasePart",
     .Constructor = ClassDefinition::WrapConstructor<Part>(),
@@ -16,20 +17,20 @@ const ClassDefinition Part::DEFINITION = {
     },
 };
 
-render::Mesh Part::GetMesh() const {
+Mesh Part::GetMesh() const {
     glm::vec3 color = Color;
     auto rgba = glm::vec4(color, 1.0f - Transparency);
 
     switch (Shape) {
-    case gargantuan::instances::Shape::Cube:
-        return render::PrimitiveMeshes::Cube(rgba);
-    case gargantuan::instances::Shape::Wedge:
-        return render::PrimitiveMeshes::Wedge(rgba);
-    case gargantuan::instances::Shape::Sphere:
-        return render::PrimitiveMeshes::Sphere(rgba);
+    case Part::Shape::Cube:
+        return PrimitiveMeshes::Cube(rgba);
+    case Part::Shape::Wedge:
+        return PrimitiveMeshes::Wedge(rgba);
+    case Part::Shape::Sphere:
+        return PrimitiveMeshes::Sphere(rgba);
     default:
         throw std::runtime_error("Unimplemented");
     }
 };
 
-} // namespace gargantuan::instances
+} // namespace gargantuan
