@@ -4,12 +4,18 @@
 
 namespace gargantuan {
 
-template <> UserdataTag CFrame::Userdata::USERDATA_TAG = UserdataTag::CFrame;
-template <> std::string_view CFrame::Userdata::USERDATA_TYPE = "CFrame";
+template <> UserdataTag CFrame::This::GetUserdataTag() { return UserdataTag::CFrame; };
+template <> std::string_view CFrame::This::GetUserdataType() { return "CFrame"; };
 
-template <> CFrame::UserdataProperties CFrame::Userdata::USERDATA_PROPERTIES = {};
+template <> const CFrame::UserdataProperties &CFrame::This::GetUserdataProperties() {
+    static const CFrame::UserdataProperties PROPERTIES = {};
+    return PROPERTIES;
+};
 
-template <> CFrame::UserdataMethods CFrame::Userdata::USERDATA_METHODS = {};
+template <> const CFrame::UserdataMethods &CFrame::This::GetUserdataMethods() {
+    static const CFrame::UserdataMethods METHODS = {};
+    return METHODS;
+};
 
 glm::vec3 CFrame::SafeUnit(glm::vec3 vec, glm::vec3 fallback) {
     auto magSq = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;

@@ -27,6 +27,11 @@ struct CFrame : public Userdata<CFrame> {
     CFrame Orthonormalize();
     glm::quat ToQuaternion();
 
+    // static UserdataTag GetUserdataTag();
+    // static std::string_view GetUserdataType();
+    // static const UserdataProperties &GetUserdataProperties();
+    // static const UserdataMethods &GetUserdataMethods();
+
   private:
     static constexpr float CF_EPSILON = 1e-6;
     static constexpr glm::mat3x3 DEFAULT_ROTATION =

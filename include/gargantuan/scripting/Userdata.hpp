@@ -61,21 +61,21 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     typedef std::unordered_map<std::string_view, Property> UserdataProperties;
     typedef std::unordered_map<std::string_view, Method> UserdataMethods;
 
-    static inline UserdataTag USERDATA_TAG;
-    static inline std::string_view USERDATA_TYPE;
-
-    static inline UserdataProperties USERDATA_PROPERTIES;
-    static inline UserdataMethods USERDATA_METHODS;
+    static UserdataTag GetUserdataTag();
+    static std::string_view GetUserdataType();
+    static const UserdataProperties &GetUserdataProperties();
+    static const UserdataMethods &GetUserdataMethods();
 
     static int UserdataIndex(lua_State *L) {
         Class *instance = fromStackValue(L, 1);
-        const char *key = luaL_checkstring(L, 2);
+        std::string_view key = StackValue<std::string_view>::From(L, 2);
 
-        if (!key || !instance) {
+        if (!instance) {
             return 0;
         }
 
-        if (auto it = Class::USERDATA_PROPERTIES.find(key); it != Class::USERDATA_PROPERTIES.end()) {
+        const UserdataProperties &properties = Class::GetUserdataProperties();
+        if (auto it = properties.find(key); it != properties.end()) {
             const Property &property = it->second;
             if (property.Read) {
                 property.Read(L, instance);
@@ -89,13 +89,14 @@ template <typename Class, typename StoredAs = Class> class Userdata {
 
     static int UserdataNewIndex(lua_State *L) {
         Class *instance = fromStackValue(L, 1);
-        const char *key = luaL_checkstring(L, 2);
+        std::string_view key = StackValue<std::string_view>::From(L, 2);
 
-        if (!key || !instance) {
+        if (!instance) {
             return 0;
         }
 
-        if (auto it = Class::USERDATA_PROPERTIES.find(key); it != Class::USERDATA_PROPERTIES.end()) {
+        const UserdataProperties &properties = Class::GetUserdataProperties();
+        if (auto it = properties.find(key); it != properties.end()) {
             const Property &property = it->second;
             if (property.Write) {
                 property.Write(L, instance);
@@ -115,7 +116,8 @@ template <typename Class, typename StoredAs = Class> class Userdata {
             return 0;
         }
 
-        if (auto it = Class::USERDATA_METHODS.find(key); it != Class::USERDATA_METHODS.end()) {
+        const UserdataMethods &methods = Class::GetUserdataMethods();
+        if (auto it = methods.find(key); it != methods.end()) {
             const Method &method = it->second;
             return method.Call(L, instance);
         }
@@ -124,14 +126,14 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     };
 
     static int UserdataTostring(lua_State *L) {
-        lua_pushstring(L, Class::USERDATA_TYPE.data());
+        lua_pushstring(L, Class::GetUserdataType().data());
         return 1;
     };
 
     static void CreateUserdataMetatable(lua_State *L) {
         lua_createtable(L, 0, 5);
 
-        lua_pushstring(L, Class::USERDATA_TYPE.data());
+        lua_pushstring(L, Class::GetUserdataType().data());
         lua_setfield(L, -2, "__type");
 
         lua_pushcfunction(L, Class::UserdataIndex, "__index");
@@ -147,7 +149,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
         lua_setfield(L, -2, "__tostring");
 
         lua_setreadonly(L, -1, true);
-        lua_setuserdatametatable(L, (int)Class::USERDATA_TAG);
+        lua_setuserdatametatable(L, (int)Class::GetUserdataTag());
     };
 
   private:
@@ -155,7 +157,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     template <typename T> struct HasGetter<T, std::void_t<decltype(std::declval<T>().get())>> : std::true_type {};
 
     static Class *fromStackValue(lua_State *L, int idx) {
-        StoredAs *instancePointer = static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Class::USERDATA_TAG));
+        StoredAs *instancePointer = static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Class::GetUserdataTag()));
         if (!instancePointer) {
             return nullptr;
         };
@@ -174,21 +176,21 @@ template <typename Class, typename StoredAs = Class> class Userdata {
 };
 
 template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, StoredAs>> {
-    static inline std::string_view ReflectedTypedef() { return Userdata<Class, StoredAs>::USERDATA_TYPE; };
+    static inline std::string_view ReflectedTypedef() { return Userdata<Class, StoredAs>::GetUserdataType(); };
 
     static bool Is(lua_State *L, int idx) {
-        return lua_userdatatag(L, idx) == (int)Userdata<Class, StoredAs>::USERDATA_TAG;
+        return lua_userdatatag(L, idx) == (int)Userdata<Class, StoredAs>::GetUserdataTag();
     };
 
     static StoredAs From(lua_State *L, int idx) {
         StoredAs *userdata =
-            static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Userdata<Class, StoredAs>::USERDATA_TAG));
+            static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Userdata<Class, StoredAs>::GetUserdataTag()));
         return userdata ? *userdata : StoredAs{};
     };
 
     static void Push(lua_State *L, StoredAs value) {
         StoredAs *userdata = static_cast<StoredAs *>(
-            lua_newuserdatataggedwithmetatable(L, sizeof(StoredAs), (int)Userdata<Class, StoredAs>::USERDATA_TAG)
+            lua_newuserdatataggedwithmetatable(L, sizeof(StoredAs), (int)Userdata<Class, StoredAs>::GetUserdataTag())
         );
         new (userdata) StoredAs(value);
     };

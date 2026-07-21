@@ -17,6 +17,9 @@
 
 namespace gargantuan {
 
+template <> UserdataTag Instance::This::GetUserdataTag() { return UserdataTag::Instance; };
+template <> std::string_view Instance::This::GetUserdataType() { return "Instance"; };
+
 const Instance::ClassDefinition Instance::DEFINITION = {
     .Name = "Instance",
     .Properties =
