@@ -26,31 +26,58 @@ template <typename Class, typename StoredAs = Class> class Userdata {
       public:
         int (*Call)(lua_State *L, Class *instance);
 
-        template <typename... Arguments, typename Returns> static Method Wrap(Returns (Class::*method)(Arguments...)) {
-            return {[method](lua_State *L, Class *instance) -> int {
+      private:
+        // I don't even know atp
+        template <typename... Arguments, std::size_t... Indices>
+        static std::tuple<Arguments...> ExtractArguments(lua_State *L, std::index_sequence<Indices...>) {
+            // stack indices start from 2 to account for the self parameter
+            return std::make_tuple(StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...);
+        }
+
+        template <typename T> struct MethodInfo;
+        template <typename R, typename C, typename... A> struct MethodInfo<R (C::*)(A...)> {
+            using Returns = R;
+            using Arguments = std::tuple<A...>;
+        };
+        template <typename R, typename C, typename... A> struct MethodInfo<R (C::*)(A...) const> {
+            using Returns = R;
+            using Arguments = std::tuple<A...>;
+        };
+
+        template <auto MethodPointer, typename Returns, typename Tuple> struct Wrapper;
+        template <auto MethodPointer, typename Returns, typename... Arguments>
+        struct Wrapper<MethodPointer, Returns, std::tuple<Arguments...>> {
+            static int Call(lua_State *L, Class *instance) {
                 auto arguments = ExtractArguments<Arguments...>(L, std::index_sequence_for<Arguments...>{});
                 if constexpr (std::is_void_v<Returns>) {
                     std::apply(
-                        [instance, method](Arguments... unpackedArgs) { (instance->*method)(unpackedArgs...); },
+                        [instance](auto &&...unpackedArgs) {
+                            (instance->*MethodPointer)(std::forward<decltype(unpackedArgs)>(unpackedArgs)...);
+                        },
                         arguments
                     );
                     return 0;
                 } else {
                     Returns result = std::apply(
-                        [instance, method](Arguments... unpackedArgs) { return (instance->*method)(unpackedArgs...); },
+                        [instance](auto &&...unpackedArgs) {
+                            return (instance->*MethodPointer)(std::forward<decltype(unpackedArgs)>(unpackedArgs)...);
+                        },
                         arguments
                     );
                     StackValue<Returns>::Push(L, result);
                     return 1;
                 }
-            }};
-        }
+            }
+        };
 
-      private:
-        template <typename... Arguments, std::size_t... Indices>
-        static std::tuple<Arguments...> ExtractArguments(lua_State *L, std::index_sequence<Indices...>) {
-            // stack indices start from 2 to account for the self parameter
-            return std::make_tuple(StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...);
+      public:
+        template <auto MethodPointer> static Method Wrap() {
+            return {[](lua_State *L, Class *instance) -> int {
+                using Info = MethodInfo<decltype(MethodPointer)>;
+                using Returns = typename Info::Returns;
+                using TupleArguments = typename Info::Arguments;
+                return Wrapper<MethodPointer, Returns, TupleArguments>::Call(L, instance);
+            }};
         }
     };
 
@@ -143,9 +170,8 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     };
 
   private:
-    // STRAIGHT BULLSHIT
-    template <typename T, typename = std::void_t<>> struct has_get : std::false_type {};
-    template <typename T> struct has_get<T, std::void_t<decltype(std::declval<T>().get())>> : std::true_type {};
+    template <typename T, typename = std::void_t<>> struct HasGetter : std::false_type {};
+    template <typename T> struct HasGetter<T, std::void_t<decltype(std::declval<T>().get())>> : std::true_type {};
 
     static Class *fromStackValue(lua_State *L, int idx) {
         StoredAs *instancePointer = static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)USERDATA_TAG));
@@ -156,7 +182,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
         Class *instance = nullptr;
         if constexpr (std::is_pointer_v<StoredAs>) {
             instance = *instancePointer;
-        } else if constexpr (has_get<StoredAs>::value) {
+        } else if constexpr (HasGetter<StoredAs>::value) {
             instance = instancePointer->get();
         } else {
             instance = instancePointer;

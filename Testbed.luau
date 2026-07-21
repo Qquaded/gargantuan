@@ -5,4 +5,4 @@
 -- ass.Name = "ass"
 -- ass.Parent = game
 
-print(game.Name)
+print(game.Cube:GetFullName())

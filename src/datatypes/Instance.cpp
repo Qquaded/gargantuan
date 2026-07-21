@@ -3,6 +3,7 @@
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
+#include <SDL3/SDL_log.h>
 #include <algorithm>
 #include <cstddef>
 #include <lua.h>
@@ -51,7 +52,7 @@ const Instance::ClassDefinition Instance::DEFINITION = {
             },
         },
     .Methods = {
-        {"GetFullName", Method::Wrap(&Instance::GetFullName)}
+        {"GetFullName", Method::Wrap<&Instance::GetFullName>()}
         // {
         //     "IsA",
         //     MethodDefinition{
@@ -225,7 +226,9 @@ int Instance::UserdataNewIndex(lua_State *L) {
 
 int Instance::UserdataNamecall(lua_State *L) {
     Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
-    const char *key = luaL_checkstring(L, 2);
+    const char *key = lua_namecallatom(L, nullptr);
+
+    SDL_Log("namecall %s", key);
 
     if (key && instance) {
         auto method = instance->FindMethod(key);
