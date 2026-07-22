@@ -13,7 +13,6 @@ namespace gargantuan {
 class Renderer {
   public:
     Renderer(SDL_Window *window, SDL_GPUDevice *gpu, MeshProvider &meshProvider);
-    ~Renderer();
 
     Renderer(const Renderer &) = delete;
     Renderer &operator=(const Renderer &) = delete;
@@ -54,6 +53,8 @@ class Renderer {
     bool DrawTryStart(DrawContext &context);
     void DrawMainPass(DrawContext &context);
     void DrawEnd(DrawContext &context);
+
+    void Destroy();
 };
 
 } // namespace gargantuan

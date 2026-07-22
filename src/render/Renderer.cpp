@@ -1,10 +1,8 @@
-#include <SDL3/SDL_gpu.h>
-#include <SDL3/SDL_log.h>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
+#include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/classes/list/BasePart.hpp"
 #include "gargantuan/render/Mesh.hpp"
-#include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,7 +26,7 @@ Renderer::Renderer(SDL_Window *window, SDL_GPUDevice *gpu, class MeshProvider &m
         std::abort();
     }
 
-    if (!SDL_ClaimWindowForGPUDevice(Gpu, window)) {
+    if (!SDL_ClaimWindowForGPUDevice(Gpu, Window)) {
         SDL_Log("SDL_ClaimWindowForGPUDevice failed: %s", SDL_GetError());
         std::abort();
     }
@@ -124,7 +122,7 @@ Renderer::Renderer(SDL_Window *window, SDL_GPUDevice *gpu, class MeshProvider &m
     OnWindowResize(width, height);
 }
 
-Renderer::~Renderer() {
+void Renderer::Destroy() {
     SDL_WaitForGPUIdle(Gpu);
     if (DepthTexture != nullptr) {
         SDL_ReleaseGPUTexture(Gpu, DepthTexture);
@@ -264,16 +262,14 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
                 // SDL_Log("rendering %s", part->Name.data());
 
                 CFrame cframe = part->CFrame;
-                glm::mat4 model = glm::mat4(cframe.Rotation);
+                glm::mat4 model = cframe.Rotation;
                 glm::vec3 position = cframe.Position;
                 model[3] = glm::vec4(position, 1.0f);
                 model = glm::scale(model, part->Size);
 
                 Renderer::PushUniforms uniforms{
                     .mvp = context.info.projectionMatrix * context.info.viewMatrix * model,
-                    .rgba = glm::vec4(
-                        1.0f, 1.0f, 1.0f, 1.0f
-                    ), // glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency)
+                    .rgba = glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency)
                 };
 
                 SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));

@@ -29,10 +29,15 @@ Engine::~Engine() {
     SDL_Log("destroying window");
     SDL_ReleaseWindowFromGPUDevice(Gpu, Window);
     SDL_DestroyWindow(Window);
+
     SDL_Log("destroying mesh provider");
     MeshProvider.Destroy();
+
+    Renderer.Destroy();
+
     SDL_Log("destroying gpu %s", Gpu ? "exists" : "not exist");
     SDL_DestroyGPUDevice(Gpu);
+    Gpu = nullptr;
     SDL_Log("done destroying gpu");
 }
 
