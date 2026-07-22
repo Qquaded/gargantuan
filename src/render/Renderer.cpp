@@ -1,8 +1,9 @@
 #include <SDL3/SDL_gpu.h>
+#include <SDL3/SDL_log.h>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include "gargantuan/classes/list/Part.hpp"
-#include "gargantuan/render/Meshes.hpp"
+#include "gargantuan/classes/list/BasePart.hpp"
+#include "gargantuan/render/Mesh.hpp"
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL.h>
@@ -15,12 +16,15 @@
 
 namespace gargantuan {
 
-Renderer::Renderer(SDL_Window *window) {
-    this->Window = window;
-    this->Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, NULL);
+Renderer::Renderer(SDL_Window *window, SDL_GPUDevice *gpu, class MeshProvider &meshProvider)
+    : Window(window), Gpu(gpu), MeshProvider(meshProvider) {
+    if (!Window) {
+        SDL_Log("Missing Window");
+        std::abort();
+    }
 
     if (!Gpu) {
-        SDL_Log("SDL_CreateGPUDevice failed: %s", SDL_GetError());
+        SDL_Log("Missing GPU");
         std::abort();
     }
 
@@ -29,10 +33,7 @@ Renderer::Renderer(SDL_Window *window) {
         std::abort();
     }
 
-    SDL_Log("GPU driver: %s", SDL_GetGPUDeviceDriver(Gpu));
-
     VertexShader = LoadShader("build/shaders/rgbTriangle.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX);
-
     FragmentShader = LoadShader("build/shaders/rgbTriangle.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT);
 
     SDL_GPUColorTargetDescription colorTarget = {
@@ -64,8 +65,8 @@ Renderer::Renderer(SDL_Window *window) {
         SDL_GPUVertexAttribute{
             .location = 2,
             .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-            .offset = offsetof(Vertex, Rgba),
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+            .offset = offsetof(Vertex, UV),
         },
     };
 
@@ -91,7 +92,7 @@ Renderer::Renderer(SDL_Window *window) {
         .rasterizer_state =
             SDL_GPURasterizerState{
                 .fill_mode = SDL_GPU_FILLMODE_FILL,
-                .cull_mode = SDL_GPU_CULLMODE_BACK,
+                .cull_mode = SDL_GPU_CULLMODE_NONE,
                 .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
             },
         .depth_stencil_state =
@@ -131,8 +132,6 @@ Renderer::~Renderer() {
     SDL_ReleaseGPUGraphicsPipeline(Gpu, Pipeline);
     SDL_ReleaseGPUShader(Gpu, VertexShader);
     SDL_ReleaseGPUShader(Gpu, FragmentShader);
-    SDL_ReleaseWindowFromGPUDevice(Gpu, Window);
-    SDL_DestroyGPUDevice(Gpu);
 }
 
 SDL_GPUShader *Renderer::LoadShader(const char *filepath, SDL_GPUShaderStage stage) {
@@ -254,13 +253,15 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
         for (auto ptr : context.info.worldModel->GetDescendants()) {
             auto instance = ptr.get();
 
-            if (instance->IsA<Part>()) {
-                auto part = instance->Cast<Part>();
-                // if (!part->RenderMesh) {
-                const_cast<Part *>(part)->UploadGeometry(Gpu);
-                // }
+            if (instance->IsA("BasePart")) {
+                auto part = instance->Cast<BasePart>();
 
-                auto *mesh = part->RenderMesh.get();
+                auto &mesh = part->GetMesh(MeshProvider);
+                if (!mesh || !mesh->VertexBuffer || !mesh->IndexBuffer) {
+                    continue;
+                }
+
+                // SDL_Log("rendering %s", part->Name.data());
 
                 CFrame cframe = part->CFrame;
                 glm::mat4 model = glm::mat4(cframe.Rotation);
@@ -268,9 +269,13 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
                 model[3] = glm::vec4(position, 1.0f);
                 model = glm::scale(model, part->Size);
 
-                glm::mat4 modelViewProjection = context.info.projectionMatrix * context.info.viewMatrix * model;
+                Renderer::PushUniforms uniforms{
+                    .mvp = context.info.projectionMatrix * context.info.viewMatrix * model,
+                    .rgba = glm::vec4(
+                        1.0f, 1.0f, 1.0f, 1.0f
+                    ), // glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency)
+                };
 
-                Renderer::PushUniforms uniforms{.modelViewProjection = modelViewProjection};
                 SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
 
                 SDL_GPUBufferBinding vertexBinding{.buffer = mesh->VertexBuffer, .offset = 0};

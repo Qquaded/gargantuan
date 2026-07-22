@@ -1,14 +1,14 @@
 #pragma once
 
-#include "gargantuan/render/Meshes.hpp"
+#include "gargantuan/render/Mesh.hpp"
 
 #include <ext/vector_float4.hpp>
 
 namespace gargantuan::PrimitiveMeshes {
 
-Mesh Cube(glm::vec4 rgba);
-Mesh Wedge(glm::vec4 rgba);
-Mesh Sphere(glm::vec4 rgba);
-Mesh Cylinder(glm::vec4 rgba);
+Mesh Block();
+Mesh Wedge();
+Mesh Sphere();
+Mesh Cylinder();
 
 } // namespace gargantuan::PrimitiveMeshes

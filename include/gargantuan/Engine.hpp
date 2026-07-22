@@ -1,11 +1,12 @@
 #pragma once
 
 #include "gargantuan/classes/list/DataModel.hpp"
-#include "gargantuan/classes/list/Part.hpp"
+#include "gargantuan/render/MeshProvider.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_gpu.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <lua.h>
 #include <memory>
@@ -14,13 +15,17 @@ namespace gargantuan {
 
 class Engine {
   public:
+    glm::vec2 ViewportSize = glm::vec2(720, 540);
+    SDL_Window *Window = SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE);
+    SDL_GPUDevice *Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
+    MeshProvider MeshProvider = gargantuan::MeshProvider(Gpu);
+    Renderer Renderer = gargantuan::Renderer(Window, Gpu, MeshProvider);
+    ScriptEngine ScriptEngine;
+
     Engine();
     ~Engine();
 
-    ScriptEngine ScriptEngine;
-
     std::shared_ptr<DataModel> dataModel;
-    glm::vec2 ViewportSize = glm::vec2(720, 540);
     bool IsRunning = true;
     void ProcessEvent(SDL_Event event);
     void Step();
@@ -29,9 +34,6 @@ class Engine {
   private:
     uint64_t CurrentTick;
     uint64_t LastTick;
-
-    SDL_Window *Window;
-    Renderer Renderer;
 
     // TODO: Camera class, and probably implement Instances by then
     glm::vec3 CameraPosition = glm::vec3(0, 0, 10);

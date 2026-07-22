@@ -5,19 +5,22 @@
 
 namespace gargantuan {
 
+namespace Enums {
+enum class PartType {
+    Ball,
+    Block,
+    Cylinder,
+    Wedge,
+    CornerWedge,
+};
+};
+
 class Part : public BasePart {
   public:
-    enum class Shape { Cube, Wedge, Sphere };
-
     static const ClassDefinition DEFINITION;
 
-    Shape Shape = Shape::Cube;
-
-    std::unique_ptr<GpuMesh> RenderMesh = nullptr;
-
-    Mesh GetMesh() const override;
-
-    void UploadGeometry(SDL_GPUDevice *gpu) { RenderMesh = std::make_unique<GpuMesh>(gpu, GetMesh()); }
+    Enums::PartType Shape = Enums::PartType::Block;
+    std::unique_ptr<GpuMesh> &GetMesh(MeshProvider &provider) const override;
 };
 
 } // namespace gargantuan

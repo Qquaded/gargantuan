@@ -29,6 +29,8 @@ for index, flowerColor in FLOWERS do
 	flowerParts[index] = flowerSoul
 end
 
+print("script runs fine here")
+
 while true do
 	for index, flowerSoul in flowerParts do
 		local step = index / TOTAL_FLOWERS

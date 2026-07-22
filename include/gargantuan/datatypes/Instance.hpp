@@ -6,6 +6,7 @@
 #include <lua.h>
 #include <memory>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -37,7 +38,7 @@ class Instance : public std::enable_shared_from_this<Instance>, public Userdata<
     Instance *Parent = nullptr;
     void SetParent(std::shared_ptr<Instance> newParent);
 
-    template <typename T> bool IsA() const { return dynamic_cast<const T *>(this) != nullptr; }
+    template <typename T> bool IsClass() const { return dynamic_cast<const T *>(this) != nullptr; }
     template <typename T> T *Cast() const { return dynamic_cast<const T *>(this); }
     template <typename T> T *Cast() { return dynamic_cast<T *>(this); }
     template <typename T> const T *Cast() const { return dynamic_cast<const T *>(this); }
@@ -49,6 +50,7 @@ class Instance : public std::enable_shared_from_this<Instance>, public Userdata<
     static int UserdataNamecall(lua_State *L);
 
     std::string GetFullName();
+    bool IsA(std::string_view className);
     std::vector<std::shared_ptr<Instance>> GetDescendants();
     std::shared_ptr<Instance> FindFirstChild(std::string_view name, bool recursive = false);
     std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className);

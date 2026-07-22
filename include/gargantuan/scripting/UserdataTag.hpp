@@ -6,6 +6,8 @@ enum class UserdataTag : int {
     Instance = 1,
     Color3,
     CFrame,
+    Enum,
+    EnumItem,
     Vector3,
 };
 

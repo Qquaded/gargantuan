@@ -284,6 +284,22 @@ std::string Instance::GetFullName() {
     return fullName;
 };
 
+bool Instance::IsA(std::string_view className) {
+    auto currentDefinition = ClassRegistry::GetDefinition(this);
+    while (true) {
+        if (currentDefinition->Name == className) {
+            return true;
+        }
+
+        auto superclass = currentDefinition->Superclass;
+        if (superclass.has_value()) {
+            currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+        } else {
+            return false;
+        }
+    }
+}
+
 void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants) {
     for (const auto &child : Children) {
         descendants.push_back(child);

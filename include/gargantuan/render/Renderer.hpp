@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/render/MeshProvider.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
@@ -11,8 +12,7 @@ namespace gargantuan {
 
 class Renderer {
   public:
-    // NOTE: Renderer does not take ownership of `window`
-    Renderer(SDL_Window *window);
+    Renderer(SDL_Window *window, SDL_GPUDevice *gpu, MeshProvider &meshProvider);
     ~Renderer();
 
     Renderer(const Renderer &) = delete;
@@ -27,6 +27,8 @@ class Renderer {
     void Draw(DrawInfo info);
     void OnWindowResize(int width, int height);
     SDL_GPUShader *LoadShader(const char *shaderPath, SDL_GPUShaderStage stage);
+
+    MeshProvider &MeshProvider;
 
     SDL_Window *Window = nullptr;
     SDL_GPUDevice *Gpu = nullptr;
@@ -45,7 +47,8 @@ class Renderer {
     };
 
     struct PushUniforms {
-        glm::mat4 modelViewProjection;
+        glm::mat4 mvp;
+        glm::vec4 rgba;
     };
 
     bool DrawTryStart(DrawContext &context);

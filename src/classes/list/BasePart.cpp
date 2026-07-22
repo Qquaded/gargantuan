@@ -10,6 +10,7 @@ const Instance::ClassDefinition BasePart::DEFINITION = {
     .Name = "BasePart",
     .Superclass = "Instance",
     .Properties = {
+        USERDATA_READWRITE_PROP(BasePart, Anchored, bool),
         USERDATA_READWRITE_PROP(BasePart, CFrame, gargantuan::CFrame),
         USERDATA_READWRITE_PROP(BasePart, Color, gargantuan::Color3),
         USERDATA_READWRITE_PROP(BasePart, Size, gargantuan::Vector3),
