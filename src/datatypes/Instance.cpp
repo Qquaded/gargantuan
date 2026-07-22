@@ -9,7 +9,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <memory>
-#include <objc/objc.h>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -28,7 +27,7 @@ const Instance::ClassDefinition Instance::DEFINITION = {
             {
                 "ClassName",
                 {
-                    *[](lua_State *L, Instance *instance) -> int {
+                    +[](lua_State *L, Instance *instance) -> int {
                         StackValue<std::string_view>::Push(L, ClassRegistry::GetDefinition(instance)->Name);
                         return 1;
                     },
@@ -38,7 +37,7 @@ const Instance::ClassDefinition Instance::DEFINITION = {
             {
                 "Parent",
                 {
-                    *[](lua_State *L, Instance *instance) -> int {
+                    +[](lua_State *L, Instance *instance) -> int {
                         if (auto parent = instance->Parent) {
                             StackValue<Instance::Userdata>::Push(L, parent->shared_from_this());
                         } else {
@@ -46,7 +45,7 @@ const Instance::ClassDefinition Instance::DEFINITION = {
                         };
                         return 1;
                     },
-                    *[](lua_State *L, Instance *instance) -> int {
+                    +[](lua_State *L, Instance *instance) -> int {
                         Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
                         instance->SetParent(newParent);
                         return 0;

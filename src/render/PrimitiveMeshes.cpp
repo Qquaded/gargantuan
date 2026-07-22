@@ -2,6 +2,7 @@
 
 #include "gargantuan/render/PrimitiveMeshes.hpp"
 
+#include <numbers>
 #include <vector>
 
 namespace gargantuan::PrimitiveMeshes {
@@ -93,11 +94,11 @@ Mesh Sphere(glm::vec4 rgba) {
 
     for (int y = 0; y <= HORIZONTAL_LINES; y++) {
         float v = (float)y / HORIZONTAL_LINES;
-        float phi = v * M_PI;
+        float phi = v * std::numbers::pi_v<float>;
 
         for (int x = 0; x <= VERTICAL_LINES; x++) {
             float u = (float)x / VERTICAL_LINES;
-            float theta = u * 2.f * M_PI;
+            float theta = u * 2.f * std::numbers::pi_v<float>;
 
             glm::vec3 pos = glm::normalize(glm::vec3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta)));
 

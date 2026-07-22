@@ -5,6 +5,7 @@
 #include <functional>
 #include <lua.h>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <vector>
 

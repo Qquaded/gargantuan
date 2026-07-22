@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(gargantuan CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -81,3 +81,12 @@ target_link_libraries(gargantuan
 		Luau.Require
 		Luau.Config
 )
+
+if(WIN32)
+	add_custom_command(TARGET gargantuan POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"$<TARGET_FILE:SDL3::SDL3>"
+			"$<TARGET_FILE_DIR:gargantuan>"
+		COMMENT "Copying SDL3.dll next to gargantuan.exe"
+	)
+endif()
