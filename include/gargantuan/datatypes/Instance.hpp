@@ -37,6 +37,8 @@ class Instance : public std::enable_shared_from_this<Instance>, public Userdata<
     void SetParent(std::shared_ptr<Instance> newParent);
 
     template <typename T> bool IsA() const { return dynamic_cast<const T *>(this) != nullptr; }
+    template <typename T> T *Cast() const { return dynamic_cast<const T *>(this); }
+    template <typename T> T *Cast() { return dynamic_cast<T *>(this); }
     template <typename T> const T *Cast() const { return dynamic_cast<const T *>(this); }
 
     std::optional<This::Property> FindProperty(std::string_view name);

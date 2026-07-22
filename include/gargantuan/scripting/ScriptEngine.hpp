@@ -6,6 +6,13 @@
 #include <lualib.h>
 
 namespace gargantuan {
+
+int OpenLibBase(lua_State *L);
+int OpenLibCFrame(lua_State *L);
+int OpenLibColor3(lua_State *L);
+int OpenLibVector3(lua_State *L);
+int OpenLibInstance(lua_State *L);
+
 class ScriptEngine {
   public:
     ScriptEngine();
@@ -13,10 +20,12 @@ class ScriptEngine {
 
     lua_State *L;
 
-    lua_State *testbedThread;
     void Step();
 
   private:
+    lua_State *testbedThread;
     bool testbedFinished = false;
+    void CreateTestbedThread();
 };
+
 } // namespace gargantuan

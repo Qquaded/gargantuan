@@ -18,6 +18,7 @@ struct Color3 : public Userdata<Color3> {
 
     static Color3 fromRGB(float r, float g, float b);
     static Color3 fromHSV(float h, float s, float v);
+    static Color3 fromHex(std::string_view hex);
 
     operator glm::vec3() const { return {R, G, B}; }
 };

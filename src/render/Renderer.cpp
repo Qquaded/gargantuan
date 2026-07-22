@@ -262,8 +262,10 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
 
                 auto *mesh = part->RenderMesh.get();
 
-                glm::mat4 model = glm::mat4(part->CFrame.Rotation);
-                model[3] = glm::vec4(part->CFrame.Position, 1.0f);
+                CFrame cframe = part->CFrame;
+                glm::mat4 model = glm::mat4(cframe.Rotation);
+                glm::vec3 position = cframe.Position;
+                model[3] = glm::vec4(position, 1.0f);
                 model = glm::scale(model, part->Size);
 
                 glm::mat4 modelViewProjection = context.info.projectionMatrix * context.info.viewMatrix * model;

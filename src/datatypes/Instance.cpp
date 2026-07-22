@@ -47,7 +47,7 @@ const Instance::ClassDefinition Instance::DEFINITION = {
                         return 1;
                     },
                     *[](lua_State *L, Instance *instance) -> int {
-                        Instance::Pointer newParent = StackValue<Instance::Userdata>::From(L, -1);
+                        Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
                         instance->SetParent(newParent);
                         return 0;
                     },
@@ -227,6 +227,8 @@ int Instance::UserdataNewIndex(lua_State *L) {
             }
         }
     }
+
+    luaL_error(L, "Unknown property %s", key);
 
     return 0;
 };

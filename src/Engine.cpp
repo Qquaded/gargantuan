@@ -32,38 +32,38 @@ Engine::Engine()
     lua_pushvalue(ScriptEngine.L, -1);
     lua_setglobal(ScriptEngine.L, "game");
 
-    auto baseplate = std::make_shared<Part>();
-    baseplate->Name = "Baseplate";
-    baseplate->Color = Color3::fromHSV(0, 0, 0.5);
-    baseplate->CFrame = CFrame(0, -30, 0);
-    baseplate->Size = glm::vec3(2048, 20, 2048);
-    baseplate->Transparency = 0.0;
-    baseplate->SetParent(dataModel);
+    // auto baseplate = std::make_shared<Part>();
+    // baseplate->Name = "Baseplate";
+    // baseplate->Color = Color3::fromHSV(0, 0, 0.5);
+    // baseplate->CFrame = CFrame(0, -30, 0);
+    // baseplate->Size = glm::vec3(2048, 20, 2048);
+    // baseplate->Transparency = 0.0;
+    // baseplate->SetParent(dataModel);
 
-    auto wedge = std::make_shared<Part>();
-    wedge->Name = "Wedge";
-    wedge->Color = Color3::fromHSV(1, 1, 1);
-    wedge->CFrame = CFrame(5, 5, 0);
-    wedge->Size = glm::vec3(2, 2, 2);
-    wedge->Shape = Part::Shape::Wedge;
-    wedge->Transparency = 0.0;
-    wedge->SetParent(dataModel);
+    // auto wedge = std::make_shared<Part>();
+    // wedge->Name = "Wedge";
+    // wedge->Color = Color3::fromHSV(1, 1, 1);
+    // wedge->CFrame = CFrame(5, 5, 0);
+    // wedge->Size = glm::vec3(2, 2, 2);
+    // wedge->Shape = Part::Shape::Wedge;
+    // wedge->Transparency = 0.0;
+    // wedge->SetParent(dataModel);
 
-    auto sphere = std::make_shared<Part>();
-    sphere->Name = "Sphere";
-    sphere->Color = Color3::fromHSV(1, 1, 1);
-    sphere->CFrame = CFrame(-10, 5, 0);
-    sphere->Size = glm::vec3(10, 10, 10);
-    sphere->Shape = Part::Shape::Sphere;
-    sphere->Transparency = 0.0;
-    sphere->SetParent(dataModel);
+    // auto sphere = std::make_shared<Part>();
+    // sphere->Name = "Sphere";
+    // sphere->Color = Color3::fromHSV(1, 1, 1);
+    // sphere->CFrame = CFrame(-10, 5, 0);
+    // sphere->Size = glm::vec3(10, 10, 10);
+    // sphere->Shape = Part::Shape::Sphere;
+    // sphere->Transparency = 0.0;
+    // sphere->SetParent(dataModel);
 
-    cube = std::make_shared<Part>();
-    cube->Name = "Cube";
-    cube->Color = Color3::fromHSV(1, 1, 1);
-    cube->CFrame = CFrame(0, 5, 0);
-    cube->Transparency = 0.0;
-    cube->SetParent(dataModel);
+    // cube = std::make_shared<Part>();
+    // cube->Name = "Cube";
+    // cube->Color = Color3::fromHSV(1, 1, 1);
+    // cube->CFrame = CFrame(0, 5, 0);
+    // cube->Transparency = 0.0;
+    // cube->SetParent(dataModel);
 
     SDL_Log("DataModel has %d descendants", (int)dataModel->GetDescendants().size());
 }
@@ -174,15 +174,15 @@ void Engine::Step() {
         CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
     }
 
-    constexpr float CYCLE_DURATION = 5;
-    float timeSec = (float)CurrentTick / 1000.0f;
+    // constexpr float CYCLE_DURATION = 5;
+    // float timeSec = (float)CurrentTick / 1000.0f;
 
-    auto cubeHue = glm::mod((float)CurrentTick / 1000.0f, CYCLE_DURATION) / CYCLE_DURATION;
-    glm::vec3 cubePosition = glm::vec3(0.0f, 5.0f, 0.0f);
-    glm::vec3 lookTarget = cubePosition + glm::vec3(glm::cos(timeSec), glm::cos(timeSec), glm::sin(timeSec));
-    cube->CFrame = CFrame(cubePosition, lookTarget);
-    cube->Color = Color3::fromHSV(cubeHue, 1, 1);
-    cube->UploadGeometry(Renderer.Gpu);
+    // auto cubeHue = glm::mod((float)CurrentTick / 1000.0f, CYCLE_DURATION) / CYCLE_DURATION;
+    // glm::vec3 cubePosition = glm::vec3(0.0f, 5.0f, 0.0f);
+    // glm::vec3 lookTarget = cubePosition + glm::vec3(glm::cos(timeSec), glm::cos(timeSec), glm::sin(timeSec));
+    // cube->CFrame = CFrame(cubePosition, lookTarget);
+    // cube->Color = Color3::fromHSV(cubeHue, 1, 1);
+    // cube->UploadGeometry(Renderer.Gpu);
 
     Renderer.Draw(
         Renderer::DrawInfo{

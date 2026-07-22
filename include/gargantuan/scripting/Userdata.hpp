@@ -68,7 +68,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
 
     static int UserdataIndex(lua_State *L) {
         Class *instance = fromStackValue(L, 1);
-        std::string_view key = StackValue<std::string_view>::From(L, 2);
+        std::string_view key = CheckStackValue<std::string_view>(L, 2);
 
         if (!instance) {
             return 0;
@@ -89,7 +89,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
 
     static int UserdataNewIndex(lua_State *L) {
         Class *instance = fromStackValue(L, 1);
-        std::string_view key = StackValue<std::string_view>::From(L, 2);
+        std::string_view key = CheckStackValue<std::string_view>(L, 2);
 
         if (!instance) {
             return 0;
@@ -101,7 +101,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
             if (property.Write) {
                 property.Write(L, instance);
             } else {
-                luaL_error(L, "%s is read-only", key);
+                luaL_error(L, "%s is read-only", key.data());
             }
             return 0;
         }
@@ -176,21 +176,20 @@ template <typename Class, typename StoredAs = Class> class Userdata {
 };
 
 template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, StoredAs>> {
-    static inline std::string_view ReflectedTypedef() { return Userdata<Class, StoredAs>::GetUserdataType(); };
+    typedef Userdata<Class, StoredAs> This;
 
-    static bool Is(lua_State *L, int idx) {
-        return lua_userdatatag(L, idx) == (int)Userdata<Class, StoredAs>::GetUserdataTag();
-    };
+    static inline std::string_view ReflectedTypedef() { return This::GetUserdataType(); };
+
+    static bool Is(lua_State *L, int idx) { return lua_userdatatag(L, idx) == (int)This::GetUserdataTag(); };
 
     static StoredAs From(lua_State *L, int idx) {
-        StoredAs *userdata =
-            static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Userdata<Class, StoredAs>::GetUserdataTag()));
-        return userdata ? *userdata : StoredAs{};
+        StoredAs *userdata = static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)This::GetUserdataTag()));
+        return *userdata;
     };
 
     static void Push(lua_State *L, StoredAs value) {
         StoredAs *userdata = static_cast<StoredAs *>(
-            lua_newuserdatataggedwithmetatable(L, sizeof(StoredAs), (int)Userdata<Class, StoredAs>::GetUserdataTag())
+            lua_newuserdatataggedwithmetatable(L, sizeof(StoredAs), (int)This::GetUserdataTag())
         );
         new (userdata) StoredAs(value);
     };
@@ -206,7 +205,7 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
 #define USERDATA_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)                                               \
     [](lua_State *L, void *rawInstance) -> int {                                                                       \
         auto *instance = static_cast<classType *>(rawInstance);                                                        \
-        valueType value = ::gargantuan::StackValue<valueType>::From(L, -1);                                            \
+        valueType value = ::gargantuan::CheckStackValue<valueType>(L, -1);                                             \
         instance->propertyName = value;                                                                                \
         return 0;                                                                                                      \
     }
@@ -244,19 +243,12 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
 
 #define USERDATA_STACKVALUE_WITH_STORED(classType, storedType)                                                         \
     template <> struct StackValue<storedType> {                                                                        \
-        static inline std::string_view ReflectedTypedef() {                                                            \
-            return StackValue<Userdata<classType, storedType>>::ReflectedTypedef();                                    \
-        };                                                                                                             \
+        typedef Userdata<classType, storedType> This;                                                                  \
                                                                                                                        \
-        static bool Is(lua_State *L, int idx) { return StackValue<Userdata<classType, storedType>>::Is(L, idx); };     \
-                                                                                                                       \
-        static storedType From(lua_State *L, int idx) {                                                                \
-            return StackValue<Userdata<classType, storedType>>::From(L, idx);                                          \
-        };                                                                                                             \
-                                                                                                                       \
-        static void Push(lua_State *L, storedType value) {                                                             \
-            return StackValue<Userdata<classType, storedType>>::Push(L, value);                                        \
-        };                                                                                                             \
+        static inline std::string_view ReflectedTypedef() { return StackValue<This>::ReflectedTypedef(); };            \
+        static bool Is(lua_State *L, int idx) { return StackValue<This>::Is(L, idx); };                                \
+        static storedType From(lua_State *L, int idx) { return StackValue<This>::From(L, idx); };                      \
+        static void Push(lua_State *L, storedType value) { return StackValue<This>::Push(L, value); };                 \
     };
 
 #define USERDATA_STACKVALUE(classType) USERDATA_STACKVALUE_WITH_STORED(classType, classType)

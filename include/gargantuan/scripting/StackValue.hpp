@@ -23,6 +23,13 @@ template <typename T> struct StackValue {
     static_assert(GARGANTUAN_STACK_VALUE_IS_UNIMPLEMENTED_FOR<T>::value);
 };
 
+template <typename T> T CheckStackValue(lua_State *L, int idx) {
+    if (StackValue<T>::Is(L, idx)) {
+        return StackValue<T>::From(L, idx);
+    };
+    luaL_typeerror(L, idx, StackValue<T>::ReflectedTypedef().data());
+}
+
 #define PRIMITIVE_STACK_VALUE(cppType, reflectedTypedef, isImpl, fromImpl, pushImpl)                                   \
     template <> struct StackValue<cppType> {                                                                           \
         static inline std::string_view ReflectedTypedef() { return reflectedTypedef; };                                \

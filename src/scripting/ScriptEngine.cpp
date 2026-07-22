@@ -5,13 +5,25 @@
 
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_log.h>
 #include <lua.h>
 #include <luacode.h>
 #include <lualib.h>
 #include <stdexcept>
-#include <sys/stat.h>
 
 namespace gargantuan {
+
+static const luaL_Reg SCRIPT_LIBS[] = {
+    {"", OpenLibBase},
+
+    {"CFrame", OpenLibCFrame},
+    {"Color3", OpenLibColor3},
+    {"Vector3", OpenLibVector3},
+
+    {"Instance", OpenLibInstance},
+
+    {nullptr, nullptr},
+};
 
 ScriptEngine::ScriptEngine() : L(luaL_newstate()) {
     if (L == nullptr) {
@@ -21,8 +33,19 @@ ScriptEngine::ScriptEngine() : L(luaL_newstate()) {
     luaL_openlibs(L);
     CFrame::CreateUserdataMetatable(L);
     Color3::CreateUserdataMetatable(L);
+    Vector3::CreateUserdataMetatable(L);
     Instance::CreateUserdataMetatable(L);
+    const luaL_Reg *lib = SCRIPT_LIBS;
+    for (; lib->func; lib++) {
+        lua_pushcfunction(L, lib->func, nullptr);
+        lua_pushstring(L, lib->name);
+        lua_call(L, 1, 0);
+    }
 
+    CreateTestbedThread();
+}
+
+void ScriptEngine::CreateTestbedThread() {
     testbedThread = lua_newthread(L);
     size_t fileSize;
     void *code = SDL_LoadFile("Testbed.luau", &fileSize);
@@ -55,8 +78,10 @@ void ScriptEngine::Step() {
     int status = lua_resume(testbedThread, nullptr, 0);
     switch (status) {
     case LUA_YIELD:
+        // SDL_Log("yielded");
         break;
     case LUA_OK:
+        // SDL_Log("finished");
         testbedFinished = true;
         break;
     default:

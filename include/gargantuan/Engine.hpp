@@ -50,8 +50,6 @@ class Engine {
     }
 
     glm::mat4 GetViewMatrix() { return glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector); }
-
-    std::shared_ptr<Part> cube;
 };
 
 } // namespace gargantuan
