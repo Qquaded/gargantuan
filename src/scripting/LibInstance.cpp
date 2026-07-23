@@ -1,4 +1,4 @@
-#include "gargantuan/classes/ClassRegistry.hpp"
+#include "gargantuan/ClassRegistry.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 

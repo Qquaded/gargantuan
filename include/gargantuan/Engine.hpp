@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gargantuan/classes/list/DataModel.hpp"
+#include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/render/MeshProvider.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"

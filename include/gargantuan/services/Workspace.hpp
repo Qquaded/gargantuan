@@ -4,7 +4,7 @@
 
 namespace gargantuan {
 
-class DataModel : public Instance {
+class Workspace : public Instance {
   public:
     static const ClassDefinition DEFINITION;
 };

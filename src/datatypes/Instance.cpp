@@ -1,5 +1,5 @@
 #include "gargantuan/datatypes/Instance.hpp"
-#include "gargantuan/classes/ClassRegistry.hpp"
+#include "gargantuan/ClassRegistry.hpp"
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
@@ -124,7 +124,7 @@ void Instance::SetParent(std::shared_ptr<Instance> newParent) {
 
 std::optional<Instance::Userdata::Property> Instance::FindProperty(std::string_view name) {
     auto currentDefinition = ClassRegistry::GetDefinition(this);
-    while (true) {
+    while (currentDefinition) {
         if (auto it = currentDefinition->Properties.find(name); it != currentDefinition->Properties.end()) {
             return it->second;
         }
@@ -137,11 +137,12 @@ std::optional<Instance::Userdata::Property> Instance::FindProperty(std::string_v
             return {};
         }
     }
+    return {};
 }
 
 std::optional<Instance::Userdata::Method> Instance::FindMethod(std::string_view name) {
     auto currentDefinition = ClassRegistry::GetDefinition(this);
-    while (true) {
+    while (currentDefinition) {
         if (auto it = currentDefinition->Methods.find(name); it != currentDefinition->Methods.end()) {
             return it->second;
         }
@@ -154,6 +155,7 @@ std::optional<Instance::Userdata::Method> Instance::FindMethod(std::string_view 
             return {};
         }
     }
+    return {};
 }
 
 int Instance::UserdataIndex(lua_State *L) {
@@ -205,8 +207,6 @@ int Instance::UserdataNamecall(lua_State *L) {
     Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
     const char *key = lua_namecallatom(L, nullptr);
 
-    SDL_Log("namecall %s", key);
-
     if (key && instance) {
         auto method = instance->FindMethod(key);
         if (method.has_value()) {
@@ -214,6 +214,7 @@ int Instance::UserdataNamecall(lua_State *L) {
         }
     }
 
+    luaL_error(L, "%s is not a valid method of %s", key, instance->Name.data());
     return 0;
 };
 

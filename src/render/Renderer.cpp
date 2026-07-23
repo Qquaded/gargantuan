@@ -1,7 +1,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include "gargantuan/render/Renderer.hpp"
-#include "gargantuan/classes/list/BasePart.hpp"
+#include "gargantuan/classes/BasePart.hpp"
 #include "gargantuan/render/Mesh.hpp"
 
 #include <SDL3/SDL.h>

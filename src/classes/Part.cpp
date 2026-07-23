@@ -1,4 +1,4 @@
-#include "gargantuan/classes/list/Part.hpp"
+#include "gargantuan/classes/Part.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 
 #include <SDL3/SDL_log.h>

@@ -23,6 +23,13 @@ Engine::Engine() {
     StackValue<Instance::Pointer>::Push(ScriptEngine.L, dataModel);
     lua_pushvalue(ScriptEngine.L, -1);
     lua_setglobal(ScriptEngine.L, "game");
+
+    auto workspace = dataModel->GetService("Workspace");
+    if (workspace) {
+        SDL_Log("workspace exists %s", workspace->GetFullName().data());
+    } else {
+        SDL_Log("service provider is fucked??");
+    }
 }
 
 Engine::~Engine() {

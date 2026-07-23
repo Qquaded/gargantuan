@@ -1,4 +1,4 @@
-#include "gargantuan/classes/list/BasePart.hpp"
+#include "gargantuan/classes/BasePart.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"

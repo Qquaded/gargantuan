@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gargantuan/classes/list/BasePart.hpp"
+#include "gargantuan/classes/BasePart.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 
 namespace gargantuan {

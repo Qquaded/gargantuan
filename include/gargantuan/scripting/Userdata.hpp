@@ -25,26 +25,32 @@ template <typename Class, typename StoredAs = Class> class Userdata {
       public:
         int (*Call)(lua_State *L, Class *instance);
 
-        template <auto MethodPointer, typename Returns, typename... Arguments>
-        static Method Wrap(Returns (Class::*)(Arguments...)) {
+        template <auto MethodPointer, typename TargetClass, typename Returns, typename... Arguments>
+        static Method Wrap(Returns (TargetClass::*)(Arguments...)) {
             return {[](lua_State *L, Class *instance) -> int {
-                return WrappedCall<MethodPointer, Arguments...>(L, instance, std::index_sequence_for<Arguments...>{});
+                auto *derived = static_cast<TargetClass *>(instance);
+                return WrappedCall<MethodPointer, TargetClass, Arguments...>(
+                    L, derived, std::index_sequence_for<Arguments...>{}
+                );
             }};
         }
 
-        template <auto MethodPointer, typename R, typename... Arguments>
-        static Method Wrap(R (Class::*)(Arguments...) const) {
+        template <auto MethodPointer, typename TargetClass, typename Returns, typename... Arguments>
+        static Method Wrap(Returns (TargetClass::*)(Arguments...) const) {
             return {[](lua_State *L, Class *instance) -> int {
-                return WrappedCall<MethodPointer, Arguments...>(L, instance, std::index_sequence_for<Arguments...>{});
+                auto *derived = static_cast<TargetClass *>(instance);
+                return WrappedCall<MethodPointer, TargetClass, Arguments...>(
+                    L, derived, std::index_sequence_for<Arguments...>{}
+                );
             }};
         }
 
         template <auto MethodPointer> static Method Wrap() { return Wrap<MethodPointer>(MethodPointer); }
 
       private:
-        template <auto MethodPointer, typename... Arguments, std::size_t... Indices>
-        static int WrappedCall(lua_State *L, Class *instance, std::index_sequence<Indices...>) {
-            using Ret = std::invoke_result_t<decltype(MethodPointer), Class *, std::decay_t<Arguments>...>;
+        template <auto MethodPointer, typename TargetClass, typename... Arguments, std::size_t... Indices>
+        static int WrappedCall(lua_State *L, TargetClass *instance, std::index_sequence<Indices...>) {
+            using Ret = std::invoke_result_t<decltype(MethodPointer), TargetClass *, std::decay_t<Arguments>...>;
 
             if constexpr (std::is_void_v<Ret>) {
                 std::invoke(MethodPointer, instance, StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...);
