@@ -56,35 +56,10 @@ const Instance::ClassDefinition Instance::DEFINITION = {
     .Methods = {
         {"IsA", Method::Wrap<&Instance::GetFullName>()},
         {"GetFullName", Method::Wrap<&Instance::GetFullName>()},
-        // {
-        //     "GetChildren",
-        //     MethodDefinition{
-        //         .Returns = {MethodReturn{.Type = Types::Array(Types::INSTANCE)}},
-        //         .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
-        //             std::vector<Instance *> result;
-        //             result.reserve(instance->Children.size());
-        //             for (auto &instance : instance->Children) {
-        //                 result.emplace_back(instance.get());
-        //             }
-        //             return {result};
-        //         },
-        //     },
-        // },
-        // {
-        //     "GetDescendants",
-        //     MethodDefinition{
-        //         .Returns = {MethodReturn{.Type = Types::Array(Types::INSTANCE)}},
-        //         .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
-        //             auto descendants = instance->GetDescendants();
-        //             std::vector<Instance *> result;
-        //             result.reserve(descendants.size());
-        //             for (auto &instance : descendants) {
-        //                 result.emplace_back(instance.get());
-        //             }
-        //             return {result};
-        //         },
-        //     },
-        // },
+        {"GetChildren", Method::Wrap<&Instance::GetChildren>()},
+        {"GetDescendants", Method::Wrap<&Instance::GetDescendants>()},
+        {"FindFirstChild", Method::Wrap<&Instance::FindFirstChild>()},
+        {"FindFirstChildOfClass", Method::Wrap<&Instance::FindFirstChildOfClass>()},
     }
 };
 
@@ -269,6 +244,8 @@ bool Instance::IsA(std::string_view className) {
         }
     }
 }
+
+std::vector<std::shared_ptr<Instance>> Instance::GetChildren() { return Children; }
 
 void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants) {
     for (const auto &child : Children) {

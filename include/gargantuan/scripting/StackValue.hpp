@@ -4,6 +4,7 @@
 #include <lualib.h>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace gargantuan {
 
@@ -75,6 +76,22 @@ template <typename... Types> struct StackValue<std::tuple<Types...>> {
     template <std::size_t... Indices>
     static std::tuple<Types...> FromImpl(lua_State *L, int idx, std::index_sequence<Indices...>) {
         return std::make_tuple(StackValue<std::decay_t<Types>>::From(L, idx + static_cast<int>(Indices))...);
+    }
+};
+
+template <typename T> struct StackValue<std::vector<T>> {
+    static inline std::string_view ReflectedTypedef() {
+        return std::string("{ ") + StackValue<T>::ReflectedTypedef() + " }";
+    };
+
+    static void Push(lua_State *L, const std::vector<T> &value) {
+        auto len = value.size();
+        lua_createtable(L, len, 0);
+        int tableIdx = lua_gettop(L);
+        for (size_t i = 0; i < len; ++i) {
+            StackValue<T>::Push(L, value[i]);
+            lua_rawseti(L, tableIdx, i + 1);
+        }
     }
 };
 
