@@ -2,10 +2,12 @@
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
+#include <cstdlib>
 #include <lua.h>
 #include <luacode.h>
 #include <lualib.h>
@@ -25,12 +27,14 @@ static const luaL_Reg SCRIPT_LIBS[] = {
     {nullptr, nullptr},
 };
 
-ScriptEngine::ScriptEngine() : L(luaL_newstate()) {
+ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
     if (L == nullptr) {
         throw std::runtime_error("Failed to instantiate Luau VM");
     }
 
     luaL_openlibs(L);
+    OpenLibTask(L, &ThreadEngine);
+
     CFrame::CreateUserdataMetatable(L);
     Color3::CreateUserdataMetatable(L);
     Vector3::CreateUserdataMetatable(L);
@@ -62,6 +66,9 @@ void ScriptEngine::CreateTestbedThread() {
     char *bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
 
     luau_load(testbedThread, "Testbed", bytecode, bytecodeSize, 0);
+    std::free(bytecode);
+
+    ThreadEngine.QueueDeferredTask(testbedThread, 0);
 }
 
 ScriptEngine::~ScriptEngine() {
@@ -71,24 +78,6 @@ ScriptEngine::~ScriptEngine() {
     }
 }
 
-void ScriptEngine::Step() {
-    if (testbedFinished)
-        return;
-
-    int status = lua_resume(testbedThread, nullptr, 0);
-    switch (status) {
-    case LUA_YIELD:
-        // SDL_Log("yielded");
-        break;
-    case LUA_OK:
-        // SDL_Log("finished");
-        testbedFinished = true;
-        break;
-    default:
-        SDL_Log("Testbed error: %s", lua_tostring(testbedThread, -1));
-        testbedFinished = true;
-        break;
-    }
-}
+void ScriptEngine::Step() { ThreadEngine.Step(); }
 
 } // namespace gargantuan

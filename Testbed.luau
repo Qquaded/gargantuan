@@ -29,9 +29,17 @@ for index, flowerColor in FLOWERS do
 	flowerParts[index] = flowerSoul
 end
 
-print("script runs fine here")
+task.defer(print, "this should spawn later even if its placed ahead of spawn")
+task.spawn(print, "this should spawn first")
 
-while true do
+print(
+	"got this thread",
+	task.delay(1, function(foo)
+		print("yo this shit got spawned with", foo)
+	end, "lmao")
+)
+
+while task.wait() do
 	for index, flowerSoul in flowerParts do
 		local step = index / TOTAL_FLOWERS
 		local angle = step * math.tau
@@ -40,5 +48,4 @@ while true do
 		local y = math.sin(os.clock() + step) * AMPLITUDE
 		flowerSoul.Position = Vector3.new(x, y, z)
 	end
-	coroutine.yield()
 end

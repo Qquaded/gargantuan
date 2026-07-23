@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gargantuan/scripting/ThreadEngine.hpp"
+
 #include <Luau/Compiler.h>
 #include <lua.h>
 #include <luacode.h>
@@ -12,13 +14,15 @@ int OpenLibCFrame(lua_State *L);
 int OpenLibColor3(lua_State *L);
 int OpenLibVector3(lua_State *L);
 int OpenLibInstance(lua_State *L);
+int OpenLibTask(lua_State *L, ThreadEngine *threadEngine);
 
 class ScriptEngine {
   public:
     ScriptEngine();
     ~ScriptEngine();
 
-    lua_State *L;
+    lua_State *L = nullptr;
+    ThreadEngine ThreadEngine;
 
     void Step();
 

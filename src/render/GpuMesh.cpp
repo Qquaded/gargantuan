@@ -13,15 +13,6 @@ GpuMesh::GpuMesh(Mesh mesh) {
     this->IndexBufferSize = IndexCount * sizeof(uint32_t);
 }
 
-/*
-
-        uint32_t VertexCount = Vertices.size();
-    uint32_t VertexBufferSize = VertexCount * sizeof(Vertex);
-
-    SDL_GPUBuffer *IndexBuffer = nullptr;
-    uint32_t IndexCount = Indices.size();
-    uint32_t IndexBufferSize = IndexCount * sizeof(uint32_t);*/
-
 SDL_GPUBuffer *GpuMesh::CreateVertexBuffer(SDL_GPUDevice *gpu) {
     if (VertexBuffer) {
         return VertexBuffer;
@@ -82,7 +73,7 @@ void GpuMesh::Upload(SDL_GPUDevice *gpu, SDL_GPUCopyPass *copyPass) {
     SDL_GPUBufferRegion indexDestination{.buffer = CreateIndexBuffer(gpu), .offset = 0, .size = IndexBufferSize};
     SDL_UploadToGPUBuffer(copyPass, &indexSource, &indexDestination, false);
 
-    // DestroyTransferBuffer(gpu);
+    DestroyTransferBuffer(gpu);
 }
 
 void GpuMesh::Destroy(SDL_GPUDevice *gpu) {

@@ -54,30 +54,8 @@ const Instance::ClassDefinition Instance::DEFINITION = {
             },
         },
     .Methods = {
-        {"GetFullName", Method::Wrap<&Instance::GetFullName>()}
-        // {
-        //     "IsA",
-        //     MethodDefinition{
-        //         .Arguments = {MethodArgument{.Name = "className", .Type = Types::STRING}},
-        //         .Returns = {MethodReturn{.Type = Types::BOOLEAN}},
-        //         .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
-        //             auto className = std::any_cast<std::string_view>(arguments[0]);
-        //             auto currentDefinition = ClassRegistry::GetDefinition(instance);
-        //             while (true) {
-        //                 if (currentDefinition->Name == className) {
-        //                     return {true};
-        //                 }
-
-        //                 auto superclass = currentDefinition->Superclass;
-        //                 if (superclass.has_value()) {
-        //                     currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
-        //                 } else {
-        //                     return {false};
-        //                 }
-        //             }
-        //         },
-        //     },
-        // },
+        {"IsA", Method::Wrap<&Instance::GetFullName>()},
+        {"GetFullName", Method::Wrap<&Instance::GetFullName>()},
         // {
         //     "GetChildren",
         //     MethodDefinition{
@@ -104,15 +82,6 @@ const Instance::ClassDefinition Instance::DEFINITION = {
         //                 result.emplace_back(instance.get());
         //             }
         //             return {result};
-        //         },
-        //     },
-        // },
-        // {
-        //     "GetFullName",
-        //     MethodDefinition{
-        //         .Returns = {MethodReturn{.Type = Types::STRING}},
-        //         .Invoke = [](Instance *instance, std::vector<std::any> arguments) -> std::vector<std::any> {
-        //             return {instance->GetFullName()};
         //         },
         //     },
         // },
