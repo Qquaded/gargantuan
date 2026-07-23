@@ -1,12 +1,17 @@
 #include "gargantuan/Engine.hpp"
+#include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
+#include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 #include <cstdlib>
 #include <cstring>
 #include <fwd.hpp>
@@ -14,22 +19,35 @@
 #include <lua.h>
 #include <luacode.h>
 #include <lualib.h>
+#include <memory>
+#include <stdexcept>
 
 namespace gargantuan {
 
 Engine::Engine() {
-    dataModel = std::make_shared<DataModel>();
-    dataModel->Name = "Welcome To Hell";
-    StackValue<Instance::Pointer>::Push(ScriptEngine.L, dataModel);
-    lua_pushvalue(ScriptEngine.L, -1);
-    lua_setglobal(ScriptEngine.L, "game");
-
-    auto workspace = dataModel->GetService("Workspace");
-    if (workspace) {
-        SDL_Log("workspace exists %s", workspace->GetFullName().data());
-    } else {
-        SDL_Log("service provider is fucked??");
+    this->Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
+    if (!Gpu) {
+        throw std::runtime_error("Failed to instantiate GPU");
     }
+
+    this->Window = SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE);
+    if (!Window) {
+        throw std::runtime_error("Failed to instantiate window");
+    }
+
+    this->MeshProvider = new class MeshProvider(Gpu);
+    this->Renderer = new class Renderer(Window, Gpu, *MeshProvider);
+    this->ScriptEngine = new class ScriptEngine();
+
+    DataModel = std::make_shared<gargantuan::DataModel>();
+    DataModel->Name = "Welcome To Hell";
+
+    auto workspace = this->DataModel->GetService("Workspace");
+    this->Workspace = std::dynamic_pointer_cast<gargantuan::Workspace>(workspace);
+
+    StackValue<Instance::Pointer>::Push(ScriptEngine->L, this->DataModel);
+    lua_pushvalue(ScriptEngine->L, -1);
+    lua_setglobal(ScriptEngine->L, "game");
 }
 
 Engine::~Engine() {
@@ -38,9 +56,9 @@ Engine::~Engine() {
     SDL_DestroyWindow(Window);
 
     SDL_Log("destroying mesh provider");
-    MeshProvider.Destroy();
+    MeshProvider->Destroy();
 
-    Renderer.Destroy();
+    Renderer->Destroy();
 
     SDL_Log("destroying gpu %s", Gpu ? "exists" : "not exist");
     SDL_DestroyGPUDevice(Gpu);
@@ -60,7 +78,7 @@ void Engine::ProcessEvent(SDL_Event event) {
         ViewportSize.x = event.window.data1;
         ViewportSize.y = event.window.data2;
         SDL_Log("Resizing: %0.fx%0.f", ViewportSize.x, ViewportSize.y);
-        Renderer.OnWindowResize(ViewportSize.x, ViewportSize.y);
+        Renderer->OnWindowResize(ViewportSize.x, ViewportSize.y);
         break;
 
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -146,10 +164,10 @@ void Engine::Step() {
         CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
     }
 
-    MeshProvider.UploadToGpu();
-    Renderer.Draw(
+    MeshProvider->UploadToGpu();
+    Renderer->Draw(
         Renderer::DrawInfo{
-            .worldModel = dataModel,
+            .worldModel = Workspace,
             .projectionMatrix = GetProjectionMatrix(),
             .viewMatrix = GetViewMatrix(),
         }
@@ -157,7 +175,7 @@ void Engine::Step() {
 
     LastTick = CurrentTick;
 
-    ScriptEngine.Step();
+    ScriptEngine->Step();
 }
 
 } // namespace gargantuan

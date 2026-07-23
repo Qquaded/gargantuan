@@ -4,6 +4,7 @@
 #include "gargantuan/render/MeshProvider.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
@@ -15,21 +16,23 @@ namespace gargantuan {
 
 class Engine {
   public:
+    bool IsRunning = true;
     glm::vec2 ViewportSize = glm::vec2(720, 540);
-    SDL_Window *Window = SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE);
-    SDL_GPUDevice *Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
-    MeshProvider MeshProvider = gargantuan::MeshProvider(Gpu);
-    Renderer Renderer = gargantuan::Renderer(Window, Gpu, MeshProvider);
-    ScriptEngine ScriptEngine;
+    std::shared_ptr<DataModel> DataModel = nullptr;
+    std::shared_ptr<Workspace> Workspace = nullptr;
+
+    SDL_Window *Window;
+    SDL_GPUDevice *Gpu;
+    MeshProvider *MeshProvider;
+    Renderer *Renderer;
+    ScriptEngine *ScriptEngine;
 
     Engine();
     ~Engine();
 
-    std::shared_ptr<DataModel> dataModel;
-    bool IsRunning = true;
+    float GetDeltaTime() { return (CurrentTick - LastTick) / 1000.0f; };
     void ProcessEvent(SDL_Event event);
     void Step();
-    float GetDeltaTime() { return (CurrentTick - LastTick) / 1000.0f; };
 
   private:
     uint64_t CurrentTick;
