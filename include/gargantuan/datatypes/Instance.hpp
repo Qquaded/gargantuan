@@ -51,7 +51,7 @@ class Instance : public std::enable_shared_from_this<Instance>, public Userdata<
 
     std::string GetFullName();
     bool IsA(std::string_view className);
-    std::vector<std::shared_ptr<Instance>> GetChildren();
+    std::vector<std::shared_ptr<Instance>> &GetChildren();
     std::vector<std::shared_ptr<Instance>> GetDescendants();
     std::shared_ptr<Instance> FindFirstChild(std::string_view name, bool recursive = false);
     std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className);

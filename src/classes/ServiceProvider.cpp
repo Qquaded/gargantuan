@@ -31,6 +31,8 @@ Instance::Pointer ServiceProvider::GetService(std::string_view nameView) {
                 throw std::runtime_error("Missing constructor for service " + std::string(name));
             }
             auto service = constructor->second();
+            // FIXME: instances should auto set names but im lazy
+            service->Name = name;
             service->SetParent(this->shared_from_this());
             Services.emplace(name, service);
             return service;

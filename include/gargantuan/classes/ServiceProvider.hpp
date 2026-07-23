@@ -13,7 +13,7 @@ class ServiceProvider : public Instance {
     typedef std::unordered_map<std::string, std::function<Instance::Pointer()>> ServiceConstructors;
 
     static const ClassDefinition DEFINITION;
-    std::unordered_map<std::string_view, Instance::Pointer> Services;
+    std::unordered_map<std::string, Instance::Pointer> Services;
 
     virtual Instance::Pointer FindService(std::string_view name);
     virtual Instance::Pointer GetService(std::string_view name);

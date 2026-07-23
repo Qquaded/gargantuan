@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(gargantuan CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -32,12 +32,12 @@ set(LUAU_BUILD_CLI OFF CACHE BOOL "" FORCE)
 set(LUAU_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 set(SDL_SHARED ON CACHE BOOL "" FORCE)
+set(GLM_ENABLE_CXX_20 ON CACHE BOOL "" FORCE)
 
 add_subdirectory(vendor/box3d)
 add_subdirectory(vendor/freetype)
 add_subdirectory(vendor/glm)
 add_subdirectory(vendor/luau)
-# add_subdirectory(vendor/magicenum)
 add_subdirectory(vendor/sdl)
 add_subdirectory(vendor/spdlog)
 

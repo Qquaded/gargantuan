@@ -15,6 +15,54 @@
 
 namespace gargantuan {
 
+// https://youtu.be/hP0NCTU81A4?si=aE-SV_ifAW745_M8
+void DumpLuaStack(lua_State *L) {
+    int stackSize = lua_gettop(L);
+
+    printf("Lua Stack Contents:\n");
+    printf("Stack Size: %d\n", stackSize);
+
+    for (int i = stackSize; i >= 1; --i) {
+        int type = lua_type(L, i);
+        printf("[%d] ", i);
+
+        switch (type) {
+        case LUA_TNIL:
+            printf("nil\n");
+            break;
+        case LUA_TBOOLEAN:
+            printf(lua_toboolean(L, i) ? "true\n" : "false\n");
+            break;
+        case LUA_TNUMBER:
+            printf("%g\n", lua_tonumber(L, i));
+            break;
+        case LUA_TSTRING:
+            printf("%s\n", lua_tostring(L, i));
+            break;
+        case LUA_TTABLE:
+            printf("table\n");
+            break;
+        case LUA_TFUNCTION:
+            printf("function\n");
+            break;
+        case LUA_TUSERDATA:
+            printf("userdata\n");
+            break;
+        case LUA_TTHREAD:
+            printf("thread\n");
+            break;
+        case LUA_TLIGHTUSERDATA:
+            printf("lightuserdata\n");
+            break;
+        default:
+            printf("unknown\n");
+            break;
+        }
+    }
+
+    printf("----------\n");
+}
+
 static const luaL_Reg SCRIPT_LIBS[] = {
     {"", OpenLibBase},
 

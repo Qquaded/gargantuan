@@ -1,8 +1,9 @@
+#include <SDL3/SDL_log.h>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/classes/BasePart.hpp"
 #include "gargantuan/render/Mesh.hpp"
+#include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,16 +17,6 @@ namespace gargantuan {
 
 Renderer::Renderer(SDL_Window *window, SDL_GPUDevice *gpu, class MeshProvider &meshProvider)
     : Window(window), Gpu(gpu), MeshProvider(meshProvider) {
-    if (!Window) {
-        SDL_Log("Missing Window");
-        std::abort();
-    }
-
-    if (!Gpu) {
-        SDL_Log("Missing GPU");
-        std::abort();
-    }
-
     if (!SDL_ClaimWindowForGPUDevice(Gpu, Window)) {
         SDL_Log("SDL_ClaimWindowForGPUDevice failed: %s", SDL_GetError());
         std::abort();
@@ -248,8 +239,11 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, &depthTarget);
     SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
     {
+        // auto descendants = context.info.worldModel->GetDescendants();
+        // SDL_Log("Workspace descendant count: %zu", descendants.size());
         for (auto ptr : context.info.worldModel->GetDescendants()) {
             auto instance = ptr.get();
+            // SDL_Log("inst %s", ptr->GetFullName().data());
 
             if (instance->IsA("BasePart")) {
                 auto part = instance->Cast<BasePart>();

@@ -9,6 +9,9 @@
 
 namespace gargantuan {
 
+// temp
+void DumpLuaStack(lua_State *L);
+
 int OpenLibBase(lua_State *L);
 int OpenLibCFrame(lua_State *L);
 int OpenLibColor3(lua_State *L);

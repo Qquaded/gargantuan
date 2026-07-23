@@ -1,5 +1,6 @@
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/ClassRegistry.hpp"
+#include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
@@ -9,7 +10,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -47,14 +47,20 @@ const Instance::ClassDefinition Instance::DEFINITION = {
                     },
                     +[](lua_State *L, Instance *instance) -> int {
                         Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
+                        SDL_Log(
+                            "Setting Parent of %s -> target raw ptr: %s", instance->GetFullName().data(),
+                            newParent->GetFullName().data()
+                        );
+                        SDL_Log("children old size: %zu", newParent->GetChildren().size());
                         instance->SetParent(newParent);
+                        SDL_Log("children new size: %zu", newParent->GetChildren().size());
                         return 0;
                     },
                 },
             },
         },
     .Methods = {
-        {"IsA", Method::Wrap<&Instance::GetFullName>()},
+        {"IsA", Method::Wrap<&Instance::IsA>()},
         {"GetFullName", Method::Wrap<&Instance::GetFullName>()},
         {"GetChildren", Method::Wrap<&Instance::GetChildren>()},
         {"GetDescendants", Method::Wrap<&Instance::GetDescendants>()},
@@ -64,36 +70,21 @@ const Instance::ClassDefinition Instance::DEFINITION = {
 };
 
 void Instance::SetParent(std::shared_ptr<Instance> newParent) {
-    auto newParentInstance = newParent.get();
-
-    if (Parent == newParentInstance) {
-        return;
-    }
-
-    if (newParentInstance == this) {
-        throw std::runtime_error("Cannot set parent to itself");
-    }
-
-    std::shared_ptr<Instance> self = weak_from_this().lock();
-    if (!self) {
-        throw std::runtime_error("Instance must be managed by std::shared_ptr before setting a parent");
-    }
+    std::shared_ptr<Instance> self = shared_from_this();
 
     if (Parent != nullptr) {
         auto &oldChildren = Parent->Children;
-        auto it = std::find_if(oldChildren.begin(), oldChildren.end(), [this](const std::shared_ptr<Instance> &child) {
-            return child.get() == this;
-        });
-
-        if (it != oldChildren.end()) {
-            oldChildren.erase(it);
-        }
+        auto it =
+            std::remove_if(oldChildren.begin(), oldChildren.end(), [this](const std::shared_ptr<Instance> &child) {
+                return child.get() == this;
+            });
+        oldChildren.erase(it, oldChildren.end());
     }
 
-    Parent = newParentInstance;
+    Parent = newParent.get();
 
-    if (Parent != nullptr) {
-        Parent->Children.emplace_back(self);
+    if (newParent != nullptr) {
+        newParent->Children.push_back(self);
     }
 }
 
@@ -166,6 +157,7 @@ int Instance::UserdataNewIndex(lua_State *L) {
         auto property = instance->FindProperty(key);
         if (property.has_value()) {
             if (property->Write) {
+                // DumpLuaStack(L);
                 return property->Write(L, instance.get());
             } else {
                 luaL_error(L, "Property %s is read-only", key);
@@ -245,7 +237,7 @@ bool Instance::IsA(std::string_view className) {
     }
 }
 
-std::vector<std::shared_ptr<Instance>> Instance::GetChildren() { return Children; }
+std::vector<std::shared_ptr<Instance>> &Instance::GetChildren() { return Children; }
 
 void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants) {
     for (const auto &child : Children) {

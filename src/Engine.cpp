@@ -1,5 +1,6 @@
 #include "gargantuan/Engine.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/Part.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
@@ -44,6 +45,8 @@ Engine::Engine() {
 
     auto workspace = this->DataModel->GetService("Workspace");
     this->Workspace = std::dynamic_pointer_cast<gargantuan::Workspace>(workspace);
+
+    SDL_Log("children (c++) has %zu", workspace->GetChildren().size());
 
     StackValue<Instance::Pointer>::Push(ScriptEngine->L, this->DataModel);
     lua_pushvalue(ScriptEngine->L, -1);
@@ -174,7 +177,6 @@ void Engine::Step() {
     );
 
     LastTick = CurrentTick;
-
     ScriptEngine->Step();
 }
 
