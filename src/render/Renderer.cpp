@@ -90,7 +90,7 @@ Renderer::Renderer(SDL_Window *window, SDL_GPUDevice *gpu, class MeshProvider &m
         .rasterizer_state =
             SDL_GPURasterizerState{
                 .fill_mode = SDL_GPU_FILLMODE_FILL,
-                .cull_mode = SDL_GPU_CULLMODE_NONE,
+                .cull_mode = SDL_GPU_CULLMODE_BACK,
                 .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
             },
         .depth_stencil_state =

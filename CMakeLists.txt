@@ -33,6 +33,14 @@ set(LUAU_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 set(SDL_SHARED ON CACHE BOOL "" FORCE)
 
+add_subdirectory(vendor/box3d)
+add_subdirectory(vendor/freetype)
+add_subdirectory(vendor/glm)
+add_subdirectory(vendor/luau)
+# add_subdirectory(vendor/magicenum)
+add_subdirectory(vendor/sdl)
+add_subdirectory(vendor/spdlog)
+
 file(GLOB_RECURSE GARGANTUAN_SOURCES CONFIGURE_DEPENDS
 	"src/*.cpp"
 	"src/*.hpp"
@@ -41,11 +49,11 @@ file(GLOB_RECURSE GARGANTUAN_SOURCES CONFIGURE_DEPENDS
 add_executable(gargantuan ${GARGANTUAN_SOURCES} ${SPIRV_OUTPUTS})
 
 target_include_directories(gargantuan PRIVATE
-	"./"
+	"src"
 	"include"
 )
 
-target_include_directories(gargantuan SYSTEM PUBLIC
+target_include_directories(gargantuan SYSTEM PRIVATE
 	"vendor/box3d/include"
 	"vendor/freetype/include"
 	"vendor/glm/glm"
@@ -61,14 +69,6 @@ target_include_directories(gargantuan SYSTEM PUBLIC
 	"vendor/spdlog/include"
 )
 
-add_subdirectory(vendor/box3d)
-add_subdirectory(vendor/freetype)
-add_subdirectory(vendor/glm)
-add_subdirectory(vendor/luau)
-add_subdirectory(vendor/magicenum)
-add_subdirectory(vendor/sdl)
-add_subdirectory(vendor/spdlog)
-
 target_link_libraries(gargantuan
 	PRIVATE
 		SDL3::SDL3
@@ -82,7 +82,7 @@ target_link_libraries(gargantuan
 		Luau.VM
 		Luau.Require
 		Luau.Config
-		magic_enum
+		# magic_enum
 )
 
 if(WIN32)
