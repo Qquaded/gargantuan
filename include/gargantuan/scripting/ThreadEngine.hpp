@@ -30,11 +30,13 @@ class ThreadEngine {
     };
 
     ThreadEngine(lua_State *mainState);
-    void Step();
     int TakeThreadReference(lua_State *thread);
+    void Step();
     void ResumeThread(lua_State *thread, int threadReference, int argumentCount);
     void QueueScheduledTask(lua_State *thread, ScheduledTask::Type type, double delaySeconds, int argumentCount);
     void QueueDeferredTask(lua_State *thread, int argumentCount);
+
+    static ThreadEngine *Get(lua_State *L);
 
   private:
     lua_State *L;

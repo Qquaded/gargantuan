@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/datatypes/Signal.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
 #include <functional>
@@ -37,6 +38,11 @@ class Instance : public std::enable_shared_from_this<Instance>, public Userdata<
     std::vector<std::shared_ptr<Instance>> Children;
     Instance *Parent = nullptr;
     void SetParent(std::shared_ptr<Instance> newParent);
+
+    CLASS_SIGNAL(ChildAdded, Instance::Pointer);
+    CLASS_SIGNAL(ChildRemoved, Instance::Pointer);
+    CLASS_SIGNAL(DescendantAdded, Instance::Pointer);
+    CLASS_SIGNAL(DescendantRemoved, Instance::Pointer);
 
     template <typename T> bool IsClass() const { return dynamic_cast<const T *>(this) != nullptr; }
     template <typename T> T *Cast() const { return dynamic_cast<const T *>(this); }

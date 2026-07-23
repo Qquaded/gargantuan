@@ -1,6 +1,6 @@
 #include "gargantuan/Engine.hpp"
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/classes/Part.hpp"
+#include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
@@ -31,7 +31,8 @@ Engine::Engine() {
         throw std::runtime_error("Failed to instantiate GPU");
     }
 
-    this->Window = SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE);
+    this->Window =
+        SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
     if (!Window) {
         throw std::runtime_error("Failed to instantiate window");
     }
@@ -45,6 +46,9 @@ Engine::Engine() {
 
     auto workspace = this->DataModel->GetService("Workspace");
     this->Workspace = std::dynamic_pointer_cast<gargantuan::Workspace>(workspace);
+
+    auto runService = this->DataModel->GetService("RunService");
+    this->RunService = std::dynamic_pointer_cast<gargantuan::RunService>(runService);
 
     SDL_Log("children (c++) has %zu", workspace->GetChildren().size());
 
@@ -170,14 +174,15 @@ void Engine::Step() {
     MeshProvider->UploadToGpu();
     Renderer->Draw(
         Renderer::DrawInfo{
-            .worldModel = Workspace,
-            .projectionMatrix = GetProjectionMatrix(),
-            .viewMatrix = GetViewMatrix(),
+            .WorldRoot = std::static_pointer_cast<WorldRoot>(Workspace),
+            .ProjectionMatrix = GetProjectionMatrix(),
+            .ViewMatrix = GetViewMatrix(),
         }
     );
 
     LastTick = CurrentTick;
     ScriptEngine->Step();
+    RunService->PreRender->Fire(GetDeltaTime());
 }
 
 } // namespace gargantuan

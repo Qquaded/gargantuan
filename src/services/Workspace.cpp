@@ -4,7 +4,7 @@ namespace gargantuan {
 
 const Workspace::ClassDefinition Workspace::DEFINITION = {
     .Name = "Workspace",
-    .Superclass = "Instance",
+    .Superclass = "WorldRoot",
     .Constructor = ClassDefinition::WrapConstructor<Workspace>(),
 };
 

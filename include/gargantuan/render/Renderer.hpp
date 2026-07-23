@@ -1,12 +1,13 @@
 #pragma once
 
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/render/MeshProvider.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
 
 #include <cstdint>
+#include <memory>
 
 namespace gargantuan {
 
@@ -18,9 +19,9 @@ class Renderer {
     Renderer &operator=(const Renderer &) = delete;
 
     struct DrawInfo {
-        Instance::Pointer worldModel;
-        glm::mat4 projectionMatrix;
-        glm::mat4 viewMatrix;
+        std::shared_ptr<WorldRoot> WorldRoot;
+        glm::mat4 ProjectionMatrix;
+        glm::mat4 ViewMatrix;
     };
 
     void Draw(DrawInfo info);

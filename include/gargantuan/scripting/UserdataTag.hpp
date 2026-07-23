@@ -8,6 +8,8 @@ enum class UserdataTag : int {
     CFrame,
     Enum,
     EnumItem,
+    Signal,
+    SignalConnection,
     Vector3,
 };
 

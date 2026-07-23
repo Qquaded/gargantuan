@@ -1,6 +1,5 @@
 const Workspace = game:GetService("Workspace")
-
-print("workspace", Workspace)
+const RunService = game:GetService("RunService")
 
 const FLOWERS = {
 	Color3.new(0, 1, 1),
@@ -17,13 +16,20 @@ const AMPLITUDE = 0.5
 
 local flowerParts = {}
 
+print("before creating part")
+
 local baseplate = Instance.new("Part")
 baseplate.Name = "Baseplate"
 baseplate.Color = Color3.fromHSV(0, 0, 0.5)
 baseplate.Position = Vector3.new(0, -50, 0)
 baseplate.Size = Vector3.new(2000, 20, 2000)
 baseplate.Transparency = 0
+
+print("after creating part")
+
 baseplate.Parent = Workspace
+
+print("after parenting part")
 
 for index, flowerColor in FLOWERS do
 	local flowerSoul = Instance.new("Part")
@@ -33,7 +39,8 @@ for index, flowerColor in FLOWERS do
 	flowerParts[index] = flowerSoul
 end
 
-while task.wait() do
+print(typeof(RunService.PreRender:Connect(function(dt: number)
+	print("deltatime:", dt)
 	for index, flowerSoul in flowerParts do
 		local step = index / TOTAL_FLOWERS
 		local angle = step * math.tau
@@ -42,4 +49,4 @@ while task.wait() do
 		local y = math.sin(os.clock() + step) * AMPLITUDE
 		flowerSoul.Position = Vector3.new(x, y, z)
 	end
-end
+end)))

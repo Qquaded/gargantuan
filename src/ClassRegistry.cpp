@@ -3,6 +3,7 @@
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/classes/Part.hpp"
 #include "gargantuan/classes/ServiceProvider.hpp"
+#include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/services/RunService.hpp"
 #include "gargantuan/services/Workspace.hpp"
@@ -23,7 +24,7 @@ std::unordered_map<std::type_index, Instance::ClassDefinition> &GetDefinitionsMa
         USE_INSTANCE_DEFINITION(BasePart),   USE_INSTANCE_DEFINITION(DataModel),
         USE_INSTANCE_DEFINITION(Instance),   USE_INSTANCE_DEFINITION(Part),
         USE_INSTANCE_DEFINITION(RunService), USE_INSTANCE_DEFINITION(ServiceProvider),
-        USE_INSTANCE_DEFINITION(Workspace),
+        USE_INSTANCE_DEFINITION(WorldRoot),  USE_INSTANCE_DEFINITION(Workspace),
     };
     return *CLASS_DEFINITIONS;
 }

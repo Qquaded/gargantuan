@@ -1,6 +1,5 @@
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/ClassRegistry.hpp"
-#include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
@@ -47,13 +46,7 @@ const Instance::ClassDefinition Instance::DEFINITION = {
                     },
                     +[](lua_State *L, Instance *instance) -> int {
                         Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
-                        SDL_Log(
-                            "Setting Parent of %s -> target raw ptr: %s", instance->GetFullName().data(),
-                            newParent->GetFullName().data()
-                        );
-                        SDL_Log("children old size: %zu", newParent->GetChildren().size());
                         instance->SetParent(newParent);
-                        SDL_Log("children new size: %zu", newParent->GetChildren().size());
                         return 0;
                     },
                 },
@@ -69,22 +62,23 @@ const Instance::ClassDefinition Instance::DEFINITION = {
     }
 };
 
+// TODO: fire DescendantAdded/Removed signals
 void Instance::SetParent(std::shared_ptr<Instance> newParent) {
     std::shared_ptr<Instance> self = shared_from_this();
 
     if (Parent != nullptr) {
         auto &oldChildren = Parent->Children;
-        auto it =
-            std::remove_if(oldChildren.begin(), oldChildren.end(), [this](const std::shared_ptr<Instance> &child) {
-                return child.get() == this;
-            });
-        oldChildren.erase(it, oldChildren.end());
+        if (auto it = std::find(oldChildren.begin(), oldChildren.end(), self); it != oldChildren.end()) {
+            oldChildren.erase(it);
+            Parent->ChildRemoved->Fire(self);
+        }
     }
 
     Parent = newParent.get();
 
     if (newParent != nullptr) {
         newParent->Children.push_back(self);
+        newParent->ChildAdded->Fire(self);
     }
 }
 
@@ -157,7 +151,6 @@ int Instance::UserdataNewIndex(lua_State *L) {
         auto property = instance->FindProperty(key);
         if (property.has_value()) {
             if (property->Write) {
-                // DumpLuaStack(L);
                 return property->Write(L, instance.get());
             } else {
                 luaL_error(L, "Property %s is read-only", key);

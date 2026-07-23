@@ -1,10 +1,10 @@
 #pragma once
 
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/classes/WorldRoot.hpp"
 
 namespace gargantuan {
 
-class Workspace : public Instance {
+class Workspace : public WorldRoot {
   public:
     static const ClassDefinition DEFINITION;
 };

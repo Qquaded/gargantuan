@@ -1,9 +1,7 @@
-#include <SDL3/SDL_log.h>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include "gargantuan/classes/BasePart.hpp"
-#include "gargantuan/render/Mesh.hpp"
 #include "gargantuan/render/Renderer.hpp"
+#include "gargantuan/render/Mesh.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -239,43 +237,32 @@ void Renderer::DrawMainPass(Renderer::DrawContext &context) {
     auto renderPass = SDL_BeginGPURenderPass(context.commands, &colorTarget, 1, &depthTarget);
     SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
     {
-        // auto descendants = context.info.worldModel->GetDescendants();
-        // SDL_Log("Workspace descendant count: %zu", descendants.size());
-        for (auto ptr : context.info.worldModel->GetDescendants()) {
-            auto instance = ptr.get();
-            // SDL_Log("inst %s", ptr->GetFullName().data());
-
-            if (instance->IsA("BasePart")) {
-                auto part = instance->Cast<BasePart>();
-
-                auto &mesh = part->GetMesh(MeshProvider);
-                if (!mesh || !mesh->VertexBuffer || !mesh->IndexBuffer) {
-                    continue;
-                }
-
-                // SDL_Log("rendering %s", part->Name.data());
-
-                CFrame cframe = part->CFrame;
-                glm::mat4 model = cframe.Rotation;
-                glm::vec3 position = cframe.Position;
-                model[3] = glm::vec4(position, 1.0f);
-                model = glm::scale(model, part->Size);
-
-                Renderer::PushUniforms uniforms{
-                    .mvp = context.info.projectionMatrix * context.info.viewMatrix * model,
-                    .rgba = glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency)
-                };
-
-                SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
-
-                SDL_GPUBufferBinding vertexBinding{.buffer = mesh->VertexBuffer, .offset = 0};
-                SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
-
-                SDL_GPUBufferBinding indexBinding{.buffer = mesh->IndexBuffer, .offset = 0};
-                SDL_BindGPUIndexBuffer(renderPass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-
-                SDL_DrawGPUIndexedPrimitives(renderPass, mesh->IndexCount, 1, 0, 0, 0);
+        for (auto part : context.info.WorldRoot->Parts) {
+            auto &mesh = part->GetMesh(MeshProvider);
+            if (!mesh || !mesh->VertexBuffer || !mesh->IndexBuffer) {
+                continue;
             }
+
+            CFrame cframe = part->CFrame;
+            glm::mat4 model = cframe.Rotation;
+            glm::vec3 position = cframe.Position;
+            model[3] = glm::vec4(position, 1.0f);
+            model = glm::scale(model, part->Size);
+
+            Renderer::PushUniforms uniforms{
+                .mvp = context.info.ProjectionMatrix * context.info.ViewMatrix * model,
+                .rgba = glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency)
+            };
+
+            SDL_PushGPUVertexUniformData(context.commands, 0, &uniforms, sizeof(PushUniforms));
+
+            SDL_GPUBufferBinding vertexBinding{.buffer = mesh->VertexBuffer, .offset = 0};
+            SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
+
+            SDL_GPUBufferBinding indexBinding{.buffer = mesh->IndexBuffer, .offset = 0};
+            SDL_BindGPUIndexBuffer(renderPass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+            SDL_DrawGPUIndexedPrimitives(renderPass, mesh->IndexCount, 1, 0, 0, 0);
         }
     }
     SDL_EndGPURenderPass(renderPass);

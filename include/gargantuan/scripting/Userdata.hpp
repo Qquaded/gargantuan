@@ -193,11 +193,12 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
         return *userdata;
     };
 
-    static void Push(lua_State *L, StoredAs value) {
+    static int Push(lua_State *L, StoredAs value) {
         StoredAs *userdata = static_cast<StoredAs *>(
             lua_newuserdatataggedwithmetatable(L, sizeof(StoredAs), (int)This::GetUserdataTag())
         );
         new (userdata) StoredAs(value);
+        return 1;
     };
 };
 
@@ -254,7 +255,7 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
         static inline std::string_view ReflectedTypedef() { return StackValue<This>::ReflectedTypedef(); };            \
         static bool Is(lua_State *L, int idx) { return StackValue<This>::Is(L, idx); };                                \
         static storedType From(lua_State *L, int idx) { return StackValue<This>::From(L, idx); };                      \
-        static void Push(lua_State *L, storedType value) { return StackValue<This>::Push(L, value); };                 \
+        static int Push(lua_State *L, storedType value) { return StackValue<This>::Push(L, value); };                  \
     };
 
 #define USERDATA_STACKVALUE(classType) USERDATA_STACKVALUE_WITH_STORED(classType, classType)

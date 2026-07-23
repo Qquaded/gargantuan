@@ -5,14 +5,6 @@
 
 namespace gargantuan {
 
-ThreadEngine *GetThreadEngine(lua_State *L) {
-    ThreadEngine *threadEngine = static_cast<ThreadEngine *>(lua_touserdata(L, lua_upvalueindex(1)));
-    if (!threadEngine) {
-        throw std::runtime_error("ThreadEngine not found");
-    }
-    return threadEngine;
-}
-
 lua_State *GetThreadFromArgument(lua_State *L, int startIdx, int &argumentsToPass) {
     int argumentCount = lua_gettop(L);
 
@@ -54,7 +46,7 @@ int LibTask_spawn(lua_State *L) {
     int argumentsToPass;
     lua_State *thread = GetThreadFromArgument(L, 1, argumentsToPass);
 
-    auto threadEngine = GetThreadEngine(L);
+    auto threadEngine = ThreadEngine::Get(L);
     threadEngine->ResumeThread(thread, threadEngine->TakeThreadReference(thread), argumentsToPass);
 
     return 1;
@@ -64,7 +56,7 @@ int LibTask_defer(lua_State *L) {
     int argumentsToPass;
     lua_State *thread = GetThreadFromArgument(L, 1, argumentsToPass);
 
-    auto threadEngine = GetThreadEngine(L);
+    auto threadEngine = ThreadEngine::Get(L);
     threadEngine->QueueDeferredTask(thread, argumentsToPass);
 
     return 1;
@@ -76,7 +68,7 @@ int LibTask_delay(lua_State *L) {
     int argumentsToPass;
     lua_State *thread = GetThreadFromArgument(L, 2, argumentsToPass);
 
-    auto threadEngine = GetThreadEngine(L);
+    auto threadEngine = ThreadEngine::Get(L);
     threadEngine->QueueScheduledTask(thread, ThreadEngine::ScheduledTask::Type::Delay, delaySeconds, argumentsToPass);
 
     return 1;
@@ -87,7 +79,7 @@ int LibTask_desynchronize(lua_State *L) { luaL_error(L, "not yet implemented"); 
 int LibTask_synchronize(lua_State *L) { luaL_error(L, "not yet implemented"); }
 
 int LibTask_wait(lua_State *L) {
-    auto threadEngine = GetThreadEngine(L);
+    auto threadEngine = ThreadEngine::Get(L);
     double delaySeconds = luaL_optnumber(L, 1, 0.0f);
     lua_settop(L, 0);
     threadEngine->QueueScheduledTask(L, ThreadEngine::ScheduledTask::Type::Wait, delaySeconds, 1);
@@ -102,17 +94,11 @@ luaL_Reg LibTask[]{
     {"synchronize", LibTask_synchronize},
     {"spawn", LibTask_spawn},
     {"wait", LibTask_wait},
+    {nullptr, nullptr}
 };
 
 int OpenLibTask(lua_State *L, ThreadEngine *threadEngine) {
-    lua_newtable(L);
-    for (luaL_Reg lib : LibTask) {
-        lua_pushlightuserdata(L, threadEngine);
-        lua_pushcclosure(L, lib.func, lib.name, 1);
-        lua_setfield(L, -2, lib.name);
-    }
-    lua_setreadonly(L, -1, true);
-    lua_setglobal(L, "task");
+    luaL_register(L, "task", LibTask);
     return 0;
 }
 

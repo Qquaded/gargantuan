@@ -2,6 +2,7 @@
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/datatypes/Signal.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Compiler.h>
@@ -12,6 +13,7 @@
 #include <luacode.h>
 #include <lualib.h>
 #include <stdexcept>
+#include <variant>
 
 namespace gargantuan {
 
@@ -87,6 +89,9 @@ ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
     Color3::CreateUserdataMetatable(L);
     Vector3::CreateUserdataMetatable(L);
     Instance::CreateUserdataMetatable(L);
+    Signal<std::monostate>::CreateUserdataMetatable(L);
+    SignalConnection<std::monostate>::CreateUserdataMetatable(L);
+
     const luaL_Reg *lib = SCRIPT_LIBS;
     for (; lib->func; lib++) {
         lua_pushcfunction(L, lib->func, nullptr);

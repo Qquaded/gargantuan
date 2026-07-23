@@ -4,6 +4,7 @@
 #include "gargantuan/render/MeshProvider.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/services/RunService.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
@@ -20,6 +21,7 @@ class Engine {
     glm::vec2 ViewportSize = glm::vec2(720, 540);
     std::shared_ptr<DataModel> DataModel = nullptr;
     std::shared_ptr<Workspace> Workspace = nullptr;
+    std::shared_ptr<RunService> RunService = nullptr;
 
     SDL_Window *Window;
     SDL_GPUDevice *Gpu;

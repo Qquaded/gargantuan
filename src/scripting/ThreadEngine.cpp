@@ -10,6 +10,26 @@ double GetCurrentTime() {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 };
 
+ThreadEngine::ThreadEngine(lua_State *mainState) : L(mainState) {
+    lua_pushstring(L, "gargantuan::ThreadEngine");
+    lua_pushlightuserdata(L, this);
+    lua_settable(L, LUA_REGISTRYINDEX);
+};
+
+ThreadEngine *ThreadEngine::Get(lua_State *L) {
+    lua_pushstring(L, "gargantuan::ThreadEngine");
+    lua_gettable(L, LUA_REGISTRYINDEX);
+
+    auto *engine = static_cast<ThreadEngine *>(lua_tolightuserdata(L, -1));
+    lua_pop(L, 1);
+
+    if (!engine) {
+        throw std::runtime_error("Missing gargantuan::ThreadEngine");
+    }
+
+    return engine;
+}
+
 int ThreadEngine::TakeThreadReference(lua_State *thread) {
     lua_pushthread(thread);
     lua_xmove(thread, L, 1);
@@ -34,8 +54,6 @@ void ThreadEngine::ResumeThread(lua_State *thread, int threadReference, int argu
         SDL_Log("Thread error: %s", lua_tostring(thread, -1));
     }
 }
-
-ThreadEngine::ThreadEngine(lua_State *mainState) : L(mainState) {};
 
 void ThreadEngine::Step() {
     auto currentTime = GetCurrentTime();
