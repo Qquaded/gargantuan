@@ -131,7 +131,7 @@ void Vector3_register(lua_State *L) {
     lua_pushcfunction(L, Vector3_index, "Vector3.__index");
     lua_setfield(L, -2, "__index");
 
-    lua_pushcfunction(L, Vector3_namecall, "Vector3.__namecall");
+    lua_pushcfunction(L, Vector3_namecall, "__namecall");
     lua_setfield(L, -2, "__namecall");
 
     lua_setreadonly(L, -1, true);
