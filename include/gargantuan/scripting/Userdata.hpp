@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
 
@@ -119,6 +120,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
         Class *instance = fromStackValue(L, 1);
         const char *key = lua_namecallatom(L, nullptr);
         if (!key || !instance) {
+            luaL_error(L, "Missing instance or method name");
             return 0;
         }
 
@@ -128,6 +130,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
             return method.Call(L, instance);
         }
 
+        luaL_error(L, "Unknown method named %s", key);
         return 0;
     };
 
@@ -137,7 +140,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     };
 
     static void CreateUserdataMetatable(lua_State *L) {
-        lua_createtable(L, 0, 5);
+        lua_createtable(L, 0, 0);
 
         lua_pushstring(L, Class::GetUserdataType().data());
         lua_setfield(L, -2, "__type");
@@ -176,6 +179,7 @@ template <typename Class, typename StoredAs = Class> class Userdata {
             lua_setfield(L, -2, name.data());
         }
 
+        lua_pushvalue(L, -1);
         lua_setreadonly(L, -1, true);
         lua_setuserdatametatable(L, (int)Class::GetUserdataTag());
     };
@@ -216,6 +220,7 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
     };
 
     static int Push(lua_State *L, StoredAs value) {
+        // DumpLuaStack(L);
         StoredAs *userdata = static_cast<StoredAs *>(
             lua_newuserdatataggedwithmetatable(L, sizeof(StoredAs), (int)This::GetUserdataTag())
         );

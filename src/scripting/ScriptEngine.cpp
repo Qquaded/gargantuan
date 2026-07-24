@@ -5,6 +5,7 @@
 #include "gargantuan/datatypes/Signal.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
+#include <Luau/Common.h>
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
@@ -76,10 +77,17 @@ static const luaL_Reg SCRIPT_LIBS[] = {
     {nullptr, nullptr},
 };
 
+static int LuauAssertHandler(const char *expression, const char *file, int line, const char *function) {
+    SDL_Log("Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function);
+    assert(false);
+}
+
 ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
     if (L == nullptr) {
         throw std::runtime_error("Failed to instantiate Luau VM");
     }
+
+    Luau::assertHandler() = LuauAssertHandler;
 
     luaL_openlibs(L);
     OpenLibTask(L, &ThreadEngine);

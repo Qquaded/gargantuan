@@ -1,11 +1,13 @@
 #pragma once
 
+#include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
 
 #include <SDL3/SDL_log.h>
 #include <any>
+#include <cstddef>
 #include <functional>
 #include <lua.h>
 #include <lualib.h>
@@ -29,17 +31,21 @@ struct SignalConnection : public Userdata<SignalConnection, std::shared_ptr<Sign
     typedef std::any CallbackArgument;
     typedef std::function<void(CallbackArgument)> CallbackType;
 
-    SignalConnection(CallbackType callback);
+    SignalConnection(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF);
 
     CallbackType Callback;
+    lua_State *L;
+    int CallbackReference;
     bool Connected = true;
+
     void Disconnect();
-    void Reconnect();
 
     static std::string_view GetUserdataType();
     static UserdataTag GetUserdataTag();
     static const SignalConnection::UserdataProperties &GetUserdataProperties();
     static const SignalConnection::UserdataMethods &GetUserdataMethods();
+
+    static int LGarbageCollect(lua_State *L, SignalConnection *signal);
 };
 
 // NOTE: Split the Luau implementation into BaseSignal a class to avoid
@@ -63,8 +69,8 @@ struct BaseSignal : public Userdata<BaseSignal, std::shared_ptr<BaseSignal>>,
     std::vector<SignalConnection::Pointer> Connections;
 
   protected:
-    SignalConnection::Pointer Connect(CallbackType callback);
-    SignalConnection::Pointer Once(CallbackType callback);
+    SignalConnection::Pointer Connect(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF);
+    SignalConnection::Pointer Once(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF);
     void Fire(CallbackArgument argument);
 
     virtual int LPushArgument(lua_State *L, CallbackArgument value) = 0;
@@ -84,13 +90,19 @@ template <typename T> struct Signal : BaseSignal {
     typedef T CallbackArgument;
     typedef std::function<void(T)> CallbackType;
 
-    SignalConnection::Pointer Connect(CallbackType callback) {
+    SignalConnection::Pointer
+    Connect(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF) {
         SDL_Log("connecting");
-        return BaseSignal::Connect([callback](std::any value) { callback(std::any_cast<T>(value)); });
+        return BaseSignal::Connect(
+            [callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
+        );
     }
 
-    SignalConnection::Pointer Once(CallbackType callback) {
-        return BaseSignal::Once([callback](std::any value) { callback(std::any_cast<T>(value)); });
+    SignalConnection::Pointer Once(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF) {
+
+        return BaseSignal::Once(
+            [callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
+        );
     }
 
     void Fire(T argument) {

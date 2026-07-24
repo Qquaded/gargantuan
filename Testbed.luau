@@ -9,6 +9,14 @@ Creates a rotating wireframe sphere with latitude and longitude rings.
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
+local baseplate = Instance.new("Part")
+baseplate.Name = "Baseplate"
+baseplate.Anchored = true
+baseplate.Color = Color3.fromHSV(0, 0, 0.5)
+baseplate.Size = Vector3.new(512, 20, 512)
+baseplate.Position = Vector3.new(0, -20, 0)
+baseplate.Parent = Workspace
+
 -- CONFIG
 local radius = 15
 local segments = 16
@@ -42,7 +50,7 @@ local function connectPoints(p1: Vector3, p2: Vector3)
 	end
 	local mid = (p1 + p2) / 2
 	local part = createPart()
-	print(typeof(thickness), typeof(dir.Magnitude), thickness, dir)
+	-- print(typeof(thickness), typeof(dir.Magnitude), thickness, dir)
 	part.Size = Vector3.new(thickness, thickness, dir.Magnitude)
 	part.CFrame = CFrame.new(mid, p2)
 	table.insert(parts, part)
@@ -97,16 +105,16 @@ end
 
 -- Rigid rotation about center
 local angle = 0
--- RunService.PreRender:Connect(function(dt)
-local last = os.clock()
-while task.wait() do
-	local now = os.clock()
-	dt = now - last
+RunService.PreRender:Connect(function(dt)
+	-- 	-- local last = os.clock()
+	-- 	-- while task.wait() do
+	-- 	-- local now = os.clock()
+	-- 	-- dt = now - last
 	angle += dt * math.rad(20)
 	local spin = centerCF * CFrame.Angles(angle * 0.5, angle, 0)
 	for i = 1, #parts do
 		parts[i].CFrame = spin * rel[i]
 	end
-	last = now
-end
--- end)
+	-- 	-- last = now
+	-- 	-- end
+end)
