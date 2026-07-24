@@ -89,7 +89,6 @@ ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
     Color3::CreateUserdataMetatable(L);
     Instance::CreateUserdataMetatable(L);
     SignalConnection::CreateUserdataMetatable(L);
-    Vector3::CreateUserdataMetatable(L);
 
     const luaL_Reg *lib = SCRIPT_LIBS;
     for (; lib->func; lib++) {

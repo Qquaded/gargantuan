@@ -11,21 +11,22 @@ const Instance::ClassDefinition BasePart::DEFINITION = {
     .Superclass = "Instance",
     .Properties = {
         USERDATA_READWRITE_PROP(BasePart, Anchored, bool),
+        USERDATA_READWRITE_PROP(BasePart, CanCollide, bool),
         USERDATA_READWRITE_PROP(BasePart, CFrame, gargantuan::CFrame),
         USERDATA_READWRITE_PROP(BasePart, Color, gargantuan::Color3),
-        USERDATA_READWRITE_PROP(BasePart, Size, gargantuan::Vector3),
+        USERDATA_READWRITE_PROP(BasePart, Size, glm::vec3),
         USERDATA_READWRITE_PROP(BasePart, Transparency, float),
         {
             "Position",
             {
                 [](lua_State *L, Instance *instance) -> int {
                     auto part = instance->Cast<BasePart>();
-                    StackValue<Vector3>::Push(L, part->CFrame.Position);
+                    StackValue<glm::vec3>::Push(L, part->CFrame.Position);
                     return 1;
                 },
                 [](lua_State *L, Instance *instance) -> int {
                     auto part = instance->Cast<BasePart>();
-                    part->CFrame = gargantuan::CFrame(StackValue<Vector3>::From(L, -1), part->CFrame.Rotation);
+                    part->CFrame = gargantuan::CFrame(StackValue<glm::vec3>::From(L, -1), part->CFrame.Rotation);
                     return 0;
                 },
             },

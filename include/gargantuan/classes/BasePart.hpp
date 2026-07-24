@@ -14,6 +14,7 @@ class BasePart : public Instance {
     static const ClassDefinition DEFINITION;
 
     bool Anchored = false;
+    bool CanCollide = true;
     CFrame CFrame;
     Color3 Color;
     glm::vec3 Size = glm::vec3(2, 1, 4);

@@ -1,35 +1,24 @@
-// (In Igblon voice)
-// I am well aware there is a Luau vector type
-// I will be ignoring this information for now
-//
-// "uuh huu its less performant" Go make an engine urself then give feedback
-// (looks at ross general)
-//
-// Plus im not bothered to implement more of this for now
-// Proper vec3 impl will be with the vector builtin, this is lit to get a demo
-// of gargantuan up
-//
-// TODO: Use Luau vector builtin
+// this file is so sad now
+// 24th july 2026
 
-#include "gargantuan/scripting/Userdata.hpp"
+#include "gargantuan/scripting/StackValue.hpp"
 
 #include <glm/glm.hpp>
+#include <lua.h>
 
 namespace gargantuan {
 
-struct Vector3 : Userdata<Vector3> {
-    float X = 0.0f;
-    float Y = 0.0f;
-    float Z = 0.0f;
-
-    Vector3();
-    Vector3(glm::vec3);
-    Vector3(float x = 0.0f, float y = 0.0f, float z = 0.0f);
-
-    operator glm::vec3() const { return {X, Y, Z}; }
-    Vector3 operator-(const Vector3 &other) const { return {X - other.X, Y - other.Y, Z - other.Z}; }
+template <> struct StackValue<glm::vec3> {
+    static inline std::string_view ReflectedTypedef() { return "Vector3"; };
+    static bool Is(lua_State *L, int idx) { return lua_isvector(L, idx); };
+    static glm::vec3 From(lua_State *L, int idx) {
+        auto vec = lua_tovector(L, idx);
+        return glm::vec3{vec[0], vec[1], vec[2]};
+    };
+    static int Push(lua_State *L, glm::vec3 value) {
+        lua_pushvector(L, value.x, value.y, value.z);
+        return 1;
+    };
 };
-
-USERDATA_STACKVALUE(Vector3)
 
 } // namespace gargantuan
