@@ -4,7 +4,6 @@
 #include <lualib.h>
 #include <string>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 namespace gargantuan {
@@ -73,12 +72,12 @@ template <typename... Types> struct StackValue<std::tuple<Types...>> {
 
     static int Push(lua_State *L, const std::tuple<Types...> &tuple) {
         std::apply([L](const auto &...args) { (StackValue<std::decay_t<decltype(args)>>::Push(L, args), ...); }, tuple);
-        // TODO: idk lmao
-        return 0;
+        return sizeof...(Types);
     }
 
     static std::tuple<Types...> From(lua_State *L, int idx) {
-        return FromImpl(L, idx, std::index_sequence_for<Types...>{});
+        int absIdx = lua_absindex(L, idx);
+        return FromImpl(L, absIdx, std::index_sequence_for<Types...>{});
     }
 
   private:

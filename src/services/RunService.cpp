@@ -9,7 +9,6 @@ const RunService::ClassDefinition RunService::DEFINITION = {
     .Superclass = "Instance",
     .Constructor = ClassDefinition::WrapConstructor<RunService>(),
     .Properties = {
-        // FIXME: ????????? ITS GETTING NIL????????? WHAT?????????
         USERDATA_READONLY_PROP(RunService, PreRender, Signal<double>::Pointer),
     }
 };

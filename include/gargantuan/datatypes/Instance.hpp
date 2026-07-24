@@ -51,6 +51,11 @@ class Instance : public std::enable_shared_from_this<Instance>, public Userdata<
 
     std::optional<This::Property> FindProperty(std::string_view name);
     std::optional<This::Method> FindMethod(std::string_view name);
+
+    static std::string_view GetUserdataType();
+    static UserdataTag GetUserdataTag();
+    static const Instance::UserdataProperties &GetUserdataProperties();
+    static const Instance::UserdataMethods &GetUserdataMethods();
     static int UserdataIndex(lua_State *L);
     static int UserdataNewIndex(lua_State *L);
     static int UserdataNamecall(lua_State *L);

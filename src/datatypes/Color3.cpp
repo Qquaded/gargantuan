@@ -5,10 +5,10 @@
 
 namespace gargantuan {
 
-template <> UserdataTag Color3::This::GetUserdataTag() { return UserdataTag::Color3; };
-template <> std::string_view Color3::This::GetUserdataType() { return "Color3"; };
+UserdataTag Color3::GetUserdataTag() { return UserdataTag::Color3; };
+std::string_view Color3::GetUserdataType() { return "Color3"; };
 
-template <> const Color3::UserdataProperties &Color3::This::GetUserdataProperties() {
+const Color3::UserdataProperties &Color3::GetUserdataProperties() {
     static const Color3::UserdataProperties PROPERTIES = {
         USERDATA_READONLY_PROP(Color3, R, float),
         USERDATA_READONLY_PROP(Color3, G, float),
@@ -17,7 +17,7 @@ template <> const Color3::UserdataProperties &Color3::This::GetUserdataPropertie
     return PROPERTIES;
 };
 
-template <> const Color3::UserdataMethods &Color3::This::GetUserdataMethods() {
+const Color3::UserdataMethods &Color3::GetUserdataMethods() {
     static const Color3::UserdataMethods METHODS = {};
     return METHODS;
 };

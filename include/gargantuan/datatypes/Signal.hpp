@@ -85,6 +85,7 @@ template <typename T> struct Signal : BaseSignal {
     typedef std::function<void(T)> CallbackType;
 
     SignalConnection::Pointer Connect(CallbackType callback) {
+        SDL_Log("connecting");
         return BaseSignal::Connect([callback](std::any value) { callback(std::any_cast<T>(value)); });
     }
 
@@ -92,7 +93,10 @@ template <typename T> struct Signal : BaseSignal {
         return BaseSignal::Once([callback](std::any value) { callback(std::any_cast<T>(value)); });
     }
 
-    void Fire(T argument) { BaseSignal::Fire(std::any(argument)); }
+    void Fire(T argument) {
+        // SDL_Log("firing");
+        BaseSignal::Fire(std::any(argument));
+    }
 
     int LPushArgument(lua_State *L, std::any value) override {
         return StackValue<T>::Push(L, std::any_cast<T>(value));
@@ -116,10 +120,11 @@ template <typename T> struct StackValue<std::shared_ptr<Signal<T>>> {
     static inline std::string_view ReflectedTypedef() { return StackValue<BaseSignal::Pointer>::ReflectedTypedef(); };
     static bool Is(lua_State *L, int idx) { return StackValue<BaseSignal::Pointer>::Is(L, idx); };
     static std::shared_ptr<Signal<T>> From(lua_State *L, int idx) {
-        return StackValue<BaseSignal::Pointer>::From(L, idx);
+        auto baseSignal = StackValue<BaseSignal::Pointer>::From(L, idx);
+        return std::dynamic_pointer_cast<Signal<T>>(baseSignal);
     };
     static int Push(lua_State *L, std::shared_ptr<Signal<T>> value) {
-        return StackValue<BaseSignal::Pointer>::Push(L, value);
+        return StackValue<BaseSignal::Pointer>::Push(L, std::static_pointer_cast<BaseSignal>(value));
     };
 };
 

@@ -21,6 +21,11 @@ struct Color3 : public Userdata<Color3> {
     static Color3 fromHex(std::string_view hex);
 
     operator glm::vec3() const { return {R, G, B}; }
+
+    static std::string_view GetUserdataType();
+    static UserdataTag GetUserdataTag();
+    static const Color3::UserdataProperties &GetUserdataProperties();
+    static const Color3::UserdataMethods &GetUserdataMethods();
 };
 
 USERDATA_STACKVALUE(Color3);

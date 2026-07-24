@@ -111,10 +111,10 @@ int Vector3_index(lua_State *L) {
     glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
     const char *key = luaL_checkstring(L, 2);
 
-    if (std::strcmp(key, "Magnitude")) {
+    if (std::strcmp(key, "Magnitude") == 0) {
         lua_pushnumber(L, glm::length(self));
         return 1;
-    } else if (std::strcmp(key, "Unit")) {
+    } else if (std::strcmp(key, "Unit") == 0) {
         StackValue<glm::vec3>::Push(L, glm::normalize(self));
         return 1;
     }

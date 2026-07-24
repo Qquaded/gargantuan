@@ -154,6 +154,28 @@ template <typename Class, typename StoredAs = Class> class Userdata {
         lua_pushcfunction(L, Class::UserdataTostring, "__tostring");
         lua_setfield(L, -2, "__tostring");
 
+        for (const auto &[name, method] : Class::GetUserdataMethods()) {
+            if (!name.starts_with("__")) {
+                continue;
+            }
+
+            lua_pushlightuserdata(L, const_cast<Method *>(&method));
+            lua_pushcclosure(
+                L,
+                [](lua_State *L) -> int {
+                    auto *methodPtr = static_cast<Method *>(lua_touserdata(L, lua_upvalueindex(1)));
+                    auto self = fromStackValue(L, 1);
+                    if (!methodPtr || !methodPtr->Call) {
+                        return 0;
+                    }
+                    return methodPtr->Call(L, self);
+                },
+                name.data(), 1
+            );
+
+            lua_setfield(L, -2, name.data());
+        }
+
         lua_setreadonly(L, -1, true);
         lua_setuserdatametatable(L, (int)Class::GetUserdataTag());
     };
@@ -259,5 +281,7 @@ template <typename Class, typename StoredAs> struct StackValue<Userdata<Class, S
     };
 
 #define USERDATA_STACKVALUE(classType) USERDATA_STACKVALUE_WITH_STORED(classType, classType)
+
+#define USERDATA_METHOD(classType, methodName) {#methodName, Method::Wrap<&classType::methodName>()}
 
 } // namespace gargantuan

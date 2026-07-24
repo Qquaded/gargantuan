@@ -1,130 +1,112 @@
-print(Vector3.new(1, 2, 3):Lerp(Vector3.new(2, 4, 6), 0.5))
+-- Advanced Luau scripting
+-- CFrame, math, rotation, RunService, RenderStepped
 
--- -- Advanced Luau scripting
--- -- CFrame, math, rotation, RunService, RenderStepped
+--[[
+Wireframe Sphere Demo (Lat + Lon)
+Creates a rotating wireframe sphere with latitude and longitude rings.
+]]
 
--- --[[
--- Wireframe Sphere Demo (Lat + Lon)
--- Creates a rotating wireframe sphere with latitude and longitude rings.
--- ]]
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
--- local Workspace = game:GetService("Workspace")
--- local RunService = game:GetService("RunService")
+-- CONFIG
+local radius = 15
+local segments = 16
+local thickness = 0.3
+local sphereCenter = Vector3.new(0, 20, 0)
+local color = Color3.fromRGB(255, 255, 0)
+local transparency = 0
 
--- -- CONFIG
--- local radius = 15
--- local segments = 16
--- local thickness = 0.3
--- local sphereCenter = Vector3.new(0, 20, 0)
--- local color = Color3.fromRGB(255, 255, 0)
--- local transparency = 0
+-- Part template
+local function createPart()
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.Size = Vector3.new(thickness, thickness, 1)
+	p.Color = color
+	p.Transparency = transparency
+	p.Parent = Workspace
+	return p
+end
 
--- -- Part template
--- local function createPart()
--- 	local p = Instance.new("Part")
--- 	p.Anchored = true
--- 	p.CanCollide = false
--- 	p.Size = Vector3.new(thickness, thickness, 1)
--- 	p.Color = color
--- 	p.Transparency = transparency
--- 	p.Parent = Workspace
--- 	return p
--- end
+-- Storage
+local parts = {}
+local rel = {}
+local centerCF = CFrame.new(sphereCenter)
 
--- -- Storage
--- local parts = {}
--- local rel = {}
--- local centerCF = CFrame.new(sphereCenter)
+-- Helper to connect two points with a part and cache local-space transform
+local function connectPoints(p1: Vector3, p2: Vector3)
+	local dir = p2 - p1
+	if dir.Magnitude <= 1e-6 then
+		return
+	end
+	local mid = (p1 + p2) / 2
+	local part = createPart()
+	print(typeof(thickness), typeof(dir.Magnitude), thickness, dir)
+	part.Size = Vector3.new(thickness, thickness, dir.Magnitude)
+	part.CFrame = CFrame.new(mid, p2)
+	table.insert(parts, part)
+	table.insert(rel, centerCF:ToObjectSpace(part.CFrame))
+end
 
--- -- Helper to connect two points with a part and cache local-space transform
--- local function connectPoints(p1: Vector3, p2: Vector3)
--- 	-- DEVIATION: no metamethods yet
--- 	local dir = vector.create(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z)
--- 	-- if dir.Magnitude <= 1e-6 then
--- 	-- 	return
--- 	-- end
--- 	local mid = (Vector3.new(p2.X / 2 + p1.X / 2, p2.Y / 2 + p1.Y / 2, p2.Z / 2 + p1.Z / 2))
--- 	local part = createPart()
--- 	part.Size = Vector3.new(thickness, thickness, vector.magnitude(dir))
--- 	part.CFrame = CFrame.new(mid, p2)
--- 	table.insert(parts, part)
--- 	table.insert(rel, centerCF) --centerCF:ToObjectSpace(part.CFrame))
--- end
+-- Longitude (vertical great circles)
+for i = 0, segments - 1 do
+	local phi = 2 * math.pi * i / segments
+	for j = 0, segments - 1 do
+		local theta1 = math.pi * j / segments
+		local theta2 = math.pi * (j + 1) / segments
 
--- -- Longitude (vertical great circles)
--- for i = 0, segments - 1 do
--- 	local phi = 2 * math.pi * i / segments
--- 	for j = 0, segments - 1 do
--- 		local theta1 = math.pi * j / segments
--- 		local theta2 = math.pi * (j + 1) / segments
+		local p1 = Vector3.new(
+			radius * math.sin(theta1) * math.cos(phi),
+			radius * math.cos(theta1),
+			radius * math.sin(theta1) * math.sin(phi)
+		) + sphereCenter
 
--- 		-- DEVIATION: no metamethods yet
--- 		-- local p1 = Vector3.new(
--- 		-- 	radius * math.sin(theta1) * math.cos(phi),
--- 		-- 	radius * math.cos(theta1),
--- 		-- 	radius * math.sin(theta1) * math.sin(phi)
--- 		-- ) + sphereCenter
--- 		local p1 = Vector3.new(
--- 			radius * math.sin(theta1) * math.cos(phi) + sphereCenter.X,
--- 			radius * math.cos(theta1) + sphereCenter.Y,
--- 			radius * math.sin(theta1) * math.sin(phi) + sphereCenter.Z
--- 		)
+		local p2 = Vector3.new(
+			radius * math.sin(theta2) * math.cos(phi),
+			radius * math.cos(theta2),
+			radius * math.sin(theta2) * math.sin(phi)
+		) + sphereCenter
 
--- 		-- local p2 = Vector3.new(
--- 		-- 	radius * math.sin(theta2) * math.cos(phi),
--- 		-- 	radius * math.cos(theta2),
--- 		-- 	radius * math.sin(theta2) * math.sin(phi)
--- 		-- ) + sphereCenter
--- 		local p2 = Vector3.new(
--- 			radius * math.sin(theta2) * math.cos(phi) + sphereCenter.X,
--- 			radius * math.cos(theta2) + sphereCenter.Y,
--- 			radius * math.sin(theta2) * math.sin(phi) + sphereCenter.Z
--- 		)
+		connectPoints(p1, p2)
+	end
+end
 
--- 		connectPoints(p1, p2)
--- 	end
--- end
+-- Latitude (horizontal rings)
+for j = 1, segments - 1 do
+	local theta = math.pi * j / segments
+	for i = 0, segments - 1 do
+		local phi1 = 2 * math.pi * i / segments
+		local phi2 = 2 * math.pi * (i + 1) / segments
 
--- -- Latitude (horizontal rings)
--- for j = 1, segments - 1 do
--- 	local theta = math.pi * j / segments
--- 	for i = 0, segments - 1 do
--- 		local phi1 = 2 * math.pi * i / segments
--- 		local phi2 = 2 * math.pi * (i + 1) / segments
+		local p1 = Vector3.new(
+			radius * math.sin(theta) * math.cos(phi1),
+			radius * math.cos(theta),
+			radius * math.sin(theta) * math.sin(phi1)
+		) + sphereCenter
 
--- 		-- DEVIATION: no metamethods yet
--- 		-- local p1 = Vector3.new(
--- 		-- 	radius * math.sin(theta1) * math.cos(phi),
--- 		-- 	radius * math.cos(theta1),
--- 		-- 	radius * math.sin(theta1) * math.sin(phi)
--- 		-- ) + sphereCenter
--- 		local p1 = Vector3.new(
--- 			radius * math.sin(theta) * math.cos(phi1) + sphereCenter.X,
--- 			radius * math.cos(theta) + sphereCenter.Y,
--- 			radius * math.sin(theta) * math.sin(phi1) + sphereCenter.Z
--- 		)
+		local p2 = Vector3.new(
+			radius * math.sin(theta) * math.cos(phi2),
+			radius * math.cos(theta),
+			radius * math.sin(theta) * math.sin(phi2)
+		) + sphereCenter
 
--- 		-- local p2 = Vector3.new(
--- 		-- 	radius * math.sin(theta2) * math.cos(phi),
--- 		-- 	radius * math.cos(theta2),
--- 		-- 	radius * math.sin(theta2) * math.sin(phi)
--- 		-- ) + sphereCenter
--- 		local p2 = Vector3.new(
--- 			radius * math.sin(theta) * math.cos(phi2) + sphereCenter.X,
--- 			radius * math.cos(theta) + sphereCenter.Y,
--- 			radius * math.sin(theta) * math.sin(phi2) + sphereCenter.Z
--- 		)
+		connectPoints(p1, p2)
+	end
+end
 
--- 		connectPoints(p1, p2)
--- 	end
--- end
-
--- -- Rigid rotation about center
--- local angle = 0
--- RunService.RenderStepped:Connect(function(dt)
--- 	angle += dt * math.rad(20)
--- 	local spin = centerCF * CFrame.Angles(angle * 0.5, angle, 0)
--- 	for i = 1, #parts do
--- 		parts[i].CFrame = spin * rel[i]
--- 	end
+-- Rigid rotation about center
+local angle = 0
+-- RunService.PreRender:Connect(function(dt)
+local last = os.clock()
+while task.wait() do
+	local now = os.clock()
+	dt = now - last
+	angle += dt * math.rad(20)
+	local spin = centerCF * CFrame.Angles(angle * 0.5, angle, 0)
+	for i = 1, #parts do
+		parts[i].CFrame = spin * rel[i]
+	end
+	last = now
+end
 -- end)

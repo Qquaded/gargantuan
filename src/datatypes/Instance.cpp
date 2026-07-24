@@ -15,8 +15,8 @@
 
 namespace gargantuan {
 
-template <> UserdataTag Instance::This::GetUserdataTag() { return UserdataTag::Instance; };
-template <> std::string_view Instance::This::GetUserdataType() { return "Instance"; };
+UserdataTag Instance::GetUserdataTag() { return UserdataTag::Instance; };
+std::string_view Instance::GetUserdataType() { return "Instance"; };
 
 const Instance::ClassDefinition Instance::DEFINITION = {
     .Name = "Instance",
@@ -60,6 +60,11 @@ const Instance::ClassDefinition Instance::DEFINITION = {
         {"FindFirstChild", Method::Wrap<&Instance::FindFirstChild>()},
         {"FindFirstChildOfClass", Method::Wrap<&Instance::FindFirstChildOfClass>()},
     }
+};
+
+const Instance::UserdataMethods &Instance::GetUserdataMethods() {
+    static const Instance::UserdataMethods METHODS = {};
+    return METHODS;
 };
 
 // TODO: fire DescendantAdded/Removed signals
