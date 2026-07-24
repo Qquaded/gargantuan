@@ -67,10 +67,10 @@ template <typename Class, typename StoredAs = Class> class Userdata {
     typedef std::unordered_map<std::string_view, Property> UserdataProperties;
     typedef std::unordered_map<std::string_view, Method> UserdataMethods;
 
-    static UserdataTag GetUserdataTag();
-    static std::string_view GetUserdataType();
-    static const UserdataProperties &GetUserdataProperties();
-    static const UserdataMethods &GetUserdataMethods();
+    static UserdataTag GetUserdataTag() { return Class::GetUserdataTag(); };
+    static std::string_view GetUserdataType() { return Class::GetUserdataType(); };
+    static const UserdataProperties &GetUserdataProperties() { return Class::GetUserdataProperties(); };
+    static const UserdataMethods &GetUserdataMethods() { return Class::GetUserdataMethods(); };
 
     static int UserdataIndex(lua_State *L) {
         Class *instance = fromStackValue(L, 1);

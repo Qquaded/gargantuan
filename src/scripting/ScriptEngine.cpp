@@ -13,7 +13,6 @@
 #include <luacode.h>
 #include <lualib.h>
 #include <stdexcept>
-#include <variant>
 
 namespace gargantuan {
 
@@ -85,12 +84,12 @@ ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
     luaL_openlibs(L);
     OpenLibTask(L, &ThreadEngine);
 
+    BaseSignal::CreateUserdataMetatable(L);
     CFrame::CreateUserdataMetatable(L);
     Color3::CreateUserdataMetatable(L);
-    Vector3::CreateUserdataMetatable(L);
     Instance::CreateUserdataMetatable(L);
-    Signal<std::monostate>::CreateUserdataMetatable(L);
-    SignalConnection<std::monostate>::CreateUserdataMetatable(L);
+    SignalConnection::CreateUserdataMetatable(L);
+    Vector3::CreateUserdataMetatable(L);
 
     const luaL_Reg *lib = SCRIPT_LIBS;
     for (; lib->func; lib++) {

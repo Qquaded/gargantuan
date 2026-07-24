@@ -105,11 +105,4 @@ template <typename T> struct StackValue<std::vector<T>> {
     }
 };
 
-template <> struct StackValue<std::monostate> {
-    static inline std::string_view ReflectedTypedef() { return "()"; };
-    static bool Is(lua_State *L, int idx) { return false; };
-    static std::monostate From(lua_State *L, int idx) { return {}; };
-    static int Push(lua_State *L, std::monostate value) { return 0; };
-};
-
 } // namespace gargantuan

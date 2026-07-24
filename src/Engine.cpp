@@ -171,6 +171,7 @@ void Engine::Step() {
         CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
     }
 
+    RunService->PreRender->Fire(GetDeltaTime());
     MeshProvider->UploadToGpu();
     Renderer->Draw(
         Renderer::DrawInfo{
@@ -180,9 +181,9 @@ void Engine::Step() {
         }
     );
 
-    LastTick = CurrentTick;
     ScriptEngine->Step();
-    RunService->PreRender->Fire(GetDeltaTime());
+
+    LastTick = CurrentTick;
 }
 
 } // namespace gargantuan
