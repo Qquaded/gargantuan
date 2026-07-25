@@ -1,26 +1,40 @@
 #include "gargantuan/render/MeshProvider.hpp"
-#include <SDL3/SDL_gpu.h>
-#include <SDL3/SDL_log.h>
+#include "gargantuan/render/PrimitiveMeshes.hpp"
+
+#include <SDL3/SDL.h>
 #include <memory>
 
-namespace gargantuan {
+namespace gargantuan::MeshProvider {
 
-MeshProvider::MeshProvider(SDL_GPUDevice *gpu) : Gpu(gpu) {}
+namespace {
 
-void MeshProvider::Destroy() {
+std::unordered_map<std::string, Mesh> UnloadedMeshes = {
+    {"gargantuan://meshes/Ball", PrimitiveMeshes::Block()},
+    {"gargantuan://meshes/Block", PrimitiveMeshes::Block()},
+    {"gargantuan://meshes/Cylinder", PrimitiveMeshes::Block()},
+    {"gargantuan://meshes/Wedge", PrimitiveMeshes::Wedge()},
+    {"gargantuan://meshes/CornerWedge", PrimitiveMeshes::Block()},
+};
+
+std::unordered_map<std::string, std::unique_ptr<GpuMesh>> GpuMeshes;
+
+} // namespace
+
+std::unique_ptr<GpuMesh> &GetGpuMesh(std::string id) { return GpuMeshes[id]; }
+
+void Destroy(SDL_GPUDevice *gpu) {
     for (auto &[meshId, gpuMesh] : GpuMeshes) {
-        SDL_Log("deleting gpu mesh %s (%s)", meshId.data(), gpuMesh ? "exists" : "not exist");
-        gpuMesh->Destroy(Gpu);
+        gpuMesh->Destroy(gpu);
     }
     GpuMeshes.clear();
 }
 
-void MeshProvider::UploadToGpu() {
+void UploadToGpu(SDL_GPUDevice *gpu) {
     if (UnloadedMeshes.empty()) {
         return;
     }
 
-    auto cmd = SDL_AcquireGPUCommandBuffer(Gpu);
+    auto cmd = SDL_AcquireGPUCommandBuffer(gpu);
     auto copyPass = SDL_BeginGPUCopyPass(cmd);
 
     for (auto &[meshId, unloadedMesh] : UnloadedMeshes) {
@@ -29,7 +43,7 @@ void MeshProvider::UploadToGpu() {
         // };
 
         auto gpuMesh = std::make_unique<GpuMesh>(unloadedMesh);
-        gpuMesh->Upload(Gpu, copyPass);
+        gpuMesh->Upload(gpu, copyPass);
         GpuMeshes[meshId] = std::move(gpuMesh);
     }
 
@@ -38,4 +52,4 @@ void MeshProvider::UploadToGpu() {
     UnloadedMeshes.clear();
 }
 
-} // namespace gargantuan
+} // namespace gargantuan::MeshProvider

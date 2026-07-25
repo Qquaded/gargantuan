@@ -1,8 +1,8 @@
 #include "gargantuan/Engine.hpp"
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
-#include "gargantuan/render/Renderer.hpp"
+#include "gargantuan/render/MeshProvider.hpp"
+#include "gargantuan/render/RenderProvider.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
@@ -26,7 +26,9 @@
 namespace gargantuan {
 
 Engine::Engine() {
-    this->Gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
+    this->Gpu = SDL_CreateGPUDevice(
+        SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_METALLIB | SDL_GPU_SHADERFORMAT_MSL, true, nullptr
+    );
     if (!Gpu) {
         throw std::runtime_error("Failed to instantiate GPU");
     }
@@ -37,8 +39,7 @@ Engine::Engine() {
         throw std::runtime_error("Failed to instantiate window");
     }
 
-    this->MeshProvider = new class MeshProvider(Gpu);
-    this->Renderer = new class Renderer(Window, Gpu, *MeshProvider);
+    this->RenderProvider = new class RenderProvider(Window, Gpu);
     this->ScriptEngine = new class ScriptEngine();
 
     DataModel = std::make_shared<gargantuan::DataModel>();
@@ -63,9 +64,9 @@ Engine::~Engine() {
     SDL_DestroyWindow(Window);
 
     SDL_Log("destroying mesh provider");
-    MeshProvider->Destroy();
+    MeshProvider::Destroy(Gpu);
 
-    Renderer->Destroy();
+    RenderProvider->Destroy();
 
     SDL_Log("destroying gpu %s", Gpu ? "exists" : "not exist");
     SDL_DestroyGPUDevice(Gpu);
@@ -85,7 +86,7 @@ void Engine::ProcessEvent(SDL_Event event) {
         ViewportSize.x = event.window.data1;
         ViewportSize.y = event.window.data2;
         SDL_Log("Resizing: %0.fx%0.f", ViewportSize.x, ViewportSize.y);
-        Renderer->OnWindowResize(ViewportSize.x, ViewportSize.y);
+        RenderProvider->Resize(ViewportSize.x, ViewportSize.y);
         break;
 
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -172,14 +173,12 @@ void Engine::Step() {
     }
 
     RunService->PreRender->Fire(GetDeltaTime());
-    MeshProvider->UploadToGpu();
-    Renderer->Draw(
-        Renderer::DrawInfo{
-            .WorldRoot = std::static_pointer_cast<WorldRoot>(Workspace),
-            .ProjectionMatrix = GetProjectionMatrix(),
-            .ViewMatrix = GetViewMatrix(),
-        }
-    );
+    MeshProvider::UploadToGpu(Gpu);
+    RenderProvider->Draw({
+        .WorldRoot = std::static_pointer_cast<WorldRoot>(Workspace),
+        .ProjectionMatrix = GetProjectionMatrix(),
+        .ViewMatrix = GetViewMatrix(),
+    });
 
     ScriptEngine->Step();
 

@@ -20,7 +20,7 @@ class Part : public BasePart {
     static const ClassDefinition DEFINITION;
 
     Enums::PartType Shape = Enums::PartType::Block;
-    std::unique_ptr<GpuMesh> &GetMesh(MeshProvider &provider) const override;
+    std::unique_ptr<GpuMesh> &GetMesh() const override;
 };
 
 } // namespace gargantuan

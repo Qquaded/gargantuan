@@ -1,6 +1,6 @@
-# gargantuan
+# Gargantuan
 
-Gargantuan is a 3D game-engine scriptable using Luau.
+A gargantuan 3D game engine built for gargantuan ambitions.
 
 ## Development
 

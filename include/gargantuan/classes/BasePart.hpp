@@ -3,7 +3,7 @@
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
-#include "gargantuan/render/MeshProvider.hpp"
+#include "gargantuan/render/GpuMesh.hpp"
 
 #include <glm/glm.hpp>
 
@@ -20,7 +20,7 @@ class BasePart : public Instance {
     glm::vec3 Size = glm::vec3(2, 1, 4);
     float Transparency = 0.0f;
 
-    virtual std::unique_ptr<GpuMesh> &GetMesh(MeshProvider &provider) const = 0;
+    virtual std::unique_ptr<GpuMesh> &GetMesh() const = 0;
 };
 
 } // namespace gargantuan

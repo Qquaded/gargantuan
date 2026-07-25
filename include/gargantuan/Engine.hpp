@@ -1,8 +1,7 @@
 #pragma once
 
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/render/MeshProvider.hpp"
-#include "gargantuan/render/Renderer.hpp"
+#include "gargantuan/render/RenderProvider.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/RunService.hpp"
 #include "gargantuan/services/Workspace.hpp"
@@ -25,8 +24,7 @@ class Engine {
 
     SDL_Window *Window;
     SDL_GPUDevice *Gpu;
-    MeshProvider *MeshProvider;
-    Renderer *Renderer;
+    RenderProvider *RenderProvider;
     ScriptEngine *ScriptEngine;
 
     Engine();
