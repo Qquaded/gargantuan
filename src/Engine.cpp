@@ -128,9 +128,9 @@ void Engine::ProcessEvent(SDL_Event event) {
 
 void Engine::Step() {
     CurrentTick = SDL_GetTicks();
-    if (!LastTick) {
-        LastTick = SDL_GetTicks();
-    };
+    if (LastTick == 0) {
+        LastTick = CurrentTick;
+    }
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -174,6 +174,7 @@ void Engine::Step() {
     MeshProvider::UploadToGpu(Gpu);
     RenderProvider->Draw({
         .WorldRoot = std::static_pointer_cast<WorldRoot>(Workspace),
+        .CameraPosition = CameraPosition,
         .ProjectionMatrix = GetProjectionMatrix(),
         .ViewMatrix = GetViewMatrix(),
     });

@@ -14,17 +14,14 @@ namespace gargantuan {
 
 class ShadowPass final : public RenderPass {
   public:
-    struct LightUniforms {
-        glm::mat4 LightSpaceMatrix;
-    };
-
-    struct PartUniforms {
-        glm::mat4 ModelMatrix;
+    struct alignas(16) Uniforms {
+        glm::mat4 ShadowMatrix;
+        glm::mat4 PartMatrix;
     };
 
     FileShader Shader{
         .VertexFilepath = GetShaderPath("shadow.vert"),
-        .VertexUniformBufferCount = 2,
+        .VertexUniformBufferCount = 1,
         .FragmentFilepath = GetShaderPath("shadow.frag"),
         .FragmentUniformBufferCount = 0,
     };
@@ -35,7 +32,6 @@ class ShadowPass final : public RenderPass {
         Pipeline = PipelineBuilder()
                        .SetVertexShader(Shader.VertexShader)
                        .SetFragmentShader(Shader.FragmentShader)
-                       .SetColorFormat(swapchainFormat)
                        .SetColorEnabled(false)
                        .SetDepthEnabled(true)
                        .SetDepthFormat(SDL_GPU_TEXTUREFORMAT_D32_FLOAT)
@@ -43,11 +39,11 @@ class ShadowPass final : public RenderPass {
     };
 
     SDL_GPURenderPass *Draw(SDL_GPUDevice *gpu, FrameContext &context) override {
-        glm::vec3 lightDirection = glm::normalize(context.LightDirection);
-        glm::vec3 lightPosition = lightDirection * 20.0f;
-        glm::mat4 lightView = glm::lookAt(lightPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 50.0f);
-        context.LightSpaceMatrix = lightProjection * lightView;
+        glm::mat4 shadowProjection = glm::ortho<float>(-30.0f, 30.0f, -30.0f, 30.0f, -50.0f, 150.0f);
+        glm::vec3 lightPosition = glm::normalize(context.LightDirection) * 40.0f;
+        glm::mat4 shadowView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
+        glm::mat4 shadowMatrix = shadowProjection * shadowView;
+        context.ShadowMatrix = shadowMatrix;
 
         SDL_GPUDepthStencilTargetInfo depthTarget{
             .texture = context.ShadowMapTexture,
@@ -61,17 +57,14 @@ class ShadowPass final : public RenderPass {
         SDL_GPURenderPass *pass = SDL_BeginGPURenderPass(context.Commands, nullptr, 0, &depthTarget);
         SDL_BindGPUGraphicsPipeline(pass, Pipeline);
 
-        LightUniforms lightUniforms{.LightSpaceMatrix = context.LightSpaceMatrix};
-        SDL_PushGPUVertexUniformData(context.Commands, 0, &lightUniforms, sizeof(LightUniforms));
-
         for (auto part : context.WorldRoot->Parts) {
             auto &mesh = part->GetMesh();
             if (!mesh || !mesh->VertexBuffer || !mesh->IndexBuffer) {
                 continue;
             }
 
-            PartUniforms uniforms{.ModelMatrix = part->GetModelMatrix()};
-            SDL_PushGPUVertexUniformData(context.Commands, 1, &uniforms, sizeof(PartUniforms));
+            Uniforms uniforms{.ShadowMatrix = shadowMatrix, .PartMatrix = part->GetModelMatrix()};
+            SDL_PushGPUVertexUniformData(context.Commands, 0, &uniforms, sizeof(Uniforms));
 
             SDL_GPUBufferBinding vertexBinding{.buffer = mesh->VertexBuffer, .offset = 0};
             SDL_BindGPUVertexBuffers(pass, 0, &vertexBinding, 1);

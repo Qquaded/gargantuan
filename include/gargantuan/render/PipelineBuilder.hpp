@@ -1,8 +1,9 @@
 #pragma once
 
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+// #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_gpu.h>
 #include <string_view>
 
 namespace gargantuan {
@@ -28,7 +29,19 @@ struct PipelineBuilder {
     PipelineBuilder &SetDepthFormat(SDL_GPUTextureFormat format);
     PipelineBuilder &SetDepthEnabled(bool enabled);
 
+    SDL_GPUGraphicsPipelineCreateInfo BuildInfo();
     SDL_GPUGraphicsPipeline *Build(SDL_GPUDevice *gpu);
+
+  private:
+    // ?????? Fuck you Sdl3?????????? Fuck you mean "Invalid blend factor enum!"
+    //
+    // Assertion failure at SDL_CreateGPUGraphicsPipeline_REAL (SDL_gpu.c:1062), triggered 1 time:
+    //   '!"Invalid blend factor enum!"'
+    //   Assertion failure at SDL_CreateGPUGraphicsPipeline_REAL (SDL_gpu.c:1062), triggered 1 time:
+    //     '!"Invalid blend factor enum!"'
+    //     Assertion failure at SDL_CreateGPUGraphicsPipeline_REAL (SDL_gpu.c:1062), triggered 1 time:
+    //       '!"Invalid blend factor enum!"'
+    SDL_GPUColorTargetDescription ColorTarget{};
 };
 
 } // namespace gargantuan

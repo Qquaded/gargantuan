@@ -1,16 +1,12 @@
 #version 450
 
-layout(set = 0, binding = 0) uniform LightUnforms {
-    mat4 LightSpaceMatrix;
-} light;
-
-layout(set = 0, binding = 1) uniform PartUniforms {
-    mat4 ModelMatrix;
-} part;
-
-layout(location = 0) in vec3 vertexPosition;
+layout(location = 0) in vec3 VertexPosition;
+layout(set = 0, binding = 0) uniform Uniforms {
+    mat4 ShadowMatrix;
+    mat4 PartMatrix;
+} uniforms;
 
 void main()
 {
-    gl_Position = light.LightSpaceMatrix * part.ModelMatrix * vec4(vertexPosition, 1.0);
+    gl_Position = uniforms.ShadowMatrix * uniforms.PartMatrix * vec4(VertexPosition, 1.0);
 }

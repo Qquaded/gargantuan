@@ -24,9 +24,11 @@ struct FileShader final : public Shader {
   public:
     std::filesystem::path VertexFilepath;
     Uint32 VertexUniformBufferCount = 1;
+    Uint32 VertexSamplerCount = 0;
 
     std::filesystem::path FragmentFilepath;
     Uint32 FragmentUniformBufferCount = 0;
+    Uint32 FragmentSamplerCount = 0;
 
     void Init(SDL_GPUDevice *gpu);
 

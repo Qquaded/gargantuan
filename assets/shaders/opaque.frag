@@ -1,50 +1,54 @@
 #version 450
 
-layout(location = 0) in vec3 fragmentNormal;
-layout(location = 1) in vec4 fragmentRgba;
-layout(location = 2) in vec3 worldPosition;
+layout(location = 0) in vec3 FragmentNormal;
+layout(location = 1) in vec4 FragmentColor;
+layout(location = 2) in vec4 WorldPosition;
+layout(location = 3) in vec4 ShadowPosition;
 
-layout(location = 0) out vec4 outputRgba;
+layout(location = 0) out vec4 OutputColor;
 
 layout(set = 0, binding = 0) uniform WorldUniforms {
     mat4 ViewMatrix;
     mat4 ProjectionMatrix;
+    mat4 ShadowBiasMatrix;
     vec3 LightDirection;
-    mat4 LightSpaceMatrix;
 } world;
 
-layout(set = 0, binding = 2) uniform sampler2DShadow shadowMap;
+layout(set = 0, binding = 0) uniform sampler2DShadow ShadowMap;
+
+float SHADOW_SPREAD = 2.0;
+vec2 SHADOW_TEXEL_SIZE = vec2(1.0 / 2048.0);
+vec2 POISSON_DISK[4] = vec2[](
+        vec2(-0.94201624, -0.39906216),
+        vec2(0.94558609, -0.76890725),
+        vec2(-0.094184101, -0.92938870),
+        vec2(0.34495938, 0.29387760)
+    );
 
 void main() {
-    // Shadows
-    vec3 normal = normalize(fragmentNormal);
-    vec4 lightSpacePosition = world.LightSpaceMatrix * vec4(worldPosition, 1.0);
-    vec3 projection = lightSpacePosition.xyz / lightSpacePosition.w;
+    vec3 shadowCoordinate = ShadowPosition.xyz / ShadowPosition.w;
 
-    vec2 uv = projection.xy * vec2(0.5, -0.5) + vec2(0.5);
+    vec3 n = normalize(FragmentNormal);
+    vec3 l = normalize(world.LightDirection);
+    float nDotL = max(dot(n, l), 0.0);
 
-    float shadow = 1.0f;
-    if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0 && projection.z >= 0.0 && projection.z <= 1.0) {
-        float nDotL = max(dot(normal, world.LightDirection), 0.0);
-        float bias = clamp(0.0015 * tan(acos(nDotL)), 0.0003, 0.004);
-        float depth = projection.z - bias;
+    float bias = max(0.003 * (1.0 - nDotL), 0.0005);
+    float currentDepth = shadowCoordinate.z - bias;
 
-        vec2 texelSize = 1 / vec2(2048.0, 2048.0);
-
-        float shadow = 0.0f;
-
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                vec2 offset = vec2(x, y) * texelSize;
-                shadow = texture(shadowMap, vec3(uv + offset, depth));
-            }
+    float shadowFactor = 1.0;
+    if (shadowCoordinate.x >= 0.0 && shadowCoordinate.x <= 1.0 &&
+            shadowCoordinate.y >= 0.0 && shadowCoordinate.y <= 1.0 &&
+            shadowCoordinate.z >= 0.0 && shadowCoordinate.z <= 1.0) {
+        shadowFactor = 0.0;
+        for (int i = 0; i < 4; i++) {
+            vec2 sampleUV = shadowCoordinate.xy + (POISSON_DISK[i] * SHADOW_TEXEL_SIZE * SHADOW_SPREAD);
+            shadowFactor += texture(ShadowMap, vec3(sampleUV, currentDepth));
         }
+        shadowFactor /= 4;
     }
 
-    // Shading
-    float diffuseFactor = max(dot(normal, world.LightDirection), 0.0) * shadow;
-    float ambientFactor = 0.15;
-    float totalLight = ambientFactor + diffuseFactor;
+    float ambient = 0.2;
+    float lighting = ambient + (nDotL * shadowFactor);
 
-    outputRgba = vec4(fragmentRgba.rgb * totalLight, fragmentRgba.a);
+    OutputColor = vec4(FragmentColor.rgb * lighting, FragmentColor.a);
 }

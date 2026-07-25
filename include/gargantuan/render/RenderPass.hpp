@@ -10,8 +10,11 @@ namespace gargantuan {
 
 struct DrawContext {
     std::shared_ptr<WorldRoot> WorldRoot;
+
+    glm::vec3 CameraPosition;
     glm::mat4 ProjectionMatrix;
     glm::mat4 ViewMatrix;
+
     // Direction TOWARDS the light
     glm::vec3 LightDirection;
 };
@@ -22,9 +25,9 @@ struct FrameContext : DrawContext {
     SDL_GPUTexture *SwapchainTexture;
     SDL_GPUTexture *DepthTexture;
 
-    glm::mat4 LightSpaceMatrix;
     SDL_GPUTexture *ShadowMapTexture;
     SDL_GPUSampler *ShadowSampler;
+    glm::mat4 ShadowMatrix;
 
     uint32_t Width;
     uint32_t Height;

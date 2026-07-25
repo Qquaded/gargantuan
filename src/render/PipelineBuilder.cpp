@@ -1,5 +1,6 @@
 #include "gargantuan/render/PipelineBuilder.hpp"
 #include "gargantuan/render/Mesh.hpp"
+#include <SDL3/SDL_gpu.h>
 
 namespace gargantuan {
 
@@ -38,7 +39,7 @@ PipelineBuilder &PipelineBuilder::SetDepthEnabled(bool enabled) {
     return *this;
 };
 
-SDL_GPUGraphicsPipeline *PipelineBuilder::Build(SDL_GPUDevice *gpu) {
+SDL_GPUGraphicsPipelineCreateInfo PipelineBuilder::BuildInfo() {
     SDL_GPUGraphicsPipelineCreateInfo info{};
     info.vertex_shader = VertexShader;
     info.fragment_shader = FragmentShader;
@@ -57,23 +58,28 @@ SDL_GPUGraphicsPipeline *PipelineBuilder::Build(SDL_GPUDevice *gpu) {
     info.depth_stencil_state.enable_depth_write = DepthEnabled;
     info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_LESS;
 
-    SDL_GPUColorTargetDescription colorTarget{};
+    ColorTarget.format = ColorFormat;
+    ColorTarget.blend_state.enable_blend = BlendingEnabled;
+
+    if (BlendingEnabled) {
+        ColorTarget.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
+        ColorTarget.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+        ColorTarget.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
+        ColorTarget.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+        ColorTarget.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+        ColorTarget.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
+    } else {
+        ColorTarget.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+        ColorTarget.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
+        ColorTarget.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
+        ColorTarget.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+        ColorTarget.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
+        ColorTarget.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
+    };
+
+    info.target_info.color_target_descriptions = &ColorTarget;
+
     if (ColorEnabled) {
-        colorTarget.format = ColorFormat;
-
-        if (BlendingEnabled) {
-            colorTarget.blend_state = SDL_GPUColorTargetBlendState{
-                .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-                .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                .color_blend_op = SDL_GPU_BLENDOP_ADD,
-                .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-                .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-                .enable_blend = true
-            };
-        }
-
-        info.target_info.color_target_descriptions = &colorTarget;
         info.target_info.num_color_targets = 1;
     } else {
         info.target_info.num_color_targets = 0;
@@ -82,6 +88,11 @@ SDL_GPUGraphicsPipeline *PipelineBuilder::Build(SDL_GPUDevice *gpu) {
     info.target_info.depth_stencil_format = DepthFormat;
     info.target_info.has_depth_stencil_target = DepthEnabled;
 
+    return info;
+}
+
+SDL_GPUGraphicsPipeline *PipelineBuilder::Build(SDL_GPUDevice *gpu) {
+    auto info = BuildInfo();
     return SDL_CreateGPUGraphicsPipeline(gpu, &info);
 }
 

@@ -10,19 +10,29 @@
 
 namespace gargantuan {
 
+static const glm::mat4 SHADOW_BIAS_MATRIX{
+    //
+    0.5f, 0.0f, 0.0f, 0.0f,
+    //
+    0.0f, -0.5f, 0.0f, 0.0f,
+    //
+    0.0f, 0.0f, 1.0f, 0.0f,
+    //
+    0.5f, 0.5f, 0.0f, 1.0f
+};
+
 class OpaquePass final : public RenderPass {
   public:
     struct alignas(16) WorldUniforms {
         glm::mat4 ViewMatrix;
         glm::mat4 ProjectionMatrix;
+        glm::mat4 ShadowBiasMatrix;
         glm::vec3 LightDirection;
-        float _padding = 0.0f;
-        glm::mat4 LightSpaceMatrix;
     };
 
-    struct PartUniforms {
+    struct alignas(16) PartUniforms {
         glm::mat4 ModelMatrix;
-        glm::vec4 Rgba;
+        glm::vec4 Color;
     };
 
     FileShader Shader{
@@ -30,6 +40,7 @@ class OpaquePass final : public RenderPass {
         .VertexUniformBufferCount = 2,
         .FragmentFilepath = GetShaderPath("opaque.frag"),
         .FragmentUniformBufferCount = 1,
+        .FragmentSamplerCount = 1,
     };
 
     OpaquePass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
@@ -74,8 +85,8 @@ class OpaquePass final : public RenderPass {
         WorldUniforms worldUniforms{
             .ViewMatrix = context.ViewMatrix,
             .ProjectionMatrix = context.ProjectionMatrix,
+            .ShadowBiasMatrix = SHADOW_BIAS_MATRIX * context.ShadowMatrix,
             .LightDirection = context.LightDirection,
-            .LightSpaceMatrix = context.LightSpaceMatrix,
         };
         SDL_PushGPUVertexUniformData(context.Commands, 0, &worldUniforms, sizeof(WorldUniforms));
         SDL_PushGPUFragmentUniformData(context.Commands, 0, &worldUniforms, sizeof(WorldUniforms));
@@ -88,7 +99,7 @@ class OpaquePass final : public RenderPass {
 
             PartUniforms uniforms{
                 .ModelMatrix = part->GetModelMatrix(),
-                .Rgba = glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency),
+                .Color = glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency),
             };
             SDL_PushGPUVertexUniformData(context.Commands, 1, &uniforms, sizeof(PartUniforms));
 

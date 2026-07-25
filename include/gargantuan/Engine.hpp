@@ -35,8 +35,8 @@ class Engine {
     void Step();
 
   private:
-    uint64_t CurrentTick;
-    uint64_t LastTick;
+    uint64_t CurrentTick = 0;
+    uint64_t LastTick = 0;
 
     // TODO: Camera class, and probably implement Instances by then
     glm::vec3 CameraPosition = glm::vec3(0, 0, 10);

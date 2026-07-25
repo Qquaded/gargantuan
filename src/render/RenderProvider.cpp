@@ -1,4 +1,4 @@
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+// #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include "gargantuan/render/RenderProvider.hpp"
 #include "gargantuan/render/RenderPass.hpp"
@@ -88,12 +88,13 @@ void RenderProvider::Draw(DrawContext drawContext) {
     frameContext.Commands = commands;
     frameContext.WorldRoot = drawContext.WorldRoot;
 
+    frameContext.CameraPosition = drawContext.CameraPosition;
     frameContext.ViewMatrix = drawContext.ViewMatrix;
     frameContext.ProjectionMatrix = drawContext.ProjectionMatrix;
 
     frameContext.ShadowMapTexture = ShadowMapTexture;
     frameContext.ShadowSampler = ShadowSampler;
-    frameContext.LightDirection = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
+    frameContext.LightDirection = glm::normalize(glm::vec3(0.75f, 1.0f, 0.5f));
 
     if (DepthTexture) {
         frameContext.DepthTexture = DepthTexture;
@@ -110,6 +111,12 @@ void RenderProvider::Draw(DrawContext drawContext) {
         if (frameContext.Commands) {
             SDL_CancelGPUCommandBuffer(frameContext.Commands);
         };
+        return;
+    }
+
+    if (!frameContext.Commands || !frameContext.SwapchainTexture || !frameContext.DepthTexture ||
+        !frameContext.ShadowMapTexture) {
+        SDL_Log("i got nothing bruh");
         return;
     }
 
