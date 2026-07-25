@@ -67,7 +67,7 @@ void FileShader::Init(SDL_GPUDevice *gpu) {
     GetShaderFormat(gpu, format, extension, entrypoint);
 
     if (!VertexShader) {
-        std::string filepath = std::string(VertexShaderFilepath) + extension;
+        std::string filepath = std::string(VertexFilepath) + extension;
         VertexShader = CompileFile(
             gpu, filepath.c_str(),
             {
@@ -82,7 +82,7 @@ void FileShader::Init(SDL_GPUDevice *gpu) {
     }
 
     if (!FragmentShader) {
-        std::string filepath = std::string(FragmentShaderFilepath) + extension;
+        std::string filepath = std::string(FragmentFilepath) + extension;
         FragmentShader = CompileFile(
             gpu, filepath,
             {

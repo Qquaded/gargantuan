@@ -51,8 +51,6 @@ Engine::Engine() {
     auto runService = this->DataModel->GetService("RunService");
     this->RunService = std::dynamic_pointer_cast<gargantuan::RunService>(runService);
 
-    SDL_Log("children (c++) has %zu", workspace->GetChildren().size());
-
     StackValue<Instance::Pointer>::Push(ScriptEngine->L, this->DataModel);
     lua_pushvalue(ScriptEngine->L, -1);
     lua_setglobal(ScriptEngine->L, "game");

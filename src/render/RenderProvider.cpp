@@ -4,6 +4,7 @@
 #include "gargantuan/render/RenderPass.hpp"
 
 #include <SDL3/SDL.h>
+#include <glm/geometric.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -19,19 +20,60 @@ RenderProvider::RenderProvider(SDL_Window *window, SDL_GPUDevice *gpu) : Window(
     }
 
     SwapchainFormat = SDL_GetGPUSwapchainTextureFormat(Gpu, Window);
-    OpaquePass = CreateOpaquePass(Gpu, SwapchainFormat);
+
+    SDL_GPUTextureCreateInfo info{
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+        .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,
+        .width = 2048,
+        .height = 2048,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+    };
+    ShadowMapTexture = SDL_CreateGPUTexture(gpu, &info);
+
+    SDL_GPUSamplerCreateInfo samplerInfo{
+        .min_filter = SDL_GPU_FILTER_LINEAR,
+        .mag_filter = SDL_GPU_FILTER_LINEAR,
+        .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+        .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        .compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
+        .enable_compare = true,
+    };
+    ShadowSampler = SDL_CreateGPUSampler(gpu, &samplerInfo);
 
     int width, height;
     SDL_GetWindowSizeInPixels(Window, &width, &height);
     Resize(width, height);
+
+    SDL_Log("Creating shadow pass");
+    ShadowPass = CreateShadowPass(Gpu, SwapchainFormat);
+
+    SDL_Log("Creating opaque pass");
+    OpaquePass = CreateOpaquePass(Gpu, SwapchainFormat);
 }
 
 void RenderProvider::Destroy() {
     SDL_WaitForGPUIdle(Gpu);
+
     if (DepthTexture != nullptr) {
         SDL_ReleaseGPUTexture(Gpu, DepthTexture);
+        DepthTexture = nullptr;
     };
-    SDL_ReleaseGPUGraphicsPipeline(Gpu, Pipeline);
+
+    if (ShadowMapTexture) {
+        SDL_ReleaseGPUTexture(Gpu, ShadowMapTexture);
+        ShadowMapTexture = nullptr;
+    }
+
+    if (ShadowSampler) {
+        SDL_ReleaseGPUSampler(Gpu, ShadowSampler);
+        ShadowSampler = nullptr;
+    }
+
+    ShadowPass->Destroy(Gpu);
     OpaquePass->Destroy(Gpu);
 }
 
@@ -44,9 +86,14 @@ void RenderProvider::Draw(DrawContext drawContext) {
 
     FrameContext frameContext;
     frameContext.Commands = commands;
+    frameContext.WorldRoot = drawContext.WorldRoot;
+
     frameContext.ViewMatrix = drawContext.ViewMatrix;
     frameContext.ProjectionMatrix = drawContext.ProjectionMatrix;
-    frameContext.WorldRoot = drawContext.WorldRoot;
+
+    frameContext.ShadowMapTexture = ShadowMapTexture;
+    frameContext.ShadowSampler = ShadowSampler;
+    frameContext.LightDirection = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
 
     if (DepthTexture) {
         frameContext.DepthTexture = DepthTexture;
@@ -82,9 +129,8 @@ void RenderProvider::Draw(DrawContext drawContext) {
         .stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
     };
 
-    auto pass = SDL_BeginGPURenderPass(frameContext.Commands, &colorTarget, 1, &depthTarget);
-    OpaquePass->Draw(Gpu, pass, frameContext);
-    SDL_EndGPURenderPass(pass);
+    SDL_EndGPURenderPass(ShadowPass->Draw(Gpu, frameContext));
+    SDL_EndGPURenderPass(OpaquePass->Draw(Gpu, frameContext));
 
     SDL_SubmitGPUCommandBuffer(frameContext.Commands);
 }

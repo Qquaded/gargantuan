@@ -10,6 +10,7 @@
 namespace gargantuan {
 
 std::unique_ptr<RenderPass> CreateOpaquePass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat);
+std::unique_ptr<RenderPass> CreateShadowPass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat);
 
 class RenderProvider {
   public:
@@ -27,8 +28,12 @@ class RenderProvider {
     SDL_GPUGraphicsPipeline *Pipeline = nullptr;
     SDL_GPUTexture *DepthTexture = nullptr;
 
+    SDL_GPUTexture *ShadowMapTexture;
+    SDL_GPUSampler *ShadowSampler = nullptr;
+
     SDL_GPUTextureFormat SwapchainFormat;
 
+    std::unique_ptr<RenderPass> ShadowPass;
     std::unique_ptr<RenderPass> OpaquePass;
 };
 

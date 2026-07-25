@@ -14,7 +14,7 @@ struct Shader {
     SDL_GPUShader *FragmentShader = nullptr;
 
     /// Instantiates the vertex and fragment shaders if it doesn't exist.
-    void Init(SDL_GPUDevice *gpu) {};
+    void Init(SDL_GPUDevice *gpu);
 
     /// Release associated shaders from the GPU.
     void Destroy(SDL_GPUDevice *gpu);
@@ -22,10 +22,10 @@ struct Shader {
 
 struct FileShader final : public Shader {
   public:
-    std::filesystem::path VertexShaderFilepath;
+    std::filesystem::path VertexFilepath;
     Uint32 VertexUniformBufferCount = 1;
 
-    std::filesystem::path FragmentShaderFilepath;
+    std::filesystem::path FragmentFilepath;
     Uint32 FragmentUniformBufferCount = 0;
 
     void Init(SDL_GPUDevice *gpu);

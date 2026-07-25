@@ -40,9 +40,9 @@ class Engine {
 
     // TODO: Camera class, and probably implement Instances by then
     glm::vec3 CameraPosition = glm::vec3(0, 0, 10);
-    glm::vec3 CameraUpVector;
-    glm::vec3 CameraRightVector;
-    glm::vec3 CameraLookVector;
+    glm::vec3 CameraUpVector = glm::vec3(0, 1, 0);
+    glm::vec3 CameraRightVector = glm::vec3(1, 0, 0);
+    glm::vec3 CameraLookVector = glm::vec3(0, 0, -1);
     float CameraYaw = -90.0f;
     float CameraPitch = 0.0f;
     float CameraSensitivity = 0.2f;

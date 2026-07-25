@@ -6,7 +6,7 @@
 
 namespace gargantuan {
 
-const Instance::ClassDefinition BasePart::DEFINITION = {
+const BasePart::ClassDefinition BasePart::DEFINITION = {
     .Name = "BasePart",
     .Superclass = "Instance",
     .Properties = {
@@ -33,4 +33,12 @@ const Instance::ClassDefinition BasePart::DEFINITION = {
         }
     }
 };
+
+glm::mat4 BasePart::GetModelMatrix() {
+    glm::mat4 translation = glm::translate(glm::mat4(1.0f), CFrame.Position);
+    glm::mat4 rotation = CFrame.Rotation;
+    glm::mat4 scale = glm::scale(glm::mat4(1.0f), Size);
+    return translation * rotation * scale;
+}
+
 } // namespace gargantuan

@@ -18,8 +18,18 @@ PipelineBuilder &PipelineBuilder::SetColorFormat(SDL_GPUTextureFormat format) {
     return *this;
 };
 
+PipelineBuilder &PipelineBuilder::SetColorEnabled(bool enabled) {
+    ColorEnabled = enabled;
+    return *this;
+};
+
 PipelineBuilder &PipelineBuilder::SetBlendingEnabled(bool enabled) {
     BlendingEnabled = enabled;
+    return *this;
+};
+
+PipelineBuilder &PipelineBuilder::SetDepthFormat(SDL_GPUTextureFormat format) {
+    DepthFormat = format;
     return *this;
 };
 
@@ -29,21 +39,6 @@ PipelineBuilder &PipelineBuilder::SetDepthEnabled(bool enabled) {
 };
 
 SDL_GPUGraphicsPipeline *PipelineBuilder::Build(SDL_GPUDevice *gpu) {
-    SDL_GPUColorTargetDescription colorTarget;
-    colorTarget.format = ColorFormat;
-
-    if (BlendingEnabled) {
-        colorTarget.blend_state = SDL_GPUColorTargetBlendState{
-            .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-            .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-            .color_blend_op = SDL_GPU_BLENDOP_ADD,
-            .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-            .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-            .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-            .enable_blend = true
-        };
-    }
-
     SDL_GPUGraphicsPipelineCreateInfo info{};
     info.vertex_shader = VertexShader;
     info.fragment_shader = FragmentShader;
@@ -62,8 +57,28 @@ SDL_GPUGraphicsPipeline *PipelineBuilder::Build(SDL_GPUDevice *gpu) {
     info.depth_stencil_state.enable_depth_write = DepthEnabled;
     info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_LESS;
 
-    info.target_info.color_target_descriptions = &colorTarget;
-    info.target_info.num_color_targets = 1;
+    SDL_GPUColorTargetDescription colorTarget{};
+    if (ColorEnabled) {
+        colorTarget.format = ColorFormat;
+
+        if (BlendingEnabled) {
+            colorTarget.blend_state = SDL_GPUColorTargetBlendState{
+                .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                .color_blend_op = SDL_GPU_BLENDOP_ADD,
+                .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+                .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+                .enable_blend = true
+            };
+        }
+
+        info.target_info.color_target_descriptions = &colorTarget;
+        info.target_info.num_color_targets = 1;
+    } else {
+        info.target_info.num_color_targets = 0;
+    }
+
     info.target_info.depth_stencil_format = DepthFormat;
     info.target_info.has_depth_stencil_target = DepthEnabled;
 

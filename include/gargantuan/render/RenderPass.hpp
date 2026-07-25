@@ -12,12 +12,20 @@ struct DrawContext {
     std::shared_ptr<WorldRoot> WorldRoot;
     glm::mat4 ProjectionMatrix;
     glm::mat4 ViewMatrix;
+    // Direction TOWARDS the light
+    glm::vec3 LightDirection;
 };
 
 struct FrameContext : DrawContext {
     SDL_GPUCommandBuffer *Commands;
+
     SDL_GPUTexture *SwapchainTexture;
     SDL_GPUTexture *DepthTexture;
+
+    glm::mat4 LightSpaceMatrix;
+    SDL_GPUTexture *ShadowMapTexture;
+    SDL_GPUSampler *ShadowSampler;
+
     uint32_t Width;
     uint32_t Height;
 };
@@ -28,7 +36,7 @@ class RenderPass {
     SDL_GPUGraphicsPipeline *Pipeline = nullptr;
 
     virtual ~RenderPass() = default;
-    virtual void Draw(SDL_GPUDevice *gpu, SDL_GPURenderPass *pass, const FrameContext &context) = 0;
+    virtual SDL_GPURenderPass *Draw(SDL_GPUDevice *gpu, FrameContext &context) = 0;
     virtual void Resize(SDL_GPUDevice *gpu, uint32_t width, uint32_t height) {};
     virtual void Destroy(SDL_GPUDevice *gpu);
 };

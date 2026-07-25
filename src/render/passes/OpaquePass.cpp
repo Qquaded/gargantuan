@@ -1,3 +1,5 @@
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 #include "gargantuan/render/PipelineBuilder.hpp"
 #include "gargantuan/render/RenderPass.hpp"
 #include "gargantuan/render/RenderProvider.hpp"
@@ -10,9 +12,12 @@ namespace gargantuan {
 
 class OpaquePass final : public RenderPass {
   public:
-    struct CameraUniforms {
+    struct alignas(16) WorldUniforms {
         glm::mat4 ViewMatrix;
         glm::mat4 ProjectionMatrix;
+        glm::vec3 LightDirection;
+        float _padding = 0.0f;
+        glm::mat4 LightSpaceMatrix;
     };
 
     struct PartUniforms {
@@ -21,10 +26,10 @@ class OpaquePass final : public RenderPass {
     };
 
     FileShader Shader{
-        .VertexShaderFilepath = GetShaderPath("opaque.vert"),
+        .VertexFilepath = GetShaderPath("opaque.vert"),
         .VertexUniformBufferCount = 2,
-        .FragmentShaderFilepath = GetShaderPath("opaque.frag"),
-        .FragmentUniformBufferCount = 1
+        .FragmentFilepath = GetShaderPath("opaque.frag"),
+        .FragmentUniformBufferCount = 1,
     };
 
     OpaquePass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
@@ -32,20 +37,48 @@ class OpaquePass final : public RenderPass {
         Pipeline = PipelineBuilder()
                        .SetVertexShader(Shader.VertexShader)
                        .SetFragmentShader(Shader.FragmentShader)
+                       .SetColorEnabled(true)
                        .SetColorFormat(swapchainFormat)
                        .SetBlendingEnabled(true)
                        .SetDepthEnabled(true)
+                       .SetDepthFormat(SDL_GPU_TEXTUREFORMAT_D16_UNORM)
                        .Build(gpu);
     };
 
-    void Draw(SDL_GPUDevice *gpu, SDL_GPURenderPass *pass, const FrameContext &context) override {
-        SDL_BindGPUGraphicsPipeline(pass, Pipeline);
+    SDL_GPURenderPass *Draw(SDL_GPUDevice *gpu, FrameContext &context) override {
+        SDL_GPUColorTargetInfo colorTarget = {
+            .texture = context.SwapchainTexture,
+            .clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f},
+            .load_op = SDL_GPU_LOADOP_CLEAR,
+            .store_op = SDL_GPU_STOREOP_STORE,
+        };
 
-        CameraUniforms cameraUniforms{
+        SDL_GPUDepthStencilTargetInfo depthTarget = {
+            .texture = context.DepthTexture,
+            .clear_depth = 1.0f,
+            .load_op = SDL_GPU_LOADOP_CLEAR,
+            .store_op = SDL_GPU_STOREOP_DONT_CARE,
+            .stencil_load_op = SDL_GPU_LOADOP_DONT_CARE,
+            .stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
+        };
+
+        SDL_GPUTextureSamplerBinding shadowBinding{
+            .texture = context.ShadowMapTexture,
+            .sampler = context.ShadowSampler,
+        };
+
+        auto pass = SDL_BeginGPURenderPass(context.Commands, &colorTarget, 1, &depthTarget);
+        SDL_BindGPUGraphicsPipeline(pass, Pipeline);
+        SDL_BindGPUFragmentSamplers(pass, 0, &shadowBinding, 1);
+
+        WorldUniforms worldUniforms{
             .ViewMatrix = context.ViewMatrix,
             .ProjectionMatrix = context.ProjectionMatrix,
+            .LightDirection = context.LightDirection,
+            .LightSpaceMatrix = context.LightSpaceMatrix,
         };
-        SDL_PushGPUVertexUniformData(context.Commands, 0, &cameraUniforms, sizeof(CameraUniforms));
+        SDL_PushGPUVertexUniformData(context.Commands, 0, &worldUniforms, sizeof(WorldUniforms));
+        SDL_PushGPUFragmentUniformData(context.Commands, 0, &worldUniforms, sizeof(WorldUniforms));
 
         for (auto part : context.WorldRoot->Parts) {
             auto &mesh = part->GetMesh();
@@ -53,14 +86,8 @@ class OpaquePass final : public RenderPass {
                 continue;
             }
 
-            CFrame cframe = part->CFrame;
-            glm::mat4 model = cframe.Rotation;
-            glm::vec3 position = cframe.Position;
-            model[3] = glm::vec4(position, 1.0f);
-            model = glm::scale(model, part->Size);
-
             PartUniforms uniforms{
-                .ModelMatrix = model,
+                .ModelMatrix = part->GetModelMatrix(),
                 .Rgba = glm::vec4((glm::vec3)part->Color, 1.0f - part->Transparency),
             };
             SDL_PushGPUVertexUniformData(context.Commands, 1, &uniforms, sizeof(PartUniforms));
@@ -73,6 +100,8 @@ class OpaquePass final : public RenderPass {
 
             SDL_DrawGPUIndexedPrimitives(pass, mesh->IndexCount, 1, 0, 0, 0);
         }
+
+        return pass;
     };
 };
 

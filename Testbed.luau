@@ -1,81 +1,105 @@
--- Temperature wave form
--- Shown in repo
--- Demonstration of Color3, Position, advanced functions
+-- Creates a rotating wireframe sphere with latitude and longitude rings.
 
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
--- Config
-local GRID_SIZE = 20
-local BLOCK_SIZE = 2
-local Y_OFFSET = 3
-local SCROLL_SPEED = 0.5
+local CENTER = Vector3.new(0, 20, 0)
+local COLOR = Color3.fromRGB(255, 255, 0)
+local DEGREES_PER_SECOND = 20
+local RADIUS = 15
+local SEGMENTS = 16
+local THICKNESS = 0.3
+local TRANSPARENCY = 0
 
--- Build grid
-local blocks = {}
-for x = 1, GRID_SIZE do
-	blocks[x] = {}
-	for z = 1, GRID_SIZE do
-		local p = Instance.new("Part")
-		p.CFrame = CFrame.new((x - (GRID_SIZE + 1) / 2) * BLOCK_SIZE, Y_OFFSET, (z - (GRID_SIZE + 1) / 2) * BLOCK_SIZE)
-		p.Size = Vector3.new(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
-		p.Parent = Workspace
-		blocks[x][z] = p
+local baseplate = Instance.new("Part")
+baseplate.Name = "Baseplate"
+baseplate.Anchored = true
+baseplate.Color = Color3.fromHSV(0, 0, 0.5)
+baseplate.Size = Vector3.new(512, 20, 512)
+baseplate.Position = Vector3.new(0, -20, 0)
+baseplate.Parent = Workspace
+
+local function createPart()
+	local part = Instance.new("Part")
+	part.Anchored = true
+	part.CanCollide = false
+	part.Size = Vector3.new(THICKNESS, THICKNESS, 1)
+	part.Color = COLOR
+	part.Transparency = TRANSPARENCY
+	part.Parent = Workspace
+	return part
+end
+
+local parts: { Part } = {}
+local relativeCFrames: { CFrame } = {}
+local centerCFrame = CFrame.new(CENTER)
+
+-- Helper to connect two points with a part and cache local-space transform
+local function connectPoints(p1: Vector3, p2: Vector3)
+	local dir = p2 - p1
+	if dir.Magnitude <= 1e-6 then
+		return
+	end
+	local mid = (p1 + p2) / 2
+	local part = createPart()
+	part.Size = Vector3.new(THICKNESS, THICKNESS, dir.Magnitude)
+	part.CFrame = CFrame.new(mid, p2)
+	table.insert(parts, part)
+	table.insert(relativeCFrames, centerCFrame:ToObjectSpace(part.CFrame) :: CFrame)
+end
+
+-- Longitude (vertical great circles)
+for i = 0, SEGMENTS - 1 do
+	local phi = 2 * math.pi * i / SEGMENTS
+	for j = 0, SEGMENTS - 1 do
+		local theta1 = math.pi * j / SEGMENTS
+		local theta2 = math.pi * (j + 1) / SEGMENTS
+
+		local p1 = Vector3.new(
+			RADIUS * math.sin(theta1) * math.cos(phi),
+			RADIUS * math.cos(theta1),
+			RADIUS * math.sin(theta1) * math.sin(phi)
+		) + CENTER
+
+		local p2 = Vector3.new(
+			RADIUS * math.sin(theta2) * math.cos(phi),
+			RADIUS * math.cos(theta2),
+			RADIUS * math.sin(theta2) * math.sin(phi)
+		) + CENTER
+
+		connectPoints(p1, p2)
 	end
 end
 
--- Lerp helpers
-local function lerp(a, b, t)
-	return a + (b - a) * t
-end
-local function lerpColor(c1, c2, t)
-	return Color3.new(lerp(c1.R, c2.R, t), lerp(c1.G, c2.G, t), lerp(c1.B, c2.B, t))
-end
+-- Latitude (horizontal rings)
+for j = 1, SEGMENTS - 1 do
+	local theta = math.pi * j / SEGMENTS
+	for i = 0, SEGMENTS - 1 do
+		local phi1 = 2 * math.pi * i / SEGMENTS
+		local phi2 = 2 * math.pi * (i + 1) / SEGMENTS
 
--- Cyclic thermal palette (red → orange → yellow → pale → white → back to red)
-local stops = {
-	Color3.fromRGB(180, 0, 0), -- red
-	Color3.fromRGB(255, 70, 0), -- orange
-	Color3.fromRGB(255, 180, 0), -- yellow
-	Color3.fromRGB(255, 230, 120), -- pale
-	Color3.fromRGB(255, 255, 255), -- white
-	Color3.fromRGB(255, 230, 120), -- pale
-	Color3.fromRGB(255, 180, 0), -- yellow
-	Color3.fromRGB(255, 70, 0), -- orange
-}
+		local p1 = Vector3.new(
+			RADIUS * math.sin(theta) * math.cos(phi1),
+			RADIUS * math.cos(theta),
+			RADIUS * math.sin(theta) * math.sin(phi1)
+		) + CENTER
 
-local function palette(u) -- u in R, loops seamlessly
-	u = u % 1
-	local scaled = u * #stops
-	local i = math.floor(scaled)
-	local f = scaled - i
-	local c1 = stops[(i % #stops) + 1]
-	local c2 = stops[((i + 1) % #stops) + 1]
-	return lerpColor(c1, c2, f)
+		local p2 = Vector3.new(
+			RADIUS * math.sin(theta) * math.cos(phi2),
+			RADIUS * math.cos(theta),
+			RADIUS * math.sin(theta) * math.sin(phi2)
+		) + CENTER
+
+		connectPoints(p1, p2)
+	end
 end
 
--- Continuous diagonal field with constant stripe size
-local function field(x, z, t)
-	-- world coords in studs
-	local wx = (x - (GRID_SIZE + 1) / 2) * BLOCK_SIZE
-	local wz = (z - (GRID_SIZE + 1) / 2) * BLOCK_SIZE
-	-- choose wavelength in studs; larger = wider stripes
-	local wavelength = 20
-	return (wx + wz) / wavelength + t * SCROLL_SPEED
-end
-
--- Animate
-local t = 0
+-- Rigid rotation about center
+local angle = 0
 RunService.PreRender:Connect(function(dt)
-	t = t + dt
-	for x = 1, GRID_SIZE do
-		for z = 1, GRID_SIZE do
-			local c = palette(field(x, z, t))
-			local p = blocks[x][z]
-			p.Color = c
-			-- scale green to height, add baseline
-			local y = Y_OFFSET + c.G * 4.5
-			p.CFrame = CFrame.new((x - (GRID_SIZE + 1) / 2) * BLOCK_SIZE, y, (z - (GRID_SIZE + 1) / 2) * BLOCK_SIZE)
-		end
+	angle += dt * math.rad(DEGREES_PER_SECOND)
+	local spin = centerCFrame * CFrame.Angles(angle * 0.5, angle, 0)
+	for i = 1, #parts do
+		parts[i].CFrame = spin * relativeCFrames[i]
 	end
 end)

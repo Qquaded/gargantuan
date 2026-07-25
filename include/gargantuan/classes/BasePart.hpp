@@ -20,6 +20,7 @@ class BasePart : public Instance {
     glm::vec3 Size = glm::vec3(2, 1, 4);
     float Transparency = 0.0f;
 
+    glm::mat4 GetModelMatrix();
     virtual std::unique_ptr<GpuMesh> &GetMesh() const = 0;
 };
 
