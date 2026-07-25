@@ -1,3 +1,6 @@
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
 local FLOWERS = {
 	Color3.new(0, 1, 1),
 	Color3.new(0, 1, 0),
@@ -16,20 +19,20 @@ local flowerParts = {}
 local baseplate = Instance.new("Part")
 baseplate.Name = "Baseplate"
 baseplate.Color = Color3.fromHSV(0, 0, 0.5)
-baseplate.Position = Vector3.new(0, -50, 0)
+baseplate.Position = Vector3.new(0, -20, 0)
 baseplate.Size = Vector3.new(2000, 20, 2000)
 baseplate.Transparency = 0
-baseplate.Parent = game
+baseplate.Parent = Workspace
 
 for index, flowerColor in FLOWERS do
 	local flowerSoul = Instance.new("Part")
 	flowerSoul.Color = flowerColor
 	flowerSoul.Size = Vector3.new(2, 2, 2)
-	flowerSoul.Parent = game
+	flowerSoul.Parent = Workspace
 	flowerParts[index] = flowerSoul
 end
 
-while true do
+RunService.PreRender:Connect(function()
 	for index, flowerSoul in flowerParts do
 		local step = index / TOTAL_FLOWERS
 		local angle = step * math.tau
@@ -38,5 +41,4 @@ while true do
 		local y = math.sin(os.clock() + step) * AMPLITUDE
 		flowerSoul.Position = Vector3.new(x, y, z)
 	end
-	coroutine.yield()
-end
+end)

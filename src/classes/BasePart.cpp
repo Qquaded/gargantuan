@@ -12,6 +12,7 @@ const BasePart::ClassDefinition BasePart::DEFINITION = {
     .Properties = {
         USERDATA_READWRITE_PROP(BasePart, Anchored, bool),
         USERDATA_READWRITE_PROP(BasePart, CanCollide, bool),
+        USERDATA_READWRITE_PROP(BasePart, CastShadow, bool),
         USERDATA_READWRITE_PROP(BasePart, CFrame, gargantuan::CFrame),
         USERDATA_READWRITE_PROP(BasePart, Color, gargantuan::Color3),
         USERDATA_READWRITE_PROP(BasePart, Size, glm::vec3),

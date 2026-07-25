@@ -58,6 +58,10 @@ class ShadowPass final : public RenderPass {
         SDL_BindGPUGraphicsPipeline(pass, Pipeline);
 
         for (auto part : context.WorldRoot->Parts) {
+            if (!part->CastShadow) {
+                continue;
+            }
+
             auto &mesh = part->GetMesh();
             if (!mesh || !mesh->VertexBuffer || !mesh->IndexBuffer) {
                 continue;
