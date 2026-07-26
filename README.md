@@ -33,27 +33,9 @@ And finally,
 
 Sparked your interest? [Read the documentation.](./docs/intro.md)
 
-## Legal Notice
-
-Gargantuan is an independent open-source game engine created and maintained by
-godmothersfire whom represents Team Fireworks.
-
-Gargantuan is an independent project and is NOT affiliated with, authorized by,
-endorsed by, or in any way officially connected with Roblox Corporation.
-"Roblox" is a registered trademark of Roblox Corporation.
-
-No reverse engineering, decompilation, or extraction of proprietary binaries,
-source code, or assets belonging to Roblox Corporation was performed or utilized
-in developing Gargantuan. Gargantuan is built from scratch.
-
-API features such as Instances and data types are implemented solely for
-developer familiarity, platform portability, and software interoperability under
-applicable fair use law including but not limited to the Copyright Act of 1976,
-17 U.S.C. § 107.
-
 ## Status
 
-Gargantuan is in it's infancy! Development just began at the start of July 2026.
+Gargantuan is in its infancy! Development has just began near the start of July 2026.
 
 As of July 26th 2026, the foundation has been laid out. Datatypes such as
 Instances, Vectors, and Signals all implemented, alongside basic instance
@@ -90,3 +72,21 @@ Gargantuan's design were informed by several other game engines:
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+## Legal Notice
+
+Gargantuan is an independent open-source game engine created and maintained by
+godmothersfire, who represents Team Fireworks.
+
+Gargantuan is an independent project and is NOT affiliated with, authorized by,
+endorsed by, or in any way officially connected with Roblox Corporation.
+"Roblox" is a registered trademark of Roblox Corporation.
+
+No reverse engineering, decompilation, or extraction of proprietary binaries,
+source code, or assets belonging to Roblox Corporation was performed or utilized
+in developing Gargantuan. Gargantuan is built from scratch.
+
+API features such as Instances and data types are implemented solely for
+developer familiarity, platform portability, and software interoperability under
+applicable fair use law including but not limited to the Copyright Act of 1976,
+17 U.S.C. § 107.
