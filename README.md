@@ -53,10 +53,10 @@ applicable fair use law including but not limited to the Copyright Act of 1976,
 
 ## Status
 
-Gargantuan is in it's infancy! Give it some time.
+Gargantuan is in it's infancy! Development just began at the start of July 2026.
 
-As of July 2026, the foundation has been laid out. Datatypes such as Instances,
-Color3, CFrames, Vectors, and Signals all implemented, alongside basic instance
+As of July 26th 2026, the foundation has been laid out. Datatypes such as
+Instances, Vectors, and Signals all implemented, alongside basic instance
 classes like parts and the data model rendered using SDL3's GPU API. Gargantuan
 is just missing more instance classes.
 
