@@ -101,7 +101,9 @@ namespace gargantuan {
 			Workspace->CurrentCamera->OnEvent(Window, event);
 		}
 
+		RunService->PreSimulation->Fire(deltaTime);
 		Workspace->CurrentCamera->Step(deltaTime);
+		RunService->PostSimulation->Fire(deltaTime);
 
 		RunService->PreRender->Fire(deltaTime);
 		MeshProvider::UploadToGpu(Gpu);

@@ -87,9 +87,9 @@ namespace gargantuan {
 	}
 
 	int BaseSignal::LConnect(lua_State* L, BaseSignal* signal) {
-		DumpLuaStack(L);
+		// DumpLuaStack(L);
 		int callbackReference = LReferenceCallback(L, 2);
-		DumpLuaStack(L);
+		// DumpLuaStack(L);
 		return StackValue<SignalConnection::Pointer>::Push(
 			L,
 			signal->Connect(

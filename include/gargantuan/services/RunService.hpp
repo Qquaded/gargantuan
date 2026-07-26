@@ -9,6 +9,8 @@ namespace gargantuan {
 	  public:
 		static const ClassDefinition DEFINITION;
 
+		CLASS_SIGNAL(PreSimulation, double);
+		CLASS_SIGNAL(PostSimulation, double);
 		CLASS_SIGNAL(PreRender, double);
 	};
 
