@@ -1,10 +1,10 @@
 #include "gargantuan/datatypes/Vector2.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
+#include <cstdlib>
 #include <lua.h>
 #include <lualib.h>
 #include <sstream>
-#include <stdexcept>
 
 namespace gargantuan {
 
@@ -21,13 +21,16 @@ Vector2 Vector2::Abs() const { return glm::abs(Value); };
 Vector2 Vector2::Ceil() const { return glm::ceil(Value); };
 Vector2 Vector2::Floor() const { return glm::floor(Value); };
 Vector2 Vector2::Sign() const { return glm::sign(Value); };
-float Vector2::Angle(const Vector2 &other, bool isSigned) const { throw std::runtime_error("not yet implemented"); };
+float Vector2::Angle(const Vector2 &other, bool isSigned) const {
+    float angle = atan2(Cross(other), Dot(other));
+    return isSigned ? angle : abs(angle);
+};
 float Vector2::Dot(const Vector2 &other) const { return GetX() * other.GetX() + GetY() * other.GetY(); };
 Vector2 Vector2::Lerp(const Vector2 &goal, float alpha) const { return Value + (goal.Value - Value) * alpha; };
 Vector2 Vector2::Max(const Vector2 &other) const { return glm::max(Value, other.Value); };
 Vector2 Vector2::Min(const Vector2 &other) const { return glm::min(Value, other.Value); };
 Vector2 Vector2::FuzzyEq(const Vector2 &other, float epsilon) const {
-    throw std::runtime_error("not yet implemented");
+    return glm::abs(Value.x - this->Value.x) <= epsilon && glm::abs(Value.y - this->Value.y) <= epsilon;
 };
 
 int Vector2::LTostring(lua_State *L, Vector2 *self) {

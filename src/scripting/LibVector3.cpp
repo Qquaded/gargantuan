@@ -63,8 +63,14 @@ int Vector3_Dot(lua_State *L) {
 }
 
 int Vector3_FuzzyEq(lua_State *L) {
-    luaL_errorL(L, "not yet implemented");
-    return 0;
+    glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
+    glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
+    float epsilon = luaL_optnumber(L, 3, 1e-5);
+    lua_pushboolean(
+        L, glm::abs(self.x - other.x) <= epsilon && glm::abs(self.y - other.y) <= epsilon &&
+               glm::abs(self.z - other.z) <= epsilon
+    );
+    return 1;
 }
 
 int Vector3_Lerp(lua_State *L) {
