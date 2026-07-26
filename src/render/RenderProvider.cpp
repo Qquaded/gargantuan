@@ -87,10 +87,7 @@ void RenderProvider::Draw(DrawContext drawContext) {
     FrameContext frameContext;
     frameContext.Commands = commands;
     frameContext.WorldRoot = drawContext.WorldRoot;
-
-    frameContext.CameraPosition = drawContext.CameraPosition;
-    frameContext.ViewMatrix = drawContext.ViewMatrix;
-    frameContext.ProjectionMatrix = drawContext.ProjectionMatrix;
+    frameContext.Camera = drawContext.Camera;
 
     frameContext.ShadowMapTexture = ShadowMapTexture;
     frameContext.ShadowSampler = ShadowSampler;

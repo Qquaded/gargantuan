@@ -74,109 +74,37 @@ Engine::~Engine() {
 
 void Engine::ProcessEvent(SDL_Event event) {
     switch (event.type) {
-
     case SDL_EVENT_QUIT:
         SDL_Log("Stopping");
         IsRunning = false;
-        return;
-
-    case SDL_EVENT_WINDOW_RESIZED:
-        ViewportSize.x = event.window.data1;
-        ViewportSize.y = event.window.data2;
-        SDL_Log("Resizing: %0.fx%0.f", ViewportSize.x, ViewportSize.y);
-        RenderProvider->Resize(ViewportSize.x, ViewportSize.y);
-        break;
-
-    case SDL_EVENT_MOUSE_BUTTON_DOWN:
-        if (event.button.button == SDL_BUTTON_RIGHT) {
-            SDL_SetWindowRelativeMouseMode(Window, true);
-        };
-        return;
-
-    case SDL_EVENT_MOUSE_BUTTON_UP:
-        if (event.button.button == SDL_BUTTON_RIGHT) {
-            SDL_SetWindowRelativeMouseMode(Window, false);
-        };
-        return;
-
-    case SDL_EVENT_MOUSE_MOTION:
-        if (SDL_GetWindowRelativeMouseMode(Window)) {
-            CameraYaw += event.motion.xrel * CameraSensitivity;
-            CameraPitch -= event.motion.yrel * CameraSensitivity;
-
-            if (CameraPitch > 89.0f) {
-                CameraPitch = 89.0f;
-            };
-
-            if (CameraPitch < -89.0f) {
-                CameraPitch = -89.0f;
-            };
-
-            float yawRad = glm::radians(CameraYaw);
-            float pitchRad = glm::radians(CameraPitch);
-            auto worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-            CameraLookVector =
-                glm::normalize(glm::vec3(cos(yawRad) * cos(pitchRad), sin(pitchRad), sin(yawRad) * cos(pitchRad)));
-
-            CameraRightVector = glm::normalize(glm::cross(CameraLookVector, worldUp));
-            CameraUpVector = glm::normalize(glm::cross(CameraRightVector, CameraLookVector));
-        };
         return;
     }
 }
 
 void Engine::Step() {
-    CurrentTick = SDL_GetTicks();
-    if (LastTick == 0) {
-        LastTick = CurrentTick;
-    }
-
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        ProcessEvent(event);
-    }
-
     if (!IsRunning) {
         return;
     }
 
-    int numKeys;
-    auto keys = SDL_GetKeyboardState(&numKeys);
-    auto worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-    auto deltaTime = GetDeltaTime();
+    CurrentTick = SDL_GetTicks();
+    if (LastTick == 0) {
+        LastTick = CurrentTick;
+    }
+    float deltaTime = GetDeltaTime();
 
-    if (keys[SDL_SCANCODE_W]) {
-        CameraPosition += CameraLookVector * CameraSpeed * deltaTime;
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        ProcessEvent(event);
+        Workspace->CurrentCamera->OnEvent(Window, event);
     }
 
-    if (keys[SDL_SCANCODE_S]) {
-        CameraPosition -= CameraLookVector * CameraSpeed * deltaTime;
-    }
+    Workspace->CurrentCamera->Step(deltaTime);
 
-    if (keys[SDL_SCANCODE_A]) {
-        CameraPosition -= CameraRightVector * CameraSpeed * deltaTime;
-    }
-
-    if (keys[SDL_SCANCODE_D]) {
-        CameraPosition += CameraRightVector * CameraSpeed * deltaTime;
-    }
-
-    if (keys[SDL_SCANCODE_SPACE]) {
-        CameraPosition += glm::vec3(0, CameraSpeed * deltaTime, 0);
-    }
-
-    if (keys[SDL_SCANCODE_LSHIFT]) {
-        CameraPosition -= glm::vec3(0, CameraSpeed * deltaTime, 0);
-    }
-
-    RunService->PreRender->Fire(GetDeltaTime());
+    RunService->PreRender->Fire(deltaTime);
     MeshProvider::UploadToGpu(Gpu);
     RenderProvider->Draw({
         .WorldRoot = std::static_pointer_cast<WorldRoot>(Workspace),
-        .CameraPosition = CameraPosition,
-        .ProjectionMatrix = GetProjectionMatrix(),
-        .ViewMatrix = GetViewMatrix(),
+        .Camera = Workspace->CurrentCamera,
     });
 
     ScriptEngine->Step();

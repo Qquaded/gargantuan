@@ -168,12 +168,12 @@ glm::vec3 CFrame::GetUpVector() { return {Rotation[0][1], Rotation[1][1], Rotati
 glm::vec3 CFrame::GetLookVector() { return {-Rotation[0][2], -Rotation[1][2], -Rotation[2][2]}; }
 
 CFrame CFrame::Angles(float x, float y, float z) {
-    glm::mat4 rot4 = glm::eulerAngleYXZ(y, x, z);
+    glm::mat4 rot4 = glm::eulerAngleXYZ(x, y, z);
     return CFrame(glm::vec3(0, 0, 0), glm::mat3(rot4));
 }
 
 CFrame CFrame::fromMatrix(glm::vec3 position, glm::vec3 x, glm::vec3 y, glm::vec3 z) {
-    glm::mat3 rot(x, y, -z);
+    glm::mat3 rot(x, y, z);
     return CFrame(position, rot);
 }
 

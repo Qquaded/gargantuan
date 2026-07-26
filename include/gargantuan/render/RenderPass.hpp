@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/classes/Camera.hpp"
 #include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/render/Shader.hpp"
 
@@ -10,10 +11,7 @@ namespace gargantuan {
 
 struct DrawContext {
     std::shared_ptr<WorldRoot> WorldRoot;
-
-    glm::vec3 CameraPosition;
-    glm::mat4 ProjectionMatrix;
-    glm::mat4 ViewMatrix;
+    std::shared_ptr<Camera> Camera;
 
     // Direction TOWARDS the light
     glm::vec3 LightDirection;

@@ -37,24 +37,6 @@ class Engine {
   private:
     uint64_t CurrentTick = 0;
     uint64_t LastTick = 0;
-
-    // TODO: Camera class, and probably implement Instances by then
-    glm::vec3 CameraPosition = glm::vec3(0, 0, 10);
-    glm::vec3 CameraUpVector = glm::vec3(0, 1, 0);
-    glm::vec3 CameraRightVector = glm::vec3(1, 0, 0);
-    glm::vec3 CameraLookVector = glm::vec3(0, 0, -1);
-    float CameraYaw = -90.0f;
-    float CameraPitch = 0.0f;
-    float CameraSensitivity = 0.2f;
-    float CameraSpeed = 10.0f;
-    float CameraFieldOfView = 70.0f;
-
-    glm::mat4 GetProjectionMatrix() {
-        float aspect = ViewportSize.x / ViewportSize.y;
-        return glm::perspective(glm::radians(CameraFieldOfView), aspect, 0.1f, 100000.0f);
-    }
-
-    glm::mat4 GetViewMatrix() { return glm::lookAt(CameraPosition, CameraPosition + CameraLookVector, CameraUpVector); }
 };
 
 } // namespace gargantuan

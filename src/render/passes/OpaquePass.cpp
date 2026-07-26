@@ -83,8 +83,8 @@ class OpaquePass final : public RenderPass {
         SDL_BindGPUFragmentSamplers(pass, 0, &shadowBinding, 1);
 
         WorldUniforms worldUniforms{
-            .ViewMatrix = context.ViewMatrix,
-            .ProjectionMatrix = context.ProjectionMatrix,
+            .ViewMatrix = context.Camera->GetViewMatrix(),
+            .ProjectionMatrix = context.Camera->GetProjectionMatrix(),
             .ShadowBiasMatrix = SHADOW_BIAS_MATRIX * context.ShadowMatrix,
             .LightDirection = context.LightDirection,
         };
