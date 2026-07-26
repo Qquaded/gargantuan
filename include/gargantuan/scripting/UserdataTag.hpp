@@ -10,6 +10,7 @@ enum class UserdataTag : int {
     EnumItem,
     Signal,
     SignalConnection,
+    Vector2,
     Vector3,
 };
 

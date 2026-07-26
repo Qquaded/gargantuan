@@ -3,6 +3,7 @@
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/datatypes/Signal.hpp"
+#include "gargantuan/datatypes/Vector2.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Common.h>
@@ -70,6 +71,7 @@ static const luaL_Reg SCRIPT_LIBS[] = {
 
     {"CFrame", OpenLibCFrame},
     {"Color3", OpenLibColor3},
+    {"Vector2", OpenLibVector2},
     {"Vector3", OpenLibVector3},
 
     {"Instance", OpenLibInstance},
@@ -97,6 +99,7 @@ ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
     Color3::CreateUserdataMetatable(L);
     Instance::CreateUserdataMetatable(L);
     SignalConnection::CreateUserdataMetatable(L);
+    Vector2::CreateUserdataMetatable(L);
 
     const luaL_Reg *lib = SCRIPT_LIBS;
     for (; lib->func; lib++) {
