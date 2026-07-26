@@ -17,18 +17,18 @@ namespace gargantuan {
 		typedef Userdata<Class, StoredAs> This;
 
 		struct Property {
-			int (*Read)(lua_State* L, Class* instance);
-			int (*Write)(lua_State* L, Class* instance);
+			int (*Read)(lua_State *L, Class *instance);
+			int (*Write)(lua_State *L, Class *instance);
 		};
 
 		struct Method {
 		  public:
-			int (*Call)(lua_State* L, Class* instance);
+			int (*Call)(lua_State *L, Class *instance);
 
 			template <auto MethodPointer, typename TargetClass, typename Returns, typename... Arguments>
 			static Method Wrap(Returns (TargetClass::*)(Arguments...)) {
-				return {[](lua_State* L, Class* instance) -> int {
-					auto* derived = static_cast<TargetClass*>(instance);
+				return {[](lua_State *L, Class *instance) -> int {
+					auto *derived = static_cast<TargetClass *>(instance);
 					return WrappedCall<MethodPointer, TargetClass, Arguments...>(
 						L, derived, std::index_sequence_for<Arguments...>{}
 					);
@@ -37,8 +37,8 @@ namespace gargantuan {
 
 			template <auto MethodPointer, typename TargetClass, typename Returns, typename... Arguments>
 			static Method Wrap(Returns (TargetClass::*)(Arguments...) const) {
-				return {[](lua_State* L, Class* instance) -> int {
-					auto* derived = static_cast<TargetClass*>(instance);
+				return {[](lua_State *L, Class *instance) -> int {
+					auto *derived = static_cast<TargetClass *>(instance);
 					return WrappedCall<MethodPointer, TargetClass, Arguments...>(
 						L, derived, std::index_sequence_for<Arguments...>{}
 					);
@@ -51,14 +51,14 @@ namespace gargantuan {
 
 		  private:
 			template <auto MethodPointer, typename TargetClass, typename... Arguments, std::size_t... Indices>
-			static int WrappedCall(lua_State* L, TargetClass* instance, std::index_sequence<Indices...>) {
-				using Ret = std::invoke_result_t<decltype(MethodPointer), TargetClass*, std::decay_t<Arguments>...>;
+			static int WrappedCall(lua_State *L, TargetClass *instance, std::index_sequence<Indices...>) {
+				using Ret = std::invoke_result_t<decltype(MethodPointer), TargetClass *, std::decay_t<Arguments>...>;
 
 				if constexpr (std::is_void_v<Ret>) {
 					std::invoke(MethodPointer, instance, StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...);
 					return 0;
 				} else {
-					auto&& res = std::invoke(
+					auto &&res = std::invoke(
 						MethodPointer, instance, StackValue<std::decay_t<Arguments>>::From(L, Indices + 2)...
 					);
 					StackValue<std::decay_t<Ret>>::Push(L, std::forward<decltype(res)>(res));
@@ -76,24 +76,24 @@ namespace gargantuan {
 		static std::string_view GetUserdataType() {
 			return Class::GetUserdataType();
 		};
-		static const UserdataProperties& GetUserdataProperties() {
+		static const UserdataProperties &GetUserdataProperties() {
 			return Class::GetUserdataProperties();
 		};
-		static const UserdataMethods& GetUserdataMethods() {
+		static const UserdataMethods &GetUserdataMethods() {
 			return Class::GetUserdataMethods();
 		};
 
-		static int UserdataIndex(lua_State* L) {
-			Class* instance = fromStackValue(L, 1);
+		static int UserdataIndex(lua_State *L) {
+			Class *instance = fromStackValue(L, 1);
 			std::string_view key = CheckStackValue<std::string_view>(L, 2);
 
 			if (!instance) {
 				return 0;
 			}
 
-			const UserdataProperties& properties = Class::GetUserdataProperties();
+			const UserdataProperties &properties = Class::GetUserdataProperties();
 			if (auto it = properties.find(key); it != properties.end()) {
-				const Property& property = it->second;
+				const Property &property = it->second;
 				if (property.Read) {
 					property.Read(L, instance);
 					return 1;
@@ -104,17 +104,17 @@ namespace gargantuan {
 			return 0;
 		};
 
-		static int UserdataNewIndex(lua_State* L) {
-			Class* instance = fromStackValue(L, 1);
+		static int UserdataNewIndex(lua_State *L) {
+			Class *instance = fromStackValue(L, 1);
 			std::string_view key = CheckStackValue<std::string_view>(L, 2);
 
 			if (!instance) {
 				return 0;
 			}
 
-			const UserdataProperties& properties = Class::GetUserdataProperties();
+			const UserdataProperties &properties = Class::GetUserdataProperties();
 			if (auto it = properties.find(key); it != properties.end()) {
-				const Property& property = it->second;
+				const Property &property = it->second;
 				if (property.Write) {
 					property.Write(L, instance);
 				} else {
@@ -126,17 +126,17 @@ namespace gargantuan {
 			return 0;
 		};
 
-		static int UserdataNamecall(lua_State* L) {
-			Class* instance = fromStackValue(L, 1);
-			const char* key = lua_namecallatom(L, nullptr);
+		static int UserdataNamecall(lua_State *L) {
+			Class *instance = fromStackValue(L, 1);
+			const char *key = lua_namecallatom(L, nullptr);
 			if (!key || !instance) {
 				luaL_error(L, "Missing instance or method name");
 				return 0;
 			}
 
-			const UserdataMethods& methods = Class::GetUserdataMethods();
+			const UserdataMethods &methods = Class::GetUserdataMethods();
 			if (auto it = methods.find(key); it != methods.end()) {
-				const Method& method = it->second;
+				const Method &method = it->second;
 				return method.Call(L, instance);
 			}
 
@@ -144,12 +144,12 @@ namespace gargantuan {
 			return 0;
 		};
 
-		static int UserdataTostring(lua_State* L) {
+		static int UserdataTostring(lua_State *L) {
 			lua_pushstring(L, Class::GetUserdataType().data());
 			return 1;
 		};
 
-		static void CreateUserdataMetatable(lua_State* L) {
+		static void CreateUserdataMetatable(lua_State *L) {
 			lua_createtable(L, 0, 0);
 
 			lua_pushstring(L, Class::GetUserdataType().data());
@@ -167,16 +167,16 @@ namespace gargantuan {
 			lua_pushcfunction(L, Class::UserdataTostring, "__tostring");
 			lua_setfield(L, -2, "__tostring");
 
-			for (const auto& [name, method] : Class::GetUserdataMethods()) {
+			for (const auto &[name, method] : Class::GetUserdataMethods()) {
 				if (!name.starts_with("__")) {
 					continue;
 				}
 
-				lua_pushlightuserdata(L, const_cast<Method*>(&method));
+				lua_pushlightuserdata(L, const_cast<Method *>(&method));
 				lua_pushcclosure(
 					L,
-					[](lua_State* L) -> int {
-						auto* methodPtr = static_cast<Method*>(lua_touserdata(L, lua_upvalueindex(1)));
+					[](lua_State *L) -> int {
+						auto *methodPtr = static_cast<Method *>(lua_touserdata(L, lua_upvalueindex(1)));
 						auto self = fromStackValue(L, 1);
 						if (!methodPtr || !methodPtr->Call) {
 							return 0;
@@ -199,14 +199,14 @@ namespace gargantuan {
 		template <typename T, typename = std::void_t<>> struct HasGetter : std::false_type {};
 		template <typename T> struct HasGetter<T, std::void_t<decltype(std::declval<T>().get())>> : std::true_type {};
 
-		static Class* fromStackValue(lua_State* L, int idx) {
-			StoredAs* instancePointer =
-				static_cast<StoredAs*>(lua_touserdatatagged(L, idx, (int)Class::GetUserdataTag()));
+		static Class *fromStackValue(lua_State *L, int idx) {
+			StoredAs *instancePointer =
+				static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)Class::GetUserdataTag()));
 			if (!instancePointer) {
 				return nullptr;
 			};
 
-			Class* instance = nullptr;
+			Class *instance = nullptr;
 			if constexpr (std::is_pointer_v<StoredAs>) {
 				instance = *instancePointer;
 			} else if constexpr (HasGetter<StoredAs>::value) {
@@ -226,17 +226,17 @@ namespace gargantuan {
 			return This::GetUserdataType();
 		};
 
-		static bool Is(lua_State* L, int idx) {
+		static bool Is(lua_State *L, int idx) {
 			return lua_userdatatag(L, idx) == (int)This::GetUserdataTag();
 		};
 
-		static StoredAs From(lua_State* L, int idx) {
-			StoredAs* userdata = static_cast<StoredAs*>(lua_touserdatatagged(L, idx, (int)This::GetUserdataTag()));
+		static StoredAs From(lua_State *L, int idx) {
+			StoredAs *userdata = static_cast<StoredAs *>(lua_touserdatatagged(L, idx, (int)This::GetUserdataTag()));
 			return *userdata;
 		};
 
-		static int Push(lua_State* L, StoredAs value) {
-			StoredAs* userdata = static_cast<StoredAs*>(
+		static int Push(lua_State *L, StoredAs value) {
+			StoredAs *userdata = static_cast<StoredAs *>(
 				lua_newuserdatataggedwithmetatable(L, sizeof(StoredAs), (int)This::GetUserdataTag())
 			);
 			new (userdata) StoredAs(value);
@@ -244,80 +244,80 @@ namespace gargantuan {
 		};
 	};
 
-#define UD_READONLY_PROP_IMPL(classType, propertyName, valueType)                                                      \
-	[](lua_State* L, void* rawInstance) -> int {                                                                       \
-		auto* instance = static_cast<classType*>(rawInstance);                                                         \
+#define G_UD_READONLY_PROP_IMPL(classType, propertyName, valueType)                                                    \
+	[](lua_State *L, void *rawInstance) -> int {                                                                       \
+		auto *instance = static_cast<classType *>(rawInstance);                                                        \
 		::gargantuan::StackValue<valueType>::Push(L, instance->propertyName);                                          \
 		return 1;                                                                                                      \
 	}
 
-#define UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)                                                     \
-	[](lua_State* L, void* rawInstance) -> int {                                                                       \
-		auto* instance = static_cast<classType*>(rawInstance);                                                         \
+#define G_UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)                                                   \
+	[](lua_State *L, void *rawInstance) -> int {                                                                       \
+		auto *instance = static_cast<classType *>(rawInstance);                                                        \
 		valueType value = ::gargantuan::CheckStackValue<valueType>(L, -1);                                             \
 		instance->propertyName = value;                                                                                \
 		return 0;                                                                                                      \
 	}
 
-#define UD_READONLY_PROP(classType, propertyName, valueType)                                                           \
+#define G_UD_READONLY_PROP(classType, propertyName, valueType)                                                         \
 	{                                                                                                                  \
 		#propertyName, {                                                                                               \
-			[](lua_State* L, auto* inst) -> int {                                                                      \
-				return UD_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                             \
+			[](lua_State *L, auto *inst) -> int {                                                                      \
+				return G_UD_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                           \
 			},                                                                                                         \
 				nullptr                                                                                                \
 		}                                                                                                              \
 	}
 
-#define UD_WRITEONLY_PROP(classType, propertyName, valueType)                                                          \
+#define G_UD_WRITEONLY_PROP(classType, propertyName, valueType)                                                        \
 	{                                                                                                                  \
 		#propertyName, {                                                                                               \
-			nullptr, [](lua_State* L, auto* inst) -> int {                                                             \
-				return UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                            \
+			nullptr, [](lua_State *L, auto *inst) -> int {                                                             \
+				return G_UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                          \
 			}                                                                                                          \
 		}                                                                                                              \
 	}
 
-#define UD_READWRITE_PROP(classType, propertyName, valueType)                                                          \
+#define G_UD_READWRITE_PROP(classType, propertyName, valueType)                                                        \
 	{                                                                                                                  \
 		#propertyName, {                                                                                               \
-			[](lua_State* L, auto* inst) -> int {                                                                      \
-				return UD_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                             \
+			[](lua_State *L, auto *inst) -> int {                                                                      \
+				return G_UD_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                           \
 			},                                                                                                         \
-				[](lua_State* L, auto* inst) -> int {                                                                  \
-					return UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                        \
+				[](lua_State *L, auto *inst) -> int {                                                                  \
+					return G_UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                      \
 				}                                                                                                      \
 		}                                                                                                              \
 	}
 
-#define UD_STACKVALUE_WITH_STORED(classType, storedType)                                                               \
+#define G_UD_STACKVALUE_WITH_STORED(classType, storedType)                                                             \
 	template <> struct StackValue<storedType> {                                                                        \
 		typedef Userdata<classType, storedType> This;                                                                  \
 		static inline std::string_view ReflectedTypedef() {                                                            \
 			return StackValue<This>::ReflectedTypedef();                                                               \
 		};                                                                                                             \
-		static bool Is(lua_State* L, int idx) {                                                                        \
+		static bool Is(lua_State *L, int idx) {                                                                        \
 			return StackValue<This>::Is(L, idx);                                                                       \
 		};                                                                                                             \
-		static storedType From(lua_State* L, int idx) {                                                                \
+		static storedType From(lua_State *L, int idx) {                                                                \
 			return StackValue<This>::From(L, idx);                                                                     \
 		};                                                                                                             \
-		static int Push(lua_State* L, storedType value) {                                                              \
+		static int Push(lua_State *L, storedType value) {                                                              \
 			return StackValue<This>::Push(L, value);                                                                   \
 		};                                                                                                             \
 	};
 
-#define UD_STACKVALUE(classType) UD_STACKVALUE_WITH_STORED(classType, classType)
+#define G_UD_STACKVALUE(classType) G_UD_STACKVALUE_WITH_STORED(classType, classType)
 
-#define UD_METHOD(classType, methodName) {#methodName, Method::Wrap<&classType::methodName>()}
+#define G_UD_METHOD(classType, methodName) {#methodName, Method::Wrap<&classType::methodName>()}
 
-#define UD_DECL_PRELUDE(self)                                                                                          \
+#define G_UD_DECL_PRELUDE(self)                                                                                        \
 	static std::string_view GetUserdataType();                                                                         \
 	static UserdataTag GetUserdataTag();                                                                               \
-	static const self::UserdataProperties& GetUserdataProperties();                                                    \
-	static const self::UserdataMethods& GetUserdataMethods();
+	static const self::UserdataProperties &GetUserdataProperties();                                                    \
+	static const self::UserdataMethods &GetUserdataMethods();
 
-#define UD_IMPL_PRELUDE(self)                                                                                          \
+#define G_UD_IMPL_PRELUDE(self)                                                                                        \
 	std::string_view self::GetUserdataType() {                                                                         \
 		return #self;                                                                                                  \
 	};                                                                                                                 \
@@ -325,14 +325,14 @@ namespace gargantuan {
 		return UserdataTag::self;                                                                                      \
 	};
 
-#define UD_IMPL_PROPS(self, ...)                                                                                       \
-	const self::UserdataProperties& self::GetUserdataProperties() {                                                    \
+#define G_UD_IMPL_PROPS(self, ...)                                                                                     \
+	const self::UserdataProperties &self::GetUserdataProperties() {                                                    \
 		static const UserdataProperties PROPERTIES = {__VA_ARGS__};                                                    \
 		return PROPERTIES;                                                                                             \
 	};
 
-#define UD_IMPL_METHODS(self, ...)                                                                                     \
-	const self::UserdataMethods& self::GetUserdataMethods() {                                                          \
+#define G_UD_IMPL_METHODS(self, ...)                                                                                   \
+	const self::UserdataMethods &self::GetUserdataMethods() {                                                          \
 		static const UserdataMethods METHODS = {__VA_ARGS__};                                                          \
 		return METHODS;                                                                                                \
 	};

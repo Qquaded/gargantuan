@@ -16,7 +16,7 @@ namespace gargantuan {
 			};
 
 			Type type = Type::Wait;
-			lua_State* Thread = nullptr;
+			lua_State *Thread = nullptr;
 			int ThreadReference = LUA_NOREF;
 			int ArgumentCount = 0;
 			double ScheduledTime = 0;
@@ -24,25 +24,25 @@ namespace gargantuan {
 		};
 
 		struct DeferredTask {
-			lua_State* Thread = nullptr;
+			lua_State *Thread = nullptr;
 			int ThreadReference = LUA_NOREF;
 			int ArgumentCount = 0;
 		};
 
-		ThreadEngine(lua_State* mainState);
-		int TakeThreadReference(lua_State* thread);
+		ThreadEngine(lua_State *mainState);
+		int TakeThreadReference(lua_State *thread);
 		void Step();
-		void ResumeThread(lua_State* thread, int threadReference, int argumentCount);
-		void QueueScheduledTask(lua_State* thread, ScheduledTask::Type type, double delaySeconds, int argumentCount);
-		void QueueDeferredTask(lua_State* thread, int argumentCount);
+		void ResumeThread(lua_State *thread, int threadReference, int argumentCount);
+		void QueueScheduledTask(lua_State *thread, ScheduledTask::Type type, double delaySeconds, int argumentCount);
+		void QueueDeferredTask(lua_State *thread, int argumentCount);
 
-		static ThreadEngine* Get(lua_State* L);
+		static ThreadEngine *Get(lua_State *L);
 
 	  private:
-		lua_State* L;
+		lua_State *L;
 
 		struct CompareWakeTime {
-			bool operator()(const ScheduledTask& lhs, const ScheduledTask& rhs) {
+			bool operator()(const ScheduledTask &lhs, const ScheduledTask &rhs) {
 				return lhs.WakeTime > rhs.WakeTime;
 			};
 		};

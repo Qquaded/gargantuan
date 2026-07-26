@@ -9,7 +9,7 @@ namespace gargantuan {
 		.Superclass = "ServiceProvider",
 	};
 
-	const DataModel::ServiceConstructors& DataModel::GetServiceConstructors() const {
+	const DataModel::ServiceConstructors &DataModel::GetServiceConstructors() const {
 		static const DataModel::ServiceConstructors CONSTRUCTORS = {
 			{"Workspace", Workspace::DEFINITION.Constructor},
 			{"RunService", RunService::DEFINITION.Constructor},

@@ -4,12 +4,12 @@
 #include <SDL3/SDL.h>
 
 namespace gargantuan {
-	std::filesystem::path GetShaderPath(const std::filesystem::path& relativePath) {
+	std::filesystem::path GetShaderPath(const std::filesystem::path &relativePath) {
 		return Paths::GetExecutableDirectory() / "shaders" / relativePath;
 	}
 
 	void
-	GetShaderFormat(SDL_GPUDevice* gpu, SDL_GPUShaderFormat& format, std::string& extension, std::string& entrypoint) {
+	GetShaderFormat(SDL_GPUDevice *gpu, SDL_GPUShaderFormat &format, std::string &extension, std::string &entrypoint) {
 		SDL_GPUShaderFormat supportedFormats = SDL_GetGPUShaderFormats(gpu);
 		if (supportedFormats & SDL_GPU_SHADERFORMAT_METALLIB) {
 			format = SDL_GPU_SHADERFORMAT_METALLIB;
@@ -26,7 +26,7 @@ namespace gargantuan {
 		}
 	}
 
-	void Shader::Destroy(SDL_GPUDevice* gpu) {
+	void Shader::Destroy(SDL_GPUDevice *gpu) {
 		if (VertexShader) {
 			SDL_ReleaseGPUShader(gpu, VertexShader);
 			VertexShader = nullptr;
@@ -38,19 +38,19 @@ namespace gargantuan {
 		}
 	}
 
-	SDL_GPUShader*
-	FileShader::CompileFile(SDL_GPUDevice* gpu, std::filesystem::path filepath, SDL_GPUShaderCreateInfo info) {
+	SDL_GPUShader *
+	FileShader::CompileFile(SDL_GPUDevice *gpu, std::filesystem::path filepath, SDL_GPUShaderCreateInfo info) {
 		size_t codeSize;
-		void* code = SDL_LoadFile(filepath.c_str(), &codeSize);
+		void *code = SDL_LoadFile(filepath.c_str(), &codeSize);
 		if (code == nullptr) {
 			SDL_Log("Failed to open shader file %s", filepath.c_str());
 			return nullptr;
 		}
 
 		info.code_size = codeSize;
-		info.code = static_cast<const Uint8*>(code);
+		info.code = static_cast<const Uint8 *>(code);
 
-		SDL_GPUShader* shader = SDL_CreateGPUShader(gpu, &info);
+		SDL_GPUShader *shader = SDL_CreateGPUShader(gpu, &info);
 		SDL_free(code);
 
 		if (shader == nullptr) {
@@ -61,7 +61,7 @@ namespace gargantuan {
 		return shader;
 	}
 
-	void FileShader::Init(SDL_GPUDevice* gpu) {
+	void FileShader::Init(SDL_GPUDevice *gpu) {
 		SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
 		std::string extension, entrypoint;
 		GetShaderFormat(gpu, format, extension, entrypoint);

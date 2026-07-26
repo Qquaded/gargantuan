@@ -5,7 +5,7 @@
 #include <lualib.h>
 
 namespace gargantuan {
-	int LibInstance_new(lua_State* L) {
+	int LibInstance_new(lua_State *L) {
 		auto className = luaL_checkstring(L, 1);
 
 		auto classDefinition = ClassRegistry::GetDefinitionByName(className);
@@ -30,7 +30,7 @@ namespace gargantuan {
 		{nullptr, nullptr},
 	};
 
-	int OpenLibInstance(lua_State* L) {
+	int OpenLibInstance(lua_State *L) {
 		luaL_register(L, "Instance", LibInstance);
 		return 0;
 	}

@@ -54,7 +54,7 @@ namespace gargantuan {
 			.FragmentSamplerCount = 1,
 		};
 
-		OpaquePass(SDL_GPUDevice* gpu, SDL_GPUTextureFormat swapchainFormat) {
+		OpaquePass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
 			Shader.Init(gpu);
 			Pipeline = PipelineBuilder()
 						   .SetVertexShader(Shader.VertexShader)
@@ -67,7 +67,7 @@ namespace gargantuan {
 						   .Build(gpu);
 		};
 
-		SDL_GPURenderPass* Draw(SDL_GPUDevice* gpu, FrameContext& context) override {
+		SDL_GPURenderPass *Draw(SDL_GPUDevice *gpu, FrameContext &context) override {
 			SDL_GPUColorTargetInfo colorTarget = {
 				.texture = context.SwapchainTexture,
 				.clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f},
@@ -103,7 +103,7 @@ namespace gargantuan {
 			SDL_PushGPUFragmentUniformData(context.Commands, 0, &worldUniforms, sizeof(WorldUniforms));
 
 			for (auto part : context.WorldRoot->Parts) {
-				auto& mesh = part->GetMesh();
+				auto &mesh = part->GetMesh();
 				if (!mesh || !mesh->VertexBuffer || !mesh->IndexBuffer) {
 					continue;
 				}
@@ -127,7 +127,7 @@ namespace gargantuan {
 		};
 	};
 
-	std::unique_ptr<RenderPass> CreateOpaquePass(SDL_GPUDevice* gpu, SDL_GPUTextureFormat swapchainFormat) {
+	std::unique_ptr<RenderPass> CreateOpaquePass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
 		return std::make_unique<OpaquePass>(gpu, swapchainFormat);
 	}
 } // namespace gargantuan

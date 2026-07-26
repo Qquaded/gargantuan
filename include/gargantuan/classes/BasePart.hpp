@@ -21,6 +21,6 @@ namespace gargantuan {
 		float Transparency = 0.0f;
 
 		glm::mat4 GetModelMatrix();
-		virtual std::unique_ptr<GpuMesh>& GetMesh() const = 0;
+		virtual std::unique_ptr<GpuMesh> &GetMesh() const = 0;
 	};
 } // namespace gargantuan

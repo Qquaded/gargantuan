@@ -15,7 +15,7 @@ namespace gargantuan {
 	class Instance : public std::enable_shared_from_this<Instance>,
 					 public Userdata<Instance, std::shared_ptr<Instance>> {
 	  public:
-		UD_DECL_PRELUDE(Instance)
+		G_UD_DECL_PRELUDE(Instance)
 
 		typedef std::shared_ptr<Instance> Pointer;
 		typedef Userdata<Instance, std::shared_ptr<Instance>> This;
@@ -38,37 +38,37 @@ namespace gargantuan {
 
 		std::string_view Name = DEFINITION.Name;
 		std::vector<std::shared_ptr<Instance>> Children;
-		Instance* Parent = nullptr;
+		Instance *Parent = nullptr;
 		void SetParent(std::shared_ptr<Instance> newParent);
 
-		CLASS_SIGNAL(ChildAdded, Instance::Pointer);
-		CLASS_SIGNAL(ChildRemoved, Instance::Pointer);
-		CLASS_SIGNAL(DescendantAdded, Instance::Pointer);
-		CLASS_SIGNAL(DescendantRemoved, Instance::Pointer);
+		G_SIGNAL(ChildAdded, Instance::Pointer);
+		G_SIGNAL(ChildRemoved, Instance::Pointer);
+		G_SIGNAL(DescendantAdded, Instance::Pointer);
+		G_SIGNAL(DescendantRemoved, Instance::Pointer);
 
 		template <typename T> bool IsClass() const {
-			return dynamic_cast<const T*>(this) != nullptr;
+			return dynamic_cast<const T *>(this) != nullptr;
 		}
-		template <typename T> T* Cast() const {
-			return dynamic_cast<const T*>(this);
+		template <typename T> T *Cast() const {
+			return dynamic_cast<const T *>(this);
 		}
-		template <typename T> T* Cast() {
-			return dynamic_cast<T*>(this);
+		template <typename T> T *Cast() {
+			return dynamic_cast<T *>(this);
 		}
-		template <typename T> const T* Cast() const {
-			return dynamic_cast<const T*>(this);
+		template <typename T> const T *Cast() const {
+			return dynamic_cast<const T *>(this);
 		}
 
 		std::optional<This::Property> FindProperty(std::string_view name);
 		std::optional<This::Method> FindMethod(std::string_view name);
 
-		static int UserdataIndex(lua_State* L);
-		static int UserdataNewIndex(lua_State* L);
-		static int UserdataNamecall(lua_State* L);
+		static int UserdataIndex(lua_State *L);
+		static int UserdataNewIndex(lua_State *L);
+		static int UserdataNamecall(lua_State *L);
 
 		std::string GetFullName();
 		bool IsA(std::string_view className);
-		std::vector<std::shared_ptr<Instance>>& GetChildren();
+		std::vector<std::shared_ptr<Instance>> &GetChildren();
 		std::vector<std::shared_ptr<Instance>> GetDescendants();
 		std::shared_ptr<Instance> FindFirstChild(std::string_view name, bool recursive = false);
 		std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className);
@@ -78,8 +78,8 @@ namespace gargantuan {
 		std::shared_ptr<Instance> FindFirstDescendantWhichIsA(std::string_view className);
 
 	  private:
-		void CollectDescendants(std::vector<std::shared_ptr<Instance>>& descendants);
+		void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
 	};
 
-	UD_STACKVALUE_WITH_STORED(Instance, Instance::Pointer)
+	G_UD_STACKVALUE_WITH_STORED(Instance, Instance::Pointer)
 } // namespace gargantuan

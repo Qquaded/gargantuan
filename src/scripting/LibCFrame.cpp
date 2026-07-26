@@ -5,7 +5,7 @@
 #include <lualib.h>
 
 namespace gargantuan {
-	int LibCFrame_new(lua_State* L) {
+	int LibCFrame_new(lua_State *L) {
 		int argumentCount = lua_gettop(L);
 
 		if (argumentCount == 0) {
@@ -33,7 +33,7 @@ namespace gargantuan {
 		return 0;
 	}
 
-	int LibCFrame_Angles(lua_State* L) {
+	int LibCFrame_Angles(lua_State *L) {
 		float rx = luaL_checknumber(L, 1);
 		float ry = luaL_checknumber(L, 2);
 		float rz = luaL_checknumber(L, 3);
@@ -47,7 +47,7 @@ namespace gargantuan {
 		{nullptr, nullptr},
 	};
 
-	int OpenLibCFrame(lua_State* L) {
+	int OpenLibCFrame(lua_State *L) {
 		luaL_register(L, "CFrame", LibCFrame);
 		return 0;
 	}

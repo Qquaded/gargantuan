@@ -4,14 +4,14 @@
 #include <common.hpp>
 
 namespace gargantuan {
-	UD_IMPL_PRELUDE(Color3);
-	UD_IMPL_PROPS(
+	G_UD_IMPL_PRELUDE(Color3);
+	G_UD_IMPL_PROPS(
 		Color3,
-		UD_READONLY_PROP(Color3, R, float),
-		UD_READONLY_PROP(Color3, G, float),
-		UD_READONLY_PROP(Color3, B, float)
+		G_UD_READONLY_PROP(Color3, R, float),
+		G_UD_READONLY_PROP(Color3, G, float),
+		G_UD_READONLY_PROP(Color3, B, float)
 	)
-	UD_IMPL_METHODS(Color3)
+	G_UD_IMPL_METHODS(Color3)
 
 	Color3::Color3() : R(0.0f), G(0.0f), B(0.0f) {};
 

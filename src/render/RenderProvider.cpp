@@ -12,7 +12,7 @@
 #include <cstring>
 
 namespace gargantuan {
-	RenderProvider::RenderProvider(SDL_Window* window, SDL_GPUDevice* gpu) : Window(window), Gpu(gpu) {
+	RenderProvider::RenderProvider(SDL_Window *window, SDL_GPUDevice *gpu) : Window(window), Gpu(gpu) {
 		if (!SDL_ClaimWindowForGPUDevice(Gpu, Window)) {
 			SDL_Log("SDL_ClaimWindowForGPUDevice failed: %s", SDL_GetError());
 			std::abort();
@@ -77,7 +77,7 @@ namespace gargantuan {
 	}
 
 	void RenderProvider::Draw(DrawContext drawContext) {
-		SDL_GPUCommandBuffer* commands = SDL_AcquireGPUCommandBuffer(Gpu);
+		SDL_GPUCommandBuffer *commands = SDL_AcquireGPUCommandBuffer(Gpu);
 		if (!commands) {
 			SDL_Log("Failed to acquire command buffer: %s", SDL_GetError());
 			return;

@@ -26,7 +26,7 @@ namespace gargantuan {
 			.FragmentUniformBufferCount = 0,
 		};
 
-		ShadowPass(SDL_GPUDevice* gpu, SDL_GPUTextureFormat swapchainFormat) {
+		ShadowPass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
 			Shader.Init(gpu);
 
 			Pipeline = PipelineBuilder()
@@ -38,7 +38,7 @@ namespace gargantuan {
 						   .Build(gpu);
 		};
 
-		SDL_GPURenderPass* Draw(SDL_GPUDevice* gpu, FrameContext& context) override {
+		SDL_GPURenderPass *Draw(SDL_GPUDevice *gpu, FrameContext &context) override {
 			glm::mat4 shadowProjection = glm::ortho<float>(-30.0f, 30.0f, -30.0f, 30.0f, -50.0f, 150.0f);
 			glm::vec3 lightPosition = glm::normalize(context.LightDirection) * 40.0f;
 			glm::mat4 shadowView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
@@ -54,7 +54,7 @@ namespace gargantuan {
 				.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
 			};
 
-			SDL_GPURenderPass* pass = SDL_BeginGPURenderPass(context.Commands, nullptr, 0, &depthTarget);
+			SDL_GPURenderPass *pass = SDL_BeginGPURenderPass(context.Commands, nullptr, 0, &depthTarget);
 			SDL_BindGPUGraphicsPipeline(pass, Pipeline);
 
 			for (auto part : context.WorldRoot->Parts) {
@@ -62,7 +62,7 @@ namespace gargantuan {
 					continue;
 				}
 
-				auto& mesh = part->GetMesh();
+				auto &mesh = part->GetMesh();
 				if (!mesh || !mesh->VertexBuffer || !mesh->IndexBuffer) {
 					continue;
 				}
@@ -83,7 +83,7 @@ namespace gargantuan {
 		};
 	};
 
-	std::unique_ptr<RenderPass> CreateShadowPass(SDL_GPUDevice* gpu, SDL_GPUTextureFormat swapchainFormat) {
+	std::unique_ptr<RenderPass> CreateShadowPass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
 		return std::make_unique<ShadowPass>(gpu, swapchainFormat);
 	}
 

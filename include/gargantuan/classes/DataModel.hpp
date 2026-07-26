@@ -6,6 +6,6 @@ namespace gargantuan {
 	class DataModel : public ServiceProvider {
 	  public:
 		static const ClassDefinition DEFINITION;
-		const ServiceConstructors& GetServiceConstructors() const override;
+		const ServiceConstructors &GetServiceConstructors() const override;
 	};
 } // namespace gargantuan

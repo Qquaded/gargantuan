@@ -12,7 +12,7 @@ namespace gargantuan {
 		this->IndexBufferSize = IndexCount * sizeof(uint32_t);
 	}
 
-	SDL_GPUBuffer* GpuMesh::CreateVertexBuffer(SDL_GPUDevice* gpu) {
+	SDL_GPUBuffer *GpuMesh::CreateVertexBuffer(SDL_GPUDevice *gpu) {
 		if (VertexBuffer) {
 			return VertexBuffer;
 		}
@@ -23,7 +23,7 @@ namespace gargantuan {
 		return VertexBuffer;
 	}
 
-	SDL_GPUBuffer* GpuMesh::CreateIndexBuffer(SDL_GPUDevice* gpu) {
+	SDL_GPUBuffer *GpuMesh::CreateIndexBuffer(SDL_GPUDevice *gpu) {
 		if (IndexBuffer) {
 			return IndexBuffer;
 		}
@@ -34,7 +34,7 @@ namespace gargantuan {
 		return IndexBuffer;
 	}
 
-	SDL_GPUTransferBuffer* GpuMesh::CreateTransferBuffer(SDL_GPUDevice* gpu) {
+	SDL_GPUTransferBuffer *GpuMesh::CreateTransferBuffer(SDL_GPUDevice *gpu) {
 		if (TransferBuffer) {
 			return TransferBuffer;
 		}
@@ -46,22 +46,22 @@ namespace gargantuan {
 
 		TransferBuffer = SDL_CreateGPUTransferBuffer(gpu, &info);
 
-		void* pointer = SDL_MapGPUTransferBuffer(gpu, TransferBuffer, false);
+		void *pointer = SDL_MapGPUTransferBuffer(gpu, TransferBuffer, false);
 		std::memcpy(pointer, Vertices.data(), VertexBufferSize);
-		std::memcpy((uint8_t*)pointer + VertexBufferSize, Indices.data(), IndexBufferSize);
+		std::memcpy((uint8_t *)pointer + VertexBufferSize, Indices.data(), IndexBufferSize);
 		SDL_UnmapGPUTransferBuffer(gpu, TransferBuffer);
 
 		return TransferBuffer;
 	}
 
-	void GpuMesh::DestroyTransferBuffer(SDL_GPUDevice* gpu) {
+	void GpuMesh::DestroyTransferBuffer(SDL_GPUDevice *gpu) {
 		if (TransferBuffer) {
 			SDL_ReleaseGPUTransferBuffer(gpu, TransferBuffer);
 			TransferBuffer = nullptr;
 		}
 	}
 
-	void GpuMesh::Upload(SDL_GPUDevice* gpu, SDL_GPUCopyPass* copyPass) {
+	void GpuMesh::Upload(SDL_GPUDevice *gpu, SDL_GPUCopyPass *copyPass) {
 		auto transferBuffer = CreateTransferBuffer(gpu);
 
 		SDL_GPUTransferBufferLocation vertexSource{.transfer_buffer = transferBuffer, .offset = 0};
@@ -75,7 +75,7 @@ namespace gargantuan {
 		DestroyTransferBuffer(gpu);
 	}
 
-	void GpuMesh::Destroy(SDL_GPUDevice* gpu) {
+	void GpuMesh::Destroy(SDL_GPUDevice *gpu) {
 		DestroyTransferBuffer(gpu);
 
 		if (VertexBuffer) {

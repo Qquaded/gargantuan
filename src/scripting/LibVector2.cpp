@@ -4,7 +4,7 @@
 #include <lualib.h>
 
 namespace gargantuan {
-	int LibVector2_new(lua_State* L) {
+	int LibVector2_new(lua_State *L) {
 		float x = luaL_optnumber(L, 1, 0.0f);
 		float y = luaL_optnumber(L, 2, 0.0f);
 		StackValue<Vector2>::Push(L, Vector2(x, y));
@@ -16,7 +16,7 @@ namespace gargantuan {
 		{nullptr, nullptr},
 	};
 
-	int OpenLibVector2(lua_State* L) {
+	int OpenLibVector2(lua_State *L) {
 		luaL_register(L, "Vector2", LibVector2);
 		return 0;
 	}

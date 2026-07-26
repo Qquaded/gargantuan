@@ -17,18 +17,18 @@ namespace gargantuan::MeshProvider {
 		std::unordered_map<std::string, std::unique_ptr<GpuMesh>> GpuMeshes;
 	} // namespace
 
-	std::unique_ptr<GpuMesh>& GetGpuMesh(std::string id) {
+	std::unique_ptr<GpuMesh> &GetGpuMesh(std::string id) {
 		return GpuMeshes[id];
 	}
 
-	void Destroy(SDL_GPUDevice* gpu) {
-		for (auto& [meshId, gpuMesh] : GpuMeshes) {
+	void Destroy(SDL_GPUDevice *gpu) {
+		for (auto &[meshId, gpuMesh] : GpuMeshes) {
 			gpuMesh->Destroy(gpu);
 		}
 		GpuMeshes.clear();
 	}
 
-	void UploadToGpu(SDL_GPUDevice* gpu) {
+	void UploadToGpu(SDL_GPUDevice *gpu) {
 		if (UnloadedMeshes.empty()) {
 			return;
 		}
@@ -36,7 +36,7 @@ namespace gargantuan::MeshProvider {
 		auto cmd = SDL_AcquireGPUCommandBuffer(gpu);
 		auto copyPass = SDL_BeginGPUCopyPass(cmd);
 
-		for (auto& [meshId, unloadedMesh] : UnloadedMeshes) {
+		for (auto &[meshId, unloadedMesh] : UnloadedMeshes) {
 			// if (auto &gpuMesh = GpuMeshes.find(meshId)) {
 			//     gpuMesh->Destroy(Gpu);
 			// };

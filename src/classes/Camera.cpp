@@ -14,9 +14,9 @@ namespace gargantuan {
 		.Superclass = "Instance",
 		.Constructor = ClassDefinition::WrapConstructor<Camera>(),
 		.Properties = {
-			UD_READWRITE_PROP(Camera, CFrame, gargantuan::CFrame),
-			UD_READWRITE_PROP(Camera, FieldOfView, float),
-			UD_READWRITE_PROP(Camera, ViewportSize, gargantuan::Vector2),
+			G_UD_READWRITE_PROP(Camera, CFrame, gargantuan::CFrame),
+			G_UD_READWRITE_PROP(Camera, FieldOfView, float),
+			G_UD_READWRITE_PROP(Camera, ViewportSize, gargantuan::Vector2),
 			{
 				"HorizontalFieldOfView",
 				Property{
@@ -67,8 +67,8 @@ namespace gargantuan {
 		return glm::lookAt(position, position + CFrame.GetLookVector(), CFrame.GetUpVector());
 	}
 
-	void Camera::OnEvent(SDL_Window* window, SDL_Event& event) {
-		if (CameraType != Enums::CameraType::Custom) {
+	void Camera::OnEvent(SDL_Window *window, SDL_Event &event) {
+		if (CameraType != Enums::CameraType::Freecam) {
 			return;
 		}
 
@@ -87,7 +87,7 @@ namespace gargantuan {
 	}
 
 	void Camera::Step(float deltaTime) {
-		if (CameraType != Enums::CameraType::Custom) {
+		if (CameraType != Enums::CameraType::Freecam) {
 			return;
 		}
 

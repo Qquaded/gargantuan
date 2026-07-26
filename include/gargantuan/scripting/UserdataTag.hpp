@@ -7,6 +7,7 @@ namespace gargantuan {
 		Color3,
 		CFrame,
 		Enum,
+		Enums,
 		EnumItem,
 		Signal,
 		SignalConnection,

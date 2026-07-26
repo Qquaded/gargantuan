@@ -7,20 +7,20 @@
 #include <memory>
 
 namespace gargantuan {
-	UD_IMPL_PRELUDE(SignalConnection);
-	UD_IMPL_PROPS(SignalConnection, UD_READONLY_PROP(SignalConnection, Connected, bool));
-	UD_IMPL_METHODS(
-		SignalConnection, UD_METHOD(SignalConnection, Disconnect), {"__gc", {&SignalConnection::LGarbageCollect}}
+	G_UD_IMPL_PRELUDE(SignalConnection);
+	G_UD_IMPL_PROPS(SignalConnection, G_UD_READONLY_PROP(SignalConnection, Connected, bool));
+	G_UD_IMPL_METHODS(
+		SignalConnection, G_UD_METHOD(SignalConnection, Disconnect), {"__gc", {&SignalConnection::LGarbageCollect}}
 	);
 
-	SignalConnection::SignalConnection(CallbackType callback, lua_State* L, int callbackReference)
+	SignalConnection::SignalConnection(CallbackType callback, lua_State *L, int callbackReference)
 		: Callback(std::move(callback)), L(L), CallbackReference(callbackReference), Connected(true) {}
 
 	void SignalConnection::Disconnect() {
 		if (Connected) {
 			Connected = false;
 			if (L && CallbackReference != LUA_NOREF && CallbackReference != LUA_REFNIL) {
-				lua_State* mainState = lua_mainthread(L);
+				lua_State *mainState = lua_mainthread(L);
 				lua_unref(mainState, CallbackReference);
 				CallbackReference = LUA_NOREF;
 				L = nullptr;
@@ -28,7 +28,7 @@ namespace gargantuan {
 		}
 	}
 
-	int SignalConnection::LGarbageCollect(lua_State* L, SignalConnection* self) {
+	int SignalConnection::LGarbageCollect(lua_State *L, SignalConnection *self) {
 		if (self) {
 			self->Disconnect();
 		}
@@ -43,20 +43,20 @@ namespace gargantuan {
 		return UserdataTag::Signal;
 	};
 
-	UD_IMPL_PROPS(BaseSignal);
-	UD_IMPL_METHODS(
+	G_UD_IMPL_PROPS(BaseSignal);
+	G_UD_IMPL_METHODS(
 		BaseSignal, {"Connect", {BaseSignal::LConnect}}, {"Once", {BaseSignal::LOnce}}, {"Wait", {BaseSignal::LWait}},
 	)
 
 	SignalConnection::Pointer
-	BaseSignal::Connect(std::function<void(std::any)> callback, lua_State* L, int callbackReference) {
+	BaseSignal::Connect(std::function<void(std::any)> callback, lua_State *L, int callbackReference) {
 		auto connection = std::make_shared<SignalConnection>(callback, L, callbackReference);
 		Connections.push_back(connection);
 		return connection;
 	};
 
 	SignalConnection::Pointer
-	BaseSignal::Once(std::function<void(std::any)> callback, lua_State* L, int callbackReference) {
+	BaseSignal::Once(std::function<void(std::any)> callback, lua_State *L, int callbackReference) {
 		auto connection = std::make_shared<SignalConnection>(nullptr, L, callbackReference);
 		std::weak_ptr<SignalConnection> weakConnection = connection;
 		connection->Callback = [weakConnection, callback](CallbackArgument value) {
@@ -74,7 +74,7 @@ namespace gargantuan {
 
 	void BaseSignal::Fire(CallbackArgument value) {
 		for (auto it = Connections.begin(); it != Connections.end();) {
-			auto& connection = *it;
+			auto &connection = *it;
 			if (!connection || !connection->Connected) {
 				it = Connections.erase(it);
 			} else {
@@ -86,7 +86,7 @@ namespace gargantuan {
 		}
 	}
 
-	int BaseSignal::LConnect(lua_State* L, BaseSignal* signal) {
+	int BaseSignal::LConnect(lua_State *L, BaseSignal *signal) {
 		// DumpLuaStack(L);
 		int callbackReference = LReferenceCallback(L, 2);
 		// DumpLuaStack(L);
@@ -102,7 +102,7 @@ namespace gargantuan {
 		);
 	}
 
-	int BaseSignal::LOnce(lua_State* L, BaseSignal* signal) {
+	int BaseSignal::LOnce(lua_State *L, BaseSignal *signal) {
 		int callbackReference = LReferenceCallback(L, 2);
 		return StackValue<SignalConnection::Pointer>::Push(
 			L,
@@ -116,7 +116,7 @@ namespace gargantuan {
 		);
 	}
 
-	int BaseSignal::LWait(lua_State* L, BaseSignal* signal) {
+	int BaseSignal::LWait(lua_State *L, BaseSignal *signal) {
 		signal->Once(
 			[L, signal](CallbackArgument value) {
 				int argumentCount = signal->LPushArgument(L, value);
@@ -132,7 +132,7 @@ namespace gargantuan {
 		return lua_yield(L, 0);
 	}
 
-	int BaseSignal::LReferenceCallback(lua_State* L, int idx) {
+	int BaseSignal::LReferenceCallback(lua_State *L, int idx) {
 		if (!lua_isfunction(L, idx)) {
 			luaL_typeerror(L, idx, "function");
 		}
@@ -144,12 +144,12 @@ namespace gargantuan {
 		return ref;
 	}
 
-	void BaseSignal::LRunCallback(lua_State* L, BaseSignal* signal, int callbackReference, std::any value) {
+	void BaseSignal::LRunCallback(lua_State *L, BaseSignal *signal, int callbackReference, std::any value) {
 		if (callbackReference == LUA_NOREF || callbackReference == LUA_REFNIL) {
 			return;
 		}
 
-		lua_State* mainState = lua_mainthread(L);
+		lua_State *mainState = lua_mainthread(L);
 		lua_getref(mainState, callbackReference);
 
 		if (!lua_isfunction(mainState, -1)) {

@@ -3,7 +3,7 @@
 #include <SDL3/SDL.h>
 
 namespace gargantuan {
-	void RenderPass::Destroy(SDL_GPUDevice* gpu) {
+	void RenderPass::Destroy(SDL_GPUDevice *gpu) {
 		if (Pipeline) {
 			SDL_ReleaseGPUGraphicsPipeline(gpu, Pipeline);
 			Pipeline = nullptr;

@@ -9,17 +9,17 @@ namespace gargantuan {
 		return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	};
 
-	ThreadEngine::ThreadEngine(lua_State* mainState) : L(mainState) {
+	ThreadEngine::ThreadEngine(lua_State *mainState) : L(mainState) {
 		lua_pushstring(L, "gargantuan::ThreadEngine");
 		lua_pushlightuserdata(L, this);
 		lua_settable(L, LUA_REGISTRYINDEX);
 	};
 
-	ThreadEngine* ThreadEngine::Get(lua_State* L) {
+	ThreadEngine *ThreadEngine::Get(lua_State *L) {
 		lua_pushstring(L, "gargantuan::ThreadEngine");
 		lua_gettable(L, LUA_REGISTRYINDEX);
 
-		auto* engine = static_cast<ThreadEngine*>(lua_tolightuserdata(L, -1));
+		auto *engine = static_cast<ThreadEngine *>(lua_tolightuserdata(L, -1));
 		lua_pop(L, 1);
 
 		if (!engine) {
@@ -29,7 +29,7 @@ namespace gargantuan {
 		return engine;
 	}
 
-	int ThreadEngine::TakeThreadReference(lua_State* thread) {
+	int ThreadEngine::TakeThreadReference(lua_State *thread) {
 		lua_pushthread(thread);
 		lua_xmove(thread, L, 1);
 		int reference = lua_ref(L, -1);
@@ -38,7 +38,7 @@ namespace gargantuan {
 		return reference;
 	}
 
-	void ThreadEngine::ResumeThread(lua_State* thread, int threadReference, int argumentCount) {
+	void ThreadEngine::ResumeThread(lua_State *thread, int threadReference, int argumentCount) {
 		int status = lua_resume(thread, L, argumentCount);
 		switch (status) {
 		case LUA_YIELD:
@@ -78,14 +78,14 @@ namespace gargantuan {
 			std::vector<DeferredTask> currentBatch;
 			currentBatch.swap(DeferredQueue);
 
-			for (auto& task : currentBatch) {
+			for (auto &task : currentBatch) {
 				ResumeThread(task.Thread, task.ThreadReference, task.ArgumentCount);
 			}
 		}
 	}
 
 	void ThreadEngine::QueueScheduledTask(
-		lua_State* thread, ScheduledTask::Type type, double delaySeconds, int argumentCount
+		lua_State *thread, ScheduledTask::Type type, double delaySeconds, int argumentCount
 	) {
 		ScheduledQueue.push({
 			.type = type,
@@ -97,7 +97,7 @@ namespace gargantuan {
 		});
 	}
 
-	void ThreadEngine::QueueDeferredTask(lua_State* thread, int argumentCount) {
+	void ThreadEngine::QueueDeferredTask(lua_State *thread, int argumentCount) {
 		DeferredQueue.push_back({
 			.Thread = thread,
 			.ThreadReference = TakeThreadReference(thread),

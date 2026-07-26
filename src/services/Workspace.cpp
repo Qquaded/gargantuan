@@ -8,7 +8,7 @@ namespace gargantuan {
 		.Superclass = "WorldRoot",
 		.Constructor = ClassDefinition::WrapConstructor<Workspace>(),
 		.Properties = {
-			UD_READONLY_PROP(Workspace, CurrentCamera, Instance::Pointer),
+			G_UD_READONLY_PROP(Workspace, CurrentCamera, Instance::Pointer),
 		}
 	};
 }

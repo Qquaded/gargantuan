@@ -4,7 +4,7 @@
 #include <lualib.h>
 
 namespace gargantuan {
-	lua_State* GetThreadFromArgument(lua_State* L, int startIdx, int& argumentsToPass) {
+	lua_State *GetThreadFromArgument(lua_State *L, int startIdx, int &argumentsToPass) {
 		int argumentCount = lua_gettop(L);
 
 		if (argumentCount < startIdx) {
@@ -14,7 +14,7 @@ namespace gargantuan {
 
 		startIdx = lua_absindex(L, startIdx);
 
-		lua_State* targetThread = nullptr;
+		lua_State *targetThread = nullptr;
 		argumentsToPass = argumentCount - startIdx;
 
 		if (lua_isfunction(L, startIdx)) {
@@ -39,13 +39,13 @@ namespace gargantuan {
 		return targetThread;
 	}
 
-	int LibTask_cancel(lua_State* L) {
+	int LibTask_cancel(lua_State *L) {
 		luaL_error(L, "not yet implemented");
 	}
 
-	int LibTask_spawn(lua_State* L) {
+	int LibTask_spawn(lua_State *L) {
 		int argumentsToPass;
-		lua_State* thread = GetThreadFromArgument(L, 1, argumentsToPass);
+		lua_State *thread = GetThreadFromArgument(L, 1, argumentsToPass);
 
 		auto threadEngine = ThreadEngine::Get(L);
 		threadEngine->ResumeThread(thread, threadEngine->TakeThreadReference(thread), argumentsToPass);
@@ -53,9 +53,9 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int LibTask_defer(lua_State* L) {
+	int LibTask_defer(lua_State *L) {
 		int argumentsToPass;
-		lua_State* thread = GetThreadFromArgument(L, 1, argumentsToPass);
+		lua_State *thread = GetThreadFromArgument(L, 1, argumentsToPass);
 
 		auto threadEngine = ThreadEngine::Get(L);
 		threadEngine->QueueDeferredTask(thread, argumentsToPass);
@@ -63,11 +63,11 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int LibTask_delay(lua_State* L) {
+	int LibTask_delay(lua_State *L) {
 		double delaySeconds = luaL_checknumber(L, 1);
 
 		int argumentsToPass;
-		lua_State* thread = GetThreadFromArgument(L, 2, argumentsToPass);
+		lua_State *thread = GetThreadFromArgument(L, 2, argumentsToPass);
 
 		auto threadEngine = ThreadEngine::Get(L);
 		threadEngine->QueueScheduledTask(
@@ -77,15 +77,15 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int LibTask_desynchronize(lua_State* L) {
+	int LibTask_desynchronize(lua_State *L) {
 		luaL_error(L, "not yet implemented");
 	}
 
-	int LibTask_synchronize(lua_State* L) {
+	int LibTask_synchronize(lua_State *L) {
 		luaL_error(L, "not yet implemented");
 	}
 
-	int LibTask_wait(lua_State* L) {
+	int LibTask_wait(lua_State *L) {
 		auto threadEngine = ThreadEngine::Get(L);
 		double delaySeconds = luaL_optnumber(L, 1, 0.0f);
 		lua_settop(L, 0);
@@ -104,7 +104,7 @@ namespace gargantuan {
 		{nullptr, nullptr}
 	};
 
-	int OpenLibTask(lua_State* L, ThreadEngine* threadEngine) {
+	int OpenLibTask(lua_State *L, ThreadEngine *threadEngine) {
 		luaL_register(L, "task", LibTask);
 		return 0;
 	}

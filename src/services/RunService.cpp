@@ -8,7 +8,7 @@ namespace gargantuan {
 		.Superclass = "Instance",
 		.Constructor = ClassDefinition::WrapConstructor<RunService>(),
 		.Properties = {
-			UD_READONLY_PROP(RunService, PreRender, Signal<double>::Pointer),
+			G_UD_READONLY_PROP(RunService, PreRender, Signal<double>::Pointer),
 		}
 	};
 }

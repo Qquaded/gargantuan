@@ -16,6 +16,6 @@ namespace gargantuan {
 
 		virtual Instance::Pointer FindService(std::string_view name);
 		virtual Instance::Pointer GetService(std::string_view name);
-		virtual const ServiceConstructors& GetServiceConstructors() const = 0;
+		virtual const ServiceConstructors &GetServiceConstructors() const = 0;
 	};
 } // namespace gargantuan

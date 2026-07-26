@@ -17,13 +17,13 @@ namespace gargantuan {
 	};
 
 	struct FrameContext : DrawContext {
-		SDL_GPUCommandBuffer* Commands;
+		SDL_GPUCommandBuffer *Commands;
 
-		SDL_GPUTexture* SwapchainTexture;
-		SDL_GPUTexture* DepthTexture;
+		SDL_GPUTexture *SwapchainTexture;
+		SDL_GPUTexture *DepthTexture;
 
-		SDL_GPUTexture* ShadowMapTexture;
-		SDL_GPUSampler* ShadowSampler;
+		SDL_GPUTexture *ShadowMapTexture;
+		SDL_GPUSampler *ShadowSampler;
 		glm::mat4 ShadowMatrix;
 
 		uint32_t Width;
@@ -33,11 +33,11 @@ namespace gargantuan {
 	class RenderPass {
 	  public:
 		Shader Shader;
-		SDL_GPUGraphicsPipeline* Pipeline = nullptr;
+		SDL_GPUGraphicsPipeline *Pipeline = nullptr;
 
 		virtual ~RenderPass() = default;
-		virtual SDL_GPURenderPass* Draw(SDL_GPUDevice* gpu, FrameContext& context) = 0;
-		virtual void Resize(SDL_GPUDevice* gpu, uint32_t width, uint32_t height) {};
-		virtual void Destroy(SDL_GPUDevice* gpu);
+		virtual SDL_GPURenderPass *Draw(SDL_GPUDevice *gpu, FrameContext &context) = 0;
+		virtual void Resize(SDL_GPUDevice *gpu, uint32_t width, uint32_t height) {};
+		virtual void Destroy(SDL_GPUDevice *gpu);
 	};
 } // namespace gargantuan

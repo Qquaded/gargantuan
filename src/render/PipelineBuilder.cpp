@@ -3,37 +3,37 @@
 #include <SDL3/SDL_gpu.h>
 
 namespace gargantuan {
-	PipelineBuilder& PipelineBuilder::SetVertexShader(SDL_GPUShader* shader) {
+	PipelineBuilder &PipelineBuilder::SetVertexShader(SDL_GPUShader *shader) {
 		VertexShader = shader;
 		return *this;
 	};
 
-	PipelineBuilder& PipelineBuilder::SetFragmentShader(SDL_GPUShader* shader) {
+	PipelineBuilder &PipelineBuilder::SetFragmentShader(SDL_GPUShader *shader) {
 		FragmentShader = shader;
 		return *this;
 	};
 
-	PipelineBuilder& PipelineBuilder::SetColorFormat(SDL_GPUTextureFormat format) {
+	PipelineBuilder &PipelineBuilder::SetColorFormat(SDL_GPUTextureFormat format) {
 		ColorFormat = format;
 		return *this;
 	};
 
-	PipelineBuilder& PipelineBuilder::SetColorEnabled(bool enabled) {
+	PipelineBuilder &PipelineBuilder::SetColorEnabled(bool enabled) {
 		ColorEnabled = enabled;
 		return *this;
 	};
 
-	PipelineBuilder& PipelineBuilder::SetBlendingEnabled(bool enabled) {
+	PipelineBuilder &PipelineBuilder::SetBlendingEnabled(bool enabled) {
 		BlendingEnabled = enabled;
 		return *this;
 	};
 
-	PipelineBuilder& PipelineBuilder::SetDepthFormat(SDL_GPUTextureFormat format) {
+	PipelineBuilder &PipelineBuilder::SetDepthFormat(SDL_GPUTextureFormat format) {
 		DepthFormat = format;
 		return *this;
 	};
 
-	PipelineBuilder& PipelineBuilder::SetDepthEnabled(bool enabled) {
+	PipelineBuilder &PipelineBuilder::SetDepthEnabled(bool enabled) {
 		DepthEnabled = enabled;
 		return *this;
 	};
@@ -90,7 +90,7 @@ namespace gargantuan {
 		return info;
 	}
 
-	SDL_GPUGraphicsPipeline* PipelineBuilder::Build(SDL_GPUDevice* gpu) {
+	SDL_GPUGraphicsPipeline *PipelineBuilder::Build(SDL_GPUDevice *gpu) {
 		auto info = BuildInfo();
 		return SDL_CreateGPUGraphicsPipeline(gpu, &info);
 	}

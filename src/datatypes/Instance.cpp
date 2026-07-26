@@ -14,19 +14,19 @@
 #include <vector>
 
 namespace gargantuan {
-	UD_IMPL_PRELUDE(Instance);
-	UD_IMPL_PROPS(Instance);
-	UD_IMPL_METHODS(Instance);
+	G_UD_IMPL_PRELUDE(Instance);
+	G_UD_IMPL_PROPS(Instance);
+	G_UD_IMPL_METHODS(Instance);
 
 	const Instance::ClassDefinition Instance::DEFINITION = {
 		.Name = "Instance",
 		.Properties =
 			{
-				UD_READWRITE_PROP(Instance, Name, std::string_view),
+				G_UD_READWRITE_PROP(Instance, Name, std::string_view),
 				{
 					"ClassName",
 					{
-						+[](lua_State* L, Instance* instance) -> int {
+						+[](lua_State *L, Instance *instance) -> int {
 							StackValue<std::string_view>::Push(L, ClassRegistry::GetDefinition(instance)->Name);
 							return 1;
 						},
@@ -36,7 +36,7 @@ namespace gargantuan {
 				{
 					"Parent",
 					{
-						+[](lua_State* L, Instance* instance) -> int {
+						+[](lua_State *L, Instance *instance) -> int {
 							if (auto parent = instance->Parent) {
 								StackValue<Instance::Userdata>::Push(L, parent->shared_from_this());
 							} else {
@@ -44,7 +44,7 @@ namespace gargantuan {
 							};
 							return 1;
 						},
-						+[](lua_State* L, Instance* instance) -> int {
+						+[](lua_State *L, Instance *instance) -> int {
 							Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
 							instance->SetParent(newParent);
 							return 0;
@@ -67,7 +67,7 @@ namespace gargantuan {
 		std::shared_ptr<Instance> self = shared_from_this();
 
 		if (Parent != nullptr) {
-			auto& oldChildren = Parent->Children;
+			auto &oldChildren = Parent->Children;
 			if (auto it = std::find(oldChildren.begin(), oldChildren.end(), self); it != oldChildren.end()) {
 				oldChildren.erase(it);
 				Parent->ChildRemoved->Fire(self);
@@ -118,9 +118,9 @@ namespace gargantuan {
 		return {};
 	}
 
-	int Instance::UserdataIndex(lua_State* L) {
+	int Instance::UserdataIndex(lua_State *L) {
 		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
-		const char* key = luaL_checkstring(L, 2);
+		const char *key = luaL_checkstring(L, 2);
 
 		if (key && instance) {
 			auto property = instance->FindProperty(key);
@@ -143,9 +143,9 @@ namespace gargantuan {
 		return 0;
 	};
 
-	int Instance::UserdataNewIndex(lua_State* L) {
+	int Instance::UserdataNewIndex(lua_State *L) {
 		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
-		const char* key = luaL_checkstring(L, 2);
+		const char *key = luaL_checkstring(L, 2);
 
 		if (key && instance) {
 			auto property = instance->FindProperty(key);
@@ -163,9 +163,9 @@ namespace gargantuan {
 		return 0;
 	};
 
-	int Instance::UserdataNamecall(lua_State* L) {
+	int Instance::UserdataNamecall(lua_State *L) {
 		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
-		const char* key = lua_namecallatom(L, nullptr);
+		const char *key = lua_namecallatom(L, nullptr);
 
 		if (key && instance) {
 			auto method = instance->FindMethod(key);
@@ -183,10 +183,10 @@ namespace gargantuan {
 
 		// Start from -1 to omit a trailing period
 		size_t totalLength = 0;
-		Instance* current = this;
+		Instance *current = this;
 
 		while (current) {
-			auto& name = current->Name;
+			auto &name = current->Name;
 			path.push_back(name);
 			totalLength += name.size() + 1;
 			current = current->Parent;
@@ -230,12 +230,12 @@ namespace gargantuan {
 		}
 	}
 
-	std::vector<std::shared_ptr<Instance>>& Instance::GetChildren() {
+	std::vector<std::shared_ptr<Instance>> &Instance::GetChildren() {
 		return Children;
 	}
 
-	void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>>& descendants) {
-		for (const auto& child : Children) {
+	void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants) {
+		for (const auto &child : Children) {
 			descendants.push_back(child);
 			child->CollectDescendants(descendants);
 		}
@@ -248,7 +248,7 @@ namespace gargantuan {
 	}
 
 	std::shared_ptr<Instance> Instance::FindFirstChild(std::string_view name, bool recursive) {
-		for (const auto& child : Children) {
+		for (const auto &child : Children) {
 			if (child->Name == name) {
 				return child;
 			}
@@ -257,7 +257,7 @@ namespace gargantuan {
 	}
 
 	std::shared_ptr<Instance> Instance::FindFirstChildOfClass(std::string_view className) {
-		for (const auto& child : Children) {
+		for (const auto &child : Children) {
 			if (ClassRegistry::GetDefinition(child.get())->Name == className) {
 				return child;
 			}

@@ -8,7 +8,7 @@
 namespace gargantuan {
 	struct Color3 : public Userdata<Color3> {
 	  public:
-		UD_DECL_PRELUDE(Color3)
+		G_UD_DECL_PRELUDE(Color3)
 
 		float R = 0.0f;
 		float G = 0.0f;
@@ -26,5 +26,5 @@ namespace gargantuan {
 		}
 	};
 
-	UD_STACKVALUE(Color3);
+	G_UD_STACKVALUE(Color3);
 } // namespace gargantuan

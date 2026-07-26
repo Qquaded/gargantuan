@@ -13,7 +13,7 @@ namespace gargantuan {
 
 	struct CFrame : public Userdata<CFrame> {
 	  public:
-		UD_DECL_PRELUDE(CFrame)
+		G_UD_DECL_PRELUDE(CFrame)
 
 		static constexpr float CF_EPSILON = 1e-6;
 		static constexpr glm::mat3 DEFAULT_ROTATION =
@@ -73,10 +73,10 @@ namespace gargantuan {
 		double AngleBetween(CFrame other);
 		glm::quat ToQuaternion();
 
-		static int LAdd(lua_State* L, CFrame* self);
-		static int LSubtract(lua_State* L, CFrame* self);
-		static int LMultiply(lua_State* L, CFrame* self);
-		static int LTostring(lua_State* L, CFrame* self);
+		static int LAdd(lua_State *L, CFrame *self);
+		static int LSubtract(lua_State *L, CFrame *self);
+		static int LMultiply(lua_State *L, CFrame *self);
+		static int LTostring(lua_State *L, CFrame *self);
 
 		static glm::vec3 SafeUnit(glm::vec3 vec, glm::vec3 fallback);
 		static glm::mat3 BuildLookRotation(glm::vec3 position, glm::vec3 target, glm::vec3 up = {0, 1, 0});
@@ -93,5 +93,5 @@ namespace gargantuan {
 		};
 	};
 
-	UD_STACKVALUE(CFrame);
+	G_UD_STACKVALUE(CFrame);
 } // namespace gargantuan

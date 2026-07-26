@@ -18,8 +18,8 @@
 #define USE_INSTANCE_DEFINITION(instance) {typeid(instance), instance::DEFINITION}
 
 namespace gargantuan::ClassRegistry {
-	std::unordered_map<std::type_index, Instance::ClassDefinition>& GetDefinitionsMap() {
-		static auto* CLASS_DEFINITIONS = new std::unordered_map<std::type_index, Instance::ClassDefinition>{
+	std::unordered_map<std::type_index, Instance::ClassDefinition> &GetDefinitionsMap() {
+		static auto *CLASS_DEFINITIONS = new std::unordered_map<std::type_index, Instance::ClassDefinition>{
 			USE_INSTANCE_DEFINITION(BasePart),
 			USE_INSTANCE_DEFINITION(DataModel),
 			USE_INSTANCE_DEFINITION(Instance),
@@ -32,9 +32,9 @@ namespace gargantuan::ClassRegistry {
 		return *CLASS_DEFINITIONS;
 	}
 
-	Instance::ClassDefinition* GetDefinition(Instance* instance) {
+	Instance::ClassDefinition *GetDefinition(Instance *instance) {
 		if (!instance) return nullptr;
-		auto& map = GetDefinitionsMap();
+		auto &map = GetDefinitionsMap();
 		auto it = map.find(std::type_index(typeid(*instance)));
 		if (it != map.end()) {
 			return &it->second;
@@ -42,9 +42,9 @@ namespace gargantuan::ClassRegistry {
 		return nullptr;
 	};
 
-	Instance::ClassDefinition* GetDefinitionByName(std::string_view name) {
-		auto& map = GetDefinitionsMap();
-		for (auto& definition : map) {
+	Instance::ClassDefinition *GetDefinitionByName(std::string_view name) {
+		auto &map = GetDefinitionsMap();
+		for (auto &definition : map) {
 			if (definition.second.Name == name) {
 				return &definition.second;
 			}
@@ -53,10 +53,10 @@ namespace gargantuan::ClassRegistry {
 	}
 
 	std::vector<std::string_view> GetClassNames() {
-		auto& map = GetDefinitionsMap();
+		auto &map = GetDefinitionsMap();
 		std::vector<std::string_view> result;
 		result.reserve(map.size());
-		for (auto& definition : map) {
+		for (auto &definition : map) {
 			result.emplace_back(definition.second.Name);
 		}
 		return result;

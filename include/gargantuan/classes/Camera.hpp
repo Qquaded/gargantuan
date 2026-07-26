@@ -3,37 +3,38 @@
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
+#include "gargantuan/reflection/Enums.hpp"
 
 #include <SDL3/SDL.h>
 
 namespace gargantuan {
-	namespace Enums {
-		enum class CameraType : int {
-			/// Camera is stationary.
-			Fixed,
-			/// Camera moves with the subject at a fixed offset and will rotate as the subject rotates.
-			Attach,
-			/// Camera is stationary but will rotate to keep the subject in the center of the screen.
-			Watch,
-			/// Camera moves with the subject but does not rotate automatically.
-			Track,
-			/// Camera moves with the subject and rotates to keep the subject in the center.
-			Follow,
-			/// Default mode used by Gargantuan.
-			Custom,
-			/// No default behavior. Used when developers need to script custom behavior.
-			Scriptable,
-			/// The camera has a fixed Y position, but can be rotated around the player.
-			Orbital,
-		};
-
-	}
+	G_ENUM(
+		CameraType,
+		/// Camera is stationary.
+		Fixed,
+		/// Camera moves with the subject at a fixed offset and will rotate as the subject rotates.
+		Attach,
+		/// Camera is stationary but will rotate to keep the subject in the center of the screen.
+		Watch,
+		/// Camera moves with the subject but does not rotate automatically.
+		Track,
+		/// Camera moves with the subject and rotates to keep the subject in the center.
+		Follow,
+		/// Default mode used by Gargantuan.
+		Custom,
+		/// No default behavior. Used when developers need to script custom behavior.
+		Scriptable,
+		/// The camera has a fixed Y position, but can be rotated around the player.
+		Orbital,
+		/// Camera has omnidirectional movement.
+		Freecam,
+	);
 
 	class Camera : public Instance {
 	  public:
 		static const ClassDefinition DEFINITION;
 
-		Enums::CameraType CameraType = Enums::CameraType::Custom;
+		Enums::CameraType CameraType = Enums::CameraType::Freecam;
 		CFrame CFrame;
 		float Pitch = 0.0f, Yaw = -90.0f, Roll;
 		// Vertical field of view in degrees.
@@ -53,7 +54,7 @@ namespace gargantuan {
 		glm::mat4 GetProjectionMatrix();
 		glm::mat4 GetViewMatrix();
 
-		void OnEvent(SDL_Window* window, SDL_Event& event);
+		void OnEvent(SDL_Window *window, SDL_Event &event);
 		void Step(float deltaTime);
 	};
 } // namespace gargantuan

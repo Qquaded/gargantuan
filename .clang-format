@@ -40,7 +40,7 @@ BraceWrapping:
 BreakConstructorInitializers: BeforeColon
 ConstructorInitializerIndentWidth: 4
 
-PointerAlignment: Left
+PointerAlignment: Right
 
 SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false

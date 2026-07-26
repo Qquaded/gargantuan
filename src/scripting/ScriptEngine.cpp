@@ -1,6 +1,7 @@
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
+#include "gargantuan/datatypes/Enum.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/datatypes/Signal.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
@@ -18,7 +19,7 @@
 
 namespace gargantuan {
 	// https://youtu.be/hP0NCTU81A4?si=aE-SV_ifAW745_M8
-	void DumpLuaStack(lua_State* L) {
+	void DumpLuaStack(lua_State *L) {
 		int stackSize = lua_gettop(L);
 
 		printf("Lua Stack Contents:\n");
@@ -70,15 +71,15 @@ namespace gargantuan {
 
 		{"CFrame", OpenLibCFrame},
 		{"Color3", OpenLibColor3},
+		{"Enum", OpenLibEnum},
+		{"Instance", OpenLibInstance},
 		{"Vector2", OpenLibVector2},
 		{"Vector3", OpenLibVector3},
-
-		{"Instance", OpenLibInstance},
 
 		{nullptr, nullptr},
 	};
 
-	static int LuauAssertHandler(const char* expression, const char* file, int line, const char* function) {
+	static int LuauAssertHandler(const char *expression, const char *file, int line, const char *function) {
 		SDL_Log("Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function);
 		assert(false);
 	}
@@ -96,11 +97,13 @@ namespace gargantuan {
 		BaseSignal::CreateUserdataMetatable(L);
 		CFrame::CreateUserdataMetatable(L);
 		Color3::CreateUserdataMetatable(L);
+		Enum::CreateUserdataMetatable(L);
+		EnumItem::CreateUserdataMetatable(L);
 		Instance::CreateUserdataMetatable(L);
 		SignalConnection::CreateUserdataMetatable(L);
 		Vector2::CreateUserdataMetatable(L);
 
-		const luaL_Reg* lib = SCRIPT_LIBS;
+		const luaL_Reg *lib = SCRIPT_LIBS;
 		for (; lib->func; lib++) {
 			lua_pushcfunction(L, lib->func, nullptr);
 			lua_pushstring(L, lib->name);
@@ -113,18 +116,18 @@ namespace gargantuan {
 	void ScriptEngine::CreateTestbedThread() {
 		testbedThread = lua_newthread(L);
 		size_t fileSize;
-		void* code = SDL_LoadFile("Testbed.luau", &fileSize);
+		void *code = SDL_LoadFile("Testbed.luau", &fileSize);
 
 		if (code == nullptr) {
 			SDL_Log("Failed to load Testbed.luau");
 			return;
 		}
 
-		std::string contents((char*)code, fileSize);
+		std::string contents((char *)code, fileSize);
 		SDL_free(code);
 
 		size_t bytecodeSize;
-		char* bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
+		char *bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
 
 		luau_load(testbedThread, "Testbed", bytecode, bytecodeSize, 0);
 		std::free(bytecode);

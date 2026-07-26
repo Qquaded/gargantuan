@@ -24,7 +24,7 @@ namespace gargantuan {
 		auto name = std::string(nameView);
 		auto it = Services.find(name);
 		if (it == Services.end()) {
-			const ServiceConstructors& constructors = GetServiceConstructors();
+			const ServiceConstructors &constructors = GetServiceConstructors();
 			if (auto constructor = constructors.find(name); constructor != constructors.end()) {
 				if (!constructor->second) {
 					throw std::runtime_error("Missing constructor for service " + std::string(name));

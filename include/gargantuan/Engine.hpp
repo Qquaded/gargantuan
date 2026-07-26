@@ -21,10 +21,10 @@ namespace gargantuan {
 		std::shared_ptr<Workspace> Workspace = nullptr;
 		std::shared_ptr<RunService> RunService = nullptr;
 
-		SDL_Window* Window;
-		SDL_GPUDevice* Gpu;
-		RenderProvider* RenderProvider;
-		ScriptEngine* ScriptEngine;
+		SDL_Window *Window;
+		SDL_GPUDevice *Gpu;
+		RenderProvider *RenderProvider;
+		ScriptEngine *ScriptEngine;
 
 		Engine();
 		~Engine();

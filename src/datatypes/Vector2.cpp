@@ -8,27 +8,27 @@
 
 namespace gargantuan {
 
-	UD_IMPL_PRELUDE(Vector2);
-	UD_IMPL_PROPS(
+	G_UD_IMPL_PRELUDE(Vector2);
+	G_UD_IMPL_PROPS(
 		Vector2,
 		{"X", {Method::Wrap<&Vector2::GetX>().Call, nullptr}},
 		{"Y", {Method::Wrap<&Vector2::GetY>().Call, nullptr}},
 		{"Magnitude", {Method::Wrap<&Vector2::GetMagnitude>().Call, nullptr}},
 		{"Unit", {Method::Wrap<&Vector2::GetUnit>().Call, nullptr}},
 	)
-	UD_IMPL_METHODS(
+	G_UD_IMPL_METHODS(
 		Vector2,
-		UD_METHOD(Vector2, Cross),
-		UD_METHOD(Vector2, Abs),
-		UD_METHOD(Vector2, Ceil),
-		UD_METHOD(Vector2, Floor),
-		UD_METHOD(Vector2, Sign),
-		UD_METHOD(Vector2, Angle),
-		UD_METHOD(Vector2, Dot),
-		UD_METHOD(Vector2, Lerp),
-		UD_METHOD(Vector2, Max),
-		UD_METHOD(Vector2, Min),
-		UD_METHOD(Vector2, FuzzyEq),
+		G_UD_METHOD(Vector2, Cross),
+		G_UD_METHOD(Vector2, Abs),
+		G_UD_METHOD(Vector2, Ceil),
+		G_UD_METHOD(Vector2, Floor),
+		G_UD_METHOD(Vector2, Sign),
+		G_UD_METHOD(Vector2, Angle),
+		G_UD_METHOD(Vector2, Dot),
+		G_UD_METHOD(Vector2, Lerp),
+		G_UD_METHOD(Vector2, Max),
+		G_UD_METHOD(Vector2, Min),
+		G_UD_METHOD(Vector2, FuzzyEq),
 		{"__tostring", {Vector2::LTostring}},
 		{"__add", {Vector2::LAdd}},
 		{"__sub", {Vector2::LSub}},
@@ -52,7 +52,7 @@ namespace gargantuan {
 		return glm::normalize(Value);
 	};
 
-	float Vector2::Cross(const Vector2& other) const {
+	float Vector2::Cross(const Vector2 &other) const {
 		return (GetX() * other.GetY()) - (GetY() * GetX());
 	};
 	Vector2 Vector2::Abs() const {
@@ -67,27 +67,27 @@ namespace gargantuan {
 	Vector2 Vector2::Sign() const {
 		return glm::sign(Value);
 	};
-	float Vector2::Angle(const Vector2& other, bool isSigned) const {
+	float Vector2::Angle(const Vector2 &other, bool isSigned) const {
 		float angle = atan2(Cross(other), Dot(other));
 		return isSigned ? angle : abs(angle);
 	};
-	float Vector2::Dot(const Vector2& other) const {
+	float Vector2::Dot(const Vector2 &other) const {
 		return GetX() * other.GetX() + GetY() * other.GetY();
 	};
-	Vector2 Vector2::Lerp(const Vector2& goal, float alpha) const {
+	Vector2 Vector2::Lerp(const Vector2 &goal, float alpha) const {
 		return Value + (goal.Value - Value) * alpha;
 	};
-	Vector2 Vector2::Max(const Vector2& other) const {
+	Vector2 Vector2::Max(const Vector2 &other) const {
 		return glm::max(Value, other.Value);
 	};
-	Vector2 Vector2::Min(const Vector2& other) const {
+	Vector2 Vector2::Min(const Vector2 &other) const {
 		return glm::min(Value, other.Value);
 	};
-	Vector2 Vector2::FuzzyEq(const Vector2& other, float epsilon) const {
+	Vector2 Vector2::FuzzyEq(const Vector2 &other, float epsilon) const {
 		return glm::abs(Value.x - this->Value.x) <= epsilon && glm::abs(Value.y - this->Value.y) <= epsilon;
 	};
 
-	int Vector2::LTostring(lua_State* L, Vector2* self) {
+	int Vector2::LTostring(lua_State *L, Vector2 *self) {
 		std::ostringstream ss;
 		ss << self->GetX() << ", " << self->GetY();
 		std::string str = ss.str();
@@ -95,19 +95,19 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int Vector2::LAdd(lua_State* L, Vector2* self) {
+	int Vector2::LAdd(lua_State *L, Vector2 *self) {
 		Vector2 other = StackValue<Vector2>::From(L, -1);
 		StackValue<Vector2>::Push(L, self->Value + other.Value);
 		return 1;
 	}
 
-	int Vector2::LSub(lua_State* L, Vector2* self) {
+	int Vector2::LSub(lua_State *L, Vector2 *self) {
 		Vector2 other = StackValue<Vector2>::From(L, -1);
 		StackValue<Vector2>::Push(L, self->Value - other.Value);
 		return 1;
 	}
 
-	int Vector2::LMul(lua_State* L, Vector2* self) {
+	int Vector2::LMul(lua_State *L, Vector2 *self) {
 		if (lua_isnumber(L, -1)) {
 			float other = lua_tonumber(L, -1);
 			StackValue<Vector2>::Push(L, self->Value * other);
@@ -121,7 +121,7 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int Vector2::LDiv(lua_State* L, Vector2* self) {
+	int Vector2::LDiv(lua_State *L, Vector2 *self) {
 		if (lua_isnumber(L, -1)) {
 			float other = lua_tonumber(L, -1);
 			StackValue<Vector2>::Push(L, self->Value / other);

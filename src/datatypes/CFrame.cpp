@@ -13,20 +13,20 @@
 #include <trigonometric.hpp>
 
 namespace gargantuan {
-	UD_IMPL_PRELUDE(CFrame);
-	UD_IMPL_PROPS(
+	G_UD_IMPL_PRELUDE(CFrame);
+	G_UD_IMPL_PROPS(
 		CFrame,
-		UD_READONLY_PROP(CFrame, Position, glm::vec3),
+		G_UD_READONLY_PROP(CFrame, Position, glm::vec3),
 		{
 			"Rotation",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				StackValue<CFrame>::Push(L, CFrame({0, 0, 0}, self->Rotation));
 				return 1;
 			}},
 		},
 		{
 			"X",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				lua_pushnumber(L, self->Position.x);
 				return 1;
 			}},
@@ -34,7 +34,7 @@ namespace gargantuan {
 		{
 			"Y",
 			Property{
-				.Read = [](lua_State* L, CFrame* self) -> int {
+				.Read = [](lua_State *L, CFrame *self) -> int {
 					lua_pushnumber(L, self->Position.y);
 					return 1;
 				},
@@ -43,7 +43,7 @@ namespace gargantuan {
 		{
 			"Z",
 			Property{
-				.Read = [](lua_State* L, CFrame* self) -> int {
+				.Read = [](lua_State *L, CFrame *self) -> int {
 					lua_pushnumber(L, self->Position.z);
 					return 1;
 				},
@@ -51,66 +51,66 @@ namespace gargantuan {
 		},
 		{
 			"RightVector",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				StackValue<CFrame>::Push(L, self->GetRightVector());
 				return 1;
 			}},
 		},
 		{
 			"UpVector",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				StackValue<CFrame>::Push(L, self->GetUpVector());
 				return 1;
 			}},
 		},
 		{
 			"LookVector",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				StackValue<CFrame>::Push(L, self->GetLookVector());
 				return 1;
 			}},
 		},
 		{
 			"XVector",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				StackValue<CFrame>::Push(L, self->GetRightVector());
 				return 1;
 			}},
 		},
 		{
 			"YVector",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				StackValue<CFrame>::Push(L, self->GetUpVector());
 				return 1;
 			}},
 		},
 		{
 			"ZVector",
-			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+			Property{.Read = [](lua_State *L, CFrame *self) -> int {
 				StackValue<CFrame>::Push(L, self->GetLookVector());
 				return 1;
 			}},
 		},
 	);
-	UD_IMPL_METHODS(
+	G_UD_IMPL_METHODS(
 		CFrame,
-		UD_METHOD(CFrame, Inverse),
-		UD_METHOD(CFrame, Lerp),
-		UD_METHOD(CFrame, Orthonormalize),
-		UD_METHOD(CFrame, ToWorldSpace),
-		UD_METHOD(CFrame, ToObjectSpace),
-		// UD_METHOD(CFrame, PointToWorldSpace),
-		// UD_METHOD(CFrame, PointToObjectSpace),
-		// UD_METHOD(CFrame, VectorToWorldSpace),
-		// UD_METHOD(CFrame, VectorToObjectSpace),
-		// UD_METHOD(CFrame, GetComponents),
-		// UD_METHOD(CFrame, ToEulerAngles),
-		// UD_METHOD(CFrame, ToEulerAnglesXYZ),
-		// UD_METHOD(CFrame, ToEulerAnglesYXZ),
-		// UD_METHOD(CFrame, ToOrientation),
-		// UD_METHOD(CFrame, ToAxisAngle),
-		// UD_METHOD(CFrame, FuzzyEq),
-		// UD_METHOD(CFrame, AngleBetween),
+		G_UD_METHOD(CFrame, Inverse),
+		G_UD_METHOD(CFrame, Lerp),
+		G_UD_METHOD(CFrame, Orthonormalize),
+		G_UD_METHOD(CFrame, ToWorldSpace),
+		G_UD_METHOD(CFrame, ToObjectSpace),
+		// G_UD_METHOD(CFrame, PointToWorldSpace),
+		// G_UD_METHOD(CFrame, PointToObjectSpace),
+		// G_UD_METHOD(CFrame, VectorToWorldSpace),
+		// G_UD_METHOD(CFrame, VectorToObjectSpace),
+		// G_UD_METHOD(CFrame, GetComponents),
+		// G_UD_METHOD(CFrame, ToEulerAngles),
+		// G_UD_METHOD(CFrame, ToEulerAnglesXYZ),
+		// G_UD_METHOD(CFrame, ToEulerAnglesYXZ),
+		// G_UD_METHOD(CFrame, ToOrientation),
+		// G_UD_METHOD(CFrame, ToAxisAngle),
+		// G_UD_METHOD(CFrame, FuzzyEq),
+		// G_UD_METHOD(CFrame, AngleBetween),
 		// {"__add", Method{CFrame::LAdd}},
 		// {"__sub", Method{CFrame::LSubtract}},
 		{"__mul", Method{CFrame::LMultiply}},
@@ -297,7 +297,7 @@ namespace gargantuan {
 		return glm::quat(x, y, z, w);
 	}
 
-	int CFrame::LMultiply(lua_State* L, CFrame* self) {
+	int CFrame::LMultiply(lua_State *L, CFrame *self) {
 		if (lua_isvector(L, 2)) {
 			auto other = StackValue<glm::vec3>::From(L, 2);
 			StackValue<glm::vec3>::Push(L, *self * other);
@@ -312,7 +312,7 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int CFrame::LTostring(lua_State* L, CFrame* self) {
+	int CFrame::LTostring(lua_State *L, CFrame *self) {
 		lua_pushfstringL(
 			L,
 			"%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f",

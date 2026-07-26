@@ -15,38 +15,38 @@
 #include <unordered_map>
 
 namespace gargantuan {
-	int Vector3_Abs(lua_State* L) {
+	int Vector3_Abs(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		StackValue<glm::vec3>::Push(L, glm::abs(self));
 		return 1;
 	}
 
-	int Vector3_Ceil(lua_State* L) {
+	int Vector3_Ceil(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		StackValue<glm::vec3>::Push(L, glm::ceil(self));
 		return 1;
 	}
 
-	int Vector3_Floor(lua_State* L) {
+	int Vector3_Floor(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		StackValue<glm::vec3>::Push(L, glm::floor(self));
 		return 1;
 	}
 
-	int Vector3_Sign(lua_State* L) {
+	int Vector3_Sign(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		StackValue<glm::vec3>::Push(L, glm::sign(self));
 		return 1;
 	}
 
-	int Vector3_Cross(lua_State* L) {
+	int Vector3_Cross(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
 		StackValue<glm::vec3>::Push(L, glm::cross(self, other));
 		return 1;
 	}
 
-	int Vector3_Angle(lua_State* L) {
+	int Vector3_Angle(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
 		double dot = glm::dot(glm::normalize(self), glm::normalize(other));
@@ -54,14 +54,14 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int Vector3_Dot(lua_State* L) {
+	int Vector3_Dot(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
 		lua_pushnumber(L, glm::dot(self, other));
 		return 1;
 	}
 
-	int Vector3_FuzzyEq(lua_State* L) {
+	int Vector3_FuzzyEq(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
 		float epsilon = luaL_optnumber(L, 3, 1e-5);
@@ -73,7 +73,7 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int Vector3_Lerp(lua_State* L) {
+	int Vector3_Lerp(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
 		double alpha = luaL_checknumber(L, 3);
@@ -86,21 +86,21 @@ namespace gargantuan {
 		return 1;
 	}
 
-	int Vector3_Min(lua_State* L) {
+	int Vector3_Min(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
 		StackValue<glm::vec3>::Push(L, glm::min(self, other));
 		return 1;
 	}
 
-	int Vector3_Max(lua_State* L) {
+	int Vector3_Max(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
 		glm::vec3 other = StackValue<glm::vec3>::From(L, 2);
 		StackValue<glm::vec3>::Push(L, glm::max(self, other));
 		return 1;
 	}
 
-	std::unordered_map<std::string_view, std::function<int(lua_State*)>> Vector3_methods = {
+	std::unordered_map<std::string_view, std::function<int(lua_State *)>> Vector3_methods = {
 		{"Abs", Vector3_Abs},
 		{"Ceil", Vector3_Ceil},
 		{"Floor", Vector3_Floor},
@@ -114,8 +114,8 @@ namespace gargantuan {
 		{"Max", Vector3_Max},
 	};
 
-	int Vector3_namecall(lua_State* L) {
-		const char* key = lua_namecallatom(L, nullptr);
+	int Vector3_namecall(lua_State *L) {
+		const char *key = lua_namecallatom(L, nullptr);
 		if (auto it = Vector3_methods.find(key); it != Vector3_methods.end()) {
 			return it->second(L);
 		} else {
@@ -124,9 +124,9 @@ namespace gargantuan {
 		}
 	}
 
-	int Vector3_index(lua_State* L) {
+	int Vector3_index(lua_State *L) {
 		glm::vec3 self = StackValue<glm::vec3>::From(L, 1);
-		const char* key = luaL_checkstring(L, 2);
+		const char *key = luaL_checkstring(L, 2);
 
 		if (std::strcmp(key, "Magnitude") == 0) {
 			lua_pushnumber(L, glm::length(self));
@@ -139,7 +139,7 @@ namespace gargantuan {
 		return 0;
 	}
 
-	void Vector3_register(lua_State* L) {
+	void Vector3_register(lua_State *L) {
 		lua_newtable(L);
 
 		lua_pushliteral(L, "Vector3");
@@ -163,12 +163,12 @@ namespace gargantuan {
 		lua_pop(L, 1);
 	}
 
-	int LibVector3_new(lua_State* L) {
+	int LibVector3_new(lua_State *L) {
 		lua_pushvector(L, luaL_optnumber(L, 1, 0.0f), luaL_optnumber(L, 2, 0.0f), luaL_optnumber(L, 3, 0.0f));
 		return 1;
 	}
 
-	void LibVector3_register(lua_State* L) {
+	void LibVector3_register(lua_State *L) {
 		lua_createtable(L, 0, 6);
 
 		lua_pushvector(L, 0, 0, 0);
@@ -193,7 +193,7 @@ namespace gargantuan {
 		lua_setglobal(L, "Vector3");
 	}
 
-	int OpenLibVector3(lua_State* L) {
+	int OpenLibVector3(lua_State *L) {
 		Vector3_register(L);
 		LibVector3_register(L);
 		return 0;
