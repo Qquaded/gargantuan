@@ -1,7 +1,7 @@
 <div align="center">
 
 <img src="./assets/github/banner.png" alt="Gargantuan" width="512px" />
-
+<br/>
 <img src="./assets/github/demo-sphere.gif" alt="Gargantuan" width="252px" />
 <img src="./assets/github/demo-waveform.gif" alt="Gargantuan" width="252px" />
 
