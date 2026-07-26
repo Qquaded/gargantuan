@@ -9,13 +9,13 @@
 #include <spdlog/spdlog.h>
 
 int main() {
-    SDL_Init(SDL_INIT_VIDEO);
-    std::atexit(SDL_Quit);
+	SDL_Init(SDL_INIT_VIDEO);
+	std::atexit(SDL_Quit);
 
-    gargantuan::Engine engine;
-    while (engine.IsRunning) {
-        engine.Step();
-    }
+	gargantuan::Engine engine;
+	while (engine.IsRunning) {
+		engine.Step();
+	}
 
-    return 0;
+	return 0;
 }
