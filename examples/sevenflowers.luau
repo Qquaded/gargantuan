@@ -27,6 +27,7 @@ baseplate.Parent = Workspace
 for index, flowerColor in FLOWERS do
 	local flowerSoul = Instance.new("Part")
 	flowerSoul.Color = flowerColor
+	flowerSoul.CastShadow = true
 	flowerSoul.Size = Vector3.new(2, 2, 2)
 	flowerSoul.Parent = Workspace
 	flowerParts[index] = flowerSoul
