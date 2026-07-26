@@ -8,15 +8,15 @@
 
 namespace gargantuan {
 
-const Instance::ClassDefinition Part::DEFINITION = {
-    .Name = "Part",
-    .Superclass = "BasePart",
-    .Constructor = ClassDefinition::WrapConstructor<Part>(),
-};
+	const Instance::ClassDefinition Part::DEFINITION = {
+		.Name = "Part",
+		.Superclass = "BasePart",
+		.Constructor = ClassDefinition::WrapConstructor<Part>(),
+	};
 
-std::unique_ptr<GpuMesh> &Part::GetMesh() const {
-    std::string key = "gargantuan://meshes/" + std::string(magic_enum::enum_name(Shape));
-    return MeshProvider::GetGpuMesh(key);
-};
+	std::unique_ptr<GpuMesh>& Part::GetMesh() const {
+		std::string key = "gargantuan://meshes/" + std::string(magic_enum::enum_name(Shape));
+		return MeshProvider::GetGpuMesh(key);
+	};
 
 } // namespace gargantuan

@@ -7,37 +7,39 @@
 #include <vector>
 
 namespace gargantuan {
+	struct Enum : Userdata<Enum> {
+		UD_DECL_PRELUDE(Enum)
 
-struct Enum : Userdata<Enum> {
-    struct EnumItem : Userdata<EnumItem> {
-        std::string_view Name;
-        int Value;
-        const Enum *EnumType;
-    };
+		struct EnumItem : Userdata<EnumItem> {
+			UD_DECL_PRELUDE(EnumItem)
 
-    std::string_view Name;
-    std::vector<EnumItem> Items;
+			std::string_view Name;
+			int Value;
+			const Enum* EnumType;
+		};
 
-    template <typename EnumType> static typename std::enable_if_t<std::is_enum_v<EnumType>, Enum> fromType() {
-        Enum result;
-        result.Name = magic_enum::enum_type_name<EnumType>();
+		std::string_view Name;
+		std::vector<EnumItem> Items;
 
-        constexpr auto entries = magic_enum::enum_entries<EnumType>();
-        result.Items.reserve(entries.size());
+		template <typename EnumType> static typename std::enable_if_t<std::is_enum_v<EnumType>, Enum> fromType() {
+			Enum result;
+			result.Name = magic_enum::enum_type_name<EnumType>();
 
-        for (const auto &[value, name] : entries) {
-            result.Items.push_back({
-                name,
-                static_cast<int>(value),
-                result,
-            });
-        }
+			constexpr auto entries = magic_enum::enum_entries<EnumType>();
+			result.Items.reserve(entries.size());
 
-        return result;
-    }
-};
+			for (const auto& [value, name] : entries) {
+				result.Items.push_back({
+					name,
+					static_cast<int>(value),
+					result,
+				});
+			}
 
-USERDATA_STACKVALUE(Enum);
-USERDATA_STACKVALUE(Enum::EnumItem);
+			return result;
+		}
+	};
 
+	UD_STACKVALUE(Enum);
+	UD_STACKVALUE(Enum::EnumItem);
 } // namespace gargantuan

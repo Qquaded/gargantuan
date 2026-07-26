@@ -17,129 +17,129 @@
 #include <stdexcept>
 
 namespace gargantuan {
+	// https://youtu.be/hP0NCTU81A4?si=aE-SV_ifAW745_M8
+	void DumpLuaStack(lua_State* L) {
+		int stackSize = lua_gettop(L);
 
-// https://youtu.be/hP0NCTU81A4?si=aE-SV_ifAW745_M8
-void DumpLuaStack(lua_State *L) {
-    int stackSize = lua_gettop(L);
+		printf("Lua Stack Contents:\n");
+		printf("Stack Size: %d\n", stackSize);
 
-    printf("Lua Stack Contents:\n");
-    printf("Stack Size: %d\n", stackSize);
+		for (int i = stackSize; i >= 1; --i) {
+			int type = lua_type(L, i);
+			printf("[%d] ", i);
 
-    for (int i = stackSize; i >= 1; --i) {
-        int type = lua_type(L, i);
-        printf("[%d] ", i);
+			switch (type) {
+			case LUA_TNIL:
+				printf("nil\n");
+				break;
+			case LUA_TBOOLEAN:
+				printf(lua_toboolean(L, i) ? "true\n" : "false\n");
+				break;
+			case LUA_TNUMBER:
+				printf("%g\n", lua_tonumber(L, i));
+				break;
+			case LUA_TSTRING:
+				printf("%s\n", lua_tostring(L, i));
+				break;
+			case LUA_TTABLE:
+				printf("table\n");
+				break;
+			case LUA_TFUNCTION:
+				printf("function\n");
+				break;
+			case LUA_TUSERDATA:
+				printf("userdata\n");
+				break;
+			case LUA_TTHREAD:
+				printf("thread\n");
+				break;
+			case LUA_TLIGHTUSERDATA:
+				printf("lightuserdata\n");
+				break;
+			default:
+				printf("unknown\n");
+				break;
+			}
+		}
 
-        switch (type) {
-        case LUA_TNIL:
-            printf("nil\n");
-            break;
-        case LUA_TBOOLEAN:
-            printf(lua_toboolean(L, i) ? "true\n" : "false\n");
-            break;
-        case LUA_TNUMBER:
-            printf("%g\n", lua_tonumber(L, i));
-            break;
-        case LUA_TSTRING:
-            printf("%s\n", lua_tostring(L, i));
-            break;
-        case LUA_TTABLE:
-            printf("table\n");
-            break;
-        case LUA_TFUNCTION:
-            printf("function\n");
-            break;
-        case LUA_TUSERDATA:
-            printf("userdata\n");
-            break;
-        case LUA_TTHREAD:
-            printf("thread\n");
-            break;
-        case LUA_TLIGHTUSERDATA:
-            printf("lightuserdata\n");
-            break;
-        default:
-            printf("unknown\n");
-            break;
-        }
-    }
+		printf("----------\n");
+	}
 
-    printf("----------\n");
-}
+	static const luaL_Reg SCRIPT_LIBS[] = {
+		{"", OpenLibBase},
 
-static const luaL_Reg SCRIPT_LIBS[] = {
-    {"", OpenLibBase},
+		{"CFrame", OpenLibCFrame},
+		{"Color3", OpenLibColor3},
+		{"Vector2", OpenLibVector2},
+		{"Vector3", OpenLibVector3},
 
-    {"CFrame", OpenLibCFrame},
-    {"Color3", OpenLibColor3},
-    {"Vector2", OpenLibVector2},
-    {"Vector3", OpenLibVector3},
+		{"Instance", OpenLibInstance},
 
-    {"Instance", OpenLibInstance},
+		{nullptr, nullptr},
+	};
 
-    {nullptr, nullptr},
-};
+	static int LuauAssertHandler(const char* expression, const char* file, int line, const char* function) {
+		SDL_Log("Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function);
+		assert(false);
+	}
 
-static int LuauAssertHandler(const char *expression, const char *file, int line, const char *function) {
-    SDL_Log("Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function);
-    assert(false);
-}
+	ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
+		if (L == nullptr) {
+			throw std::runtime_error("Failed to instantiate Luau VM");
+		}
 
-ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
-    if (L == nullptr) {
-        throw std::runtime_error("Failed to instantiate Luau VM");
-    }
+		Luau::assertHandler() = LuauAssertHandler;
 
-    Luau::assertHandler() = LuauAssertHandler;
+		luaL_openlibs(L);
+		OpenLibTask(L, &ThreadEngine);
 
-    luaL_openlibs(L);
-    OpenLibTask(L, &ThreadEngine);
+		BaseSignal::CreateUserdataMetatable(L);
+		CFrame::CreateUserdataMetatable(L);
+		Color3::CreateUserdataMetatable(L);
+		Instance::CreateUserdataMetatable(L);
+		SignalConnection::CreateUserdataMetatable(L);
+		Vector2::CreateUserdataMetatable(L);
 
-    BaseSignal::CreateUserdataMetatable(L);
-    CFrame::CreateUserdataMetatable(L);
-    Color3::CreateUserdataMetatable(L);
-    Instance::CreateUserdataMetatable(L);
-    SignalConnection::CreateUserdataMetatable(L);
-    Vector2::CreateUserdataMetatable(L);
+		const luaL_Reg* lib = SCRIPT_LIBS;
+		for (; lib->func; lib++) {
+			lua_pushcfunction(L, lib->func, nullptr);
+			lua_pushstring(L, lib->name);
+			lua_call(L, 1, 0);
+		}
 
-    const luaL_Reg *lib = SCRIPT_LIBS;
-    for (; lib->func; lib++) {
-        lua_pushcfunction(L, lib->func, nullptr);
-        lua_pushstring(L, lib->name);
-        lua_call(L, 1, 0);
-    }
+		CreateTestbedThread();
+	}
 
-    CreateTestbedThread();
-}
+	void ScriptEngine::CreateTestbedThread() {
+		testbedThread = lua_newthread(L);
+		size_t fileSize;
+		void* code = SDL_LoadFile("Testbed.luau", &fileSize);
 
-void ScriptEngine::CreateTestbedThread() {
-    testbedThread = lua_newthread(L);
-    size_t fileSize;
-    void *code = SDL_LoadFile("Testbed.luau", &fileSize);
+		if (code == nullptr) {
+			SDL_Log("Failed to load Testbed.luau");
+			return;
+		}
 
-    if (code == nullptr) {
-        SDL_Log("Failed to load Testbed.luau");
-        return;
-    }
+		std::string contents((char*)code, fileSize);
+		SDL_free(code);
 
-    std::string contents((char *)code, fileSize);
-    SDL_free(code);
+		size_t bytecodeSize;
+		char* bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
 
-    size_t bytecodeSize;
-    char *bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
+		luau_load(testbedThread, "Testbed", bytecode, bytecodeSize, 0);
+		std::free(bytecode);
 
-    luau_load(testbedThread, "Testbed", bytecode, bytecodeSize, 0);
-    std::free(bytecode);
+		ThreadEngine.QueueDeferredTask(testbedThread, 0);
+	}
 
-    ThreadEngine.QueueDeferredTask(testbedThread, 0);
-}
+	ScriptEngine::~ScriptEngine() {
+		if (L) {
+			lua_close(L);
+			L = nullptr;
+		}
+	}
 
-ScriptEngine::~ScriptEngine() {
-    if (L) {
-        lua_close(L);
-        L = nullptr;
-    }
-}
-
-void ScriptEngine::Step() { ThreadEngine.Step(); }
-
+	void ScriptEngine::Step() {
+		ThreadEngine.Step();
+	}
 } // namespace gargantuan

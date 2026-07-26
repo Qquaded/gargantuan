@@ -12,69 +12,74 @@
 #include <vector>
 
 namespace gargantuan {
+	class Instance : public std::enable_shared_from_this<Instance>,
+					 public Userdata<Instance, std::shared_ptr<Instance>> {
+	  public:
+		UD_DECL_PRELUDE(Instance)
 
-class Instance : public std::enable_shared_from_this<Instance>, public Userdata<Instance, std::shared_ptr<Instance>> {
-  public:
-    typedef std::shared_ptr<Instance> Pointer;
-    typedef Userdata<Instance, std::shared_ptr<Instance>> This;
-    struct ClassDefinition {
-        std::string_view Name;
-        std::optional<std::string_view> Superclass;
+		typedef std::shared_ptr<Instance> Pointer;
+		typedef Userdata<Instance, std::shared_ptr<Instance>> This;
+		struct ClassDefinition {
+			std::string_view Name;
+			std::optional<std::string_view> Superclass;
 
-        std::function<Pointer()> Constructor;
-        template <typename T> static std::function<std::shared_ptr<Instance>()> WrapConstructor() {
-            return []() -> std::shared_ptr<Instance> { return std::make_shared<T>(); };
-        }
+			std::function<Pointer()> Constructor;
+			template <typename T> static std::function<std::shared_ptr<Instance>()> WrapConstructor() {
+				return []() -> std::shared_ptr<Instance> { return std::make_shared<T>(); };
+			}
 
-        std::unordered_map<std::string_view, This::Property> Properties = {};
-        std::unordered_map<std::string_view, This::Method> Methods = {};
-    };
+			std::unordered_map<std::string_view, This::Property> Properties = {};
+			std::unordered_map<std::string_view, This::Method> Methods = {};
+		};
 
-    static const ClassDefinition DEFINITION;
+		static const ClassDefinition DEFINITION;
 
-    virtual ~Instance() = default;
+		virtual ~Instance() = default;
 
-    std::string_view Name = DEFINITION.Name;
-    std::vector<std::shared_ptr<Instance>> Children;
-    Instance *Parent = nullptr;
-    void SetParent(std::shared_ptr<Instance> newParent);
+		std::string_view Name = DEFINITION.Name;
+		std::vector<std::shared_ptr<Instance>> Children;
+		Instance* Parent = nullptr;
+		void SetParent(std::shared_ptr<Instance> newParent);
 
-    CLASS_SIGNAL(ChildAdded, Instance::Pointer);
-    CLASS_SIGNAL(ChildRemoved, Instance::Pointer);
-    CLASS_SIGNAL(DescendantAdded, Instance::Pointer);
-    CLASS_SIGNAL(DescendantRemoved, Instance::Pointer);
+		CLASS_SIGNAL(ChildAdded, Instance::Pointer);
+		CLASS_SIGNAL(ChildRemoved, Instance::Pointer);
+		CLASS_SIGNAL(DescendantAdded, Instance::Pointer);
+		CLASS_SIGNAL(DescendantRemoved, Instance::Pointer);
 
-    template <typename T> bool IsClass() const { return dynamic_cast<const T *>(this) != nullptr; }
-    template <typename T> T *Cast() const { return dynamic_cast<const T *>(this); }
-    template <typename T> T *Cast() { return dynamic_cast<T *>(this); }
-    template <typename T> const T *Cast() const { return dynamic_cast<const T *>(this); }
+		template <typename T> bool IsClass() const {
+			return dynamic_cast<const T*>(this) != nullptr;
+		}
+		template <typename T> T* Cast() const {
+			return dynamic_cast<const T*>(this);
+		}
+		template <typename T> T* Cast() {
+			return dynamic_cast<T*>(this);
+		}
+		template <typename T> const T* Cast() const {
+			return dynamic_cast<const T*>(this);
+		}
 
-    std::optional<This::Property> FindProperty(std::string_view name);
-    std::optional<This::Method> FindMethod(std::string_view name);
+		std::optional<This::Property> FindProperty(std::string_view name);
+		std::optional<This::Method> FindMethod(std::string_view name);
 
-    static std::string_view GetUserdataType();
-    static UserdataTag GetUserdataTag();
-    static const Instance::UserdataProperties &GetUserdataProperties();
-    static const Instance::UserdataMethods &GetUserdataMethods();
-    static int UserdataIndex(lua_State *L);
-    static int UserdataNewIndex(lua_State *L);
-    static int UserdataNamecall(lua_State *L);
+		static int UserdataIndex(lua_State* L);
+		static int UserdataNewIndex(lua_State* L);
+		static int UserdataNamecall(lua_State* L);
 
-    std::string GetFullName();
-    bool IsA(std::string_view className);
-    std::vector<std::shared_ptr<Instance>> &GetChildren();
-    std::vector<std::shared_ptr<Instance>> GetDescendants();
-    std::shared_ptr<Instance> FindFirstChild(std::string_view name, bool recursive = false);
-    std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className);
-    std::shared_ptr<Instance> FindFirstChildWhichIsA(std::string_view className);
-    std::shared_ptr<Instance> FindFirstDescendant(std::string_view name);
-    std::shared_ptr<Instance> FindFirstDescendantOfClass(std::string_view className);
-    std::shared_ptr<Instance> FindFirstDescendantWhichIsA(std::string_view className);
+		std::string GetFullName();
+		bool IsA(std::string_view className);
+		std::vector<std::shared_ptr<Instance>>& GetChildren();
+		std::vector<std::shared_ptr<Instance>> GetDescendants();
+		std::shared_ptr<Instance> FindFirstChild(std::string_view name, bool recursive = false);
+		std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className);
+		std::shared_ptr<Instance> FindFirstChildWhichIsA(std::string_view className);
+		std::shared_ptr<Instance> FindFirstDescendant(std::string_view name);
+		std::shared_ptr<Instance> FindFirstDescendantOfClass(std::string_view className);
+		std::shared_ptr<Instance> FindFirstDescendantWhichIsA(std::string_view className);
 
-  private:
-    void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
-};
+	  private:
+		void CollectDescendants(std::vector<std::shared_ptr<Instance>>& descendants);
+	};
 
-USERDATA_STACKVALUE_WITH_STORED(Instance, Instance::Pointer)
-
+	UD_STACKVALUE_WITH_STORED(Instance, Instance::Pointer)
 } // namespace gargantuan

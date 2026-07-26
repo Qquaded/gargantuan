@@ -7,101 +7,111 @@
 #include <vector>
 
 namespace gargantuan {
+	template <typename T> struct StackValue {
+		static inline std::string_view ReflectedTypedef();
+		static bool Is(lua_State* L, int idx);
+		static T From(lua_State* L, int idx);
+		static int Push(lua_State* L, T value);
 
-template <typename T> struct StackValue {
-    static inline std::string_view ReflectedTypedef();
-    static bool Is(lua_State *L, int idx);
-    static T From(lua_State *L, int idx);
-    static int Push(lua_State *L, T value);
+	  private:
+		// i hope NOBODY has to see the original error message
 
-  private:
-    // i hope NOBODY has to see the original error message
+		template <typename Missing> struct GARGANTUAN_STACK_VALUE_IS_UNIMPLEMENTED_FOR {
+			static constexpr bool value = false;
+		};
 
-    template <typename Missing> struct GARGANTUAN_STACK_VALUE_IS_UNIMPLEMENTED_FOR {
-        static constexpr bool value = false;
-    };
+		static_assert(GARGANTUAN_STACK_VALUE_IS_UNIMPLEMENTED_FOR<T>::value);
+	};
 
-    static_assert(GARGANTUAN_STACK_VALUE_IS_UNIMPLEMENTED_FOR<T>::value);
-};
-
-template <typename T> T CheckStackValue(lua_State *L, int idx) {
-    if (StackValue<T>::Is(L, idx)) {
-        return StackValue<T>::From(L, idx);
-    };
-    luaL_typeerror(L, idx, StackValue<T>::ReflectedTypedef().data());
-}
+	template <typename T> T CheckStackValue(lua_State* L, int idx) {
+		if (StackValue<T>::Is(L, idx)) {
+			return StackValue<T>::From(L, idx);
+		};
+		luaL_typeerror(L, idx, StackValue<T>::ReflectedTypedef().data());
+	}
 
 #define PRIMITIVE_STACK_VALUE(cppType, reflectedTypedef, isImpl, fromImpl, pushImpl)                                   \
-    template <> struct StackValue<cppType> {                                                                           \
-        static inline std::string_view ReflectedTypedef() { return reflectedTypedef; };                                \
-        static bool Is(lua_State *L, int idx) { return isImpl(L, idx); };                                              \
-        static cppType From(lua_State *L, int idx) { return fromImpl(L, idx); };                                       \
-        static int Push(lua_State *L, cppType value) {                                                                 \
-            pushImpl(L, value);                                                                                        \
-            return 1;                                                                                                  \
-        };                                                                                                             \
-    };
+	template <> struct StackValue<cppType> {                                                                           \
+		static inline std::string_view ReflectedTypedef() {                                                            \
+			return reflectedTypedef;                                                                                   \
+		};                                                                                                             \
+		static bool Is(lua_State* L, int idx) {                                                                        \
+			return isImpl(L, idx);                                                                                     \
+		};                                                                                                             \
+		static cppType From(lua_State* L, int idx) {                                                                   \
+			return fromImpl(L, idx);                                                                                   \
+		};                                                                                                             \
+		static int Push(lua_State* L, cppType value) {                                                                 \
+			pushImpl(L, value);                                                                                        \
+			return 1;                                                                                                  \
+		};                                                                                                             \
+	};
 
 #define STRING_STACK_VALUE(cppType)                                                                                    \
-    template <> struct StackValue<cppType> {                                                                           \
-        static inline std::string_view ReflectedTypedef() { return "string"; };                                        \
-        static bool Is(lua_State *L, int idx) { return lua_isstring(L, idx); };                                        \
-        static cppType From(lua_State *L, int idx) {                                                                   \
-            size_t len;                                                                                                \
-            const char *str = luaL_checklstring(L, idx, &len);                                                         \
-            return {str, len};                                                                                         \
-        };                                                                                                             \
-        static int Push(lua_State *L, cppType value) {                                                                 \
-            lua_pushlstring(L, value.data(), value.length());                                                          \
-            return 1;                                                                                                  \
-        };                                                                                                             \
-    };
+	template <> struct StackValue<cppType> {                                                                           \
+		static inline std::string_view ReflectedTypedef() {                                                            \
+			return "string";                                                                                           \
+		};                                                                                                             \
+		static bool Is(lua_State* L, int idx) {                                                                        \
+			return lua_isstring(L, idx);                                                                               \
+		};                                                                                                             \
+		static cppType From(lua_State* L, int idx) {                                                                   \
+			size_t len;                                                                                                \
+			const char* str = luaL_checklstring(L, idx, &len);                                                         \
+			return {str, len};                                                                                         \
+		};                                                                                                             \
+		static int Push(lua_State* L, cppType value) {                                                                 \
+			lua_pushlstring(L, value.data(), value.length());                                                          \
+			return 1;                                                                                                  \
+		};                                                                                                             \
+	};
 
-PRIMITIVE_STACK_VALUE(float, "number", lua_isnumber, lua_tonumber, lua_pushnumber);
-PRIMITIVE_STACK_VALUE(double, "number", lua_isnumber, lua_tonumber, lua_pushnumber);
-PRIMITIVE_STACK_VALUE(bool, "boolean", lua_isboolean, lua_toboolean, lua_pushboolean);
-PRIMITIVE_STACK_VALUE(const char *, "string", lua_isstring, lua_tostring, lua_pushstring);
-STRING_STACK_VALUE(std::string);
-STRING_STACK_VALUE(std::string_view);
+	PRIMITIVE_STACK_VALUE(float, "number", lua_isnumber, lua_tonumber, lua_pushnumber);
+	PRIMITIVE_STACK_VALUE(double, "number", lua_isnumber, lua_tonumber, lua_pushnumber);
+	PRIMITIVE_STACK_VALUE(bool, "boolean", lua_isboolean, lua_toboolean, lua_pushboolean);
+	PRIMITIVE_STACK_VALUE(const char*, "string", lua_isstring, lua_tostring, lua_pushstring);
+	STRING_STACK_VALUE(std::string);
+	STRING_STACK_VALUE(std::string_view);
 
-template <typename... Types> struct StackValue<std::tuple<Types...>> {
-    static inline std::string_view ReflectedTypedef() {
-        // NOTE: tuples are probably not used for typedef generation right?
-        return "any";
-    };
+	template <typename... Types> struct StackValue<std::tuple<Types...>> {
+		static inline std::string_view ReflectedTypedef() {
+			// NOTE: tuples are probably not used for typedef generation right?
+			return "any";
+		};
 
-    static int Push(lua_State *L, const std::tuple<Types...> &tuple) {
-        std::apply([L](const auto &...args) { (StackValue<std::decay_t<decltype(args)>>::Push(L, args), ...); }, tuple);
-        return sizeof...(Types);
-    }
+		static int Push(lua_State* L, const std::tuple<Types...>& tuple) {
+			std::apply(
+				[L](const auto&... args) { (StackValue<std::decay_t<decltype(args)>>::Push(L, args), ...); }, tuple
+			);
+			return sizeof...(Types);
+		}
 
-    static std::tuple<Types...> From(lua_State *L, int idx) {
-        int absIdx = lua_absindex(L, idx);
-        return FromImpl(L, absIdx, std::index_sequence_for<Types...>{});
-    }
+		static std::tuple<Types...> From(lua_State* L, int idx) {
+			int absIdx = lua_absindex(L, idx);
+			return FromImpl(L, absIdx, std::index_sequence_for<Types...>{});
+		}
 
-  private:
-    template <std::size_t... Indices>
-    static std::tuple<Types...> FromImpl(lua_State *L, int idx, std::index_sequence<Indices...>) {
-        return std::make_tuple(StackValue<std::decay_t<Types>>::From(L, idx + static_cast<int>(Indices))...);
-    }
-};
+	  private:
+		template <std::size_t... Indices>
+		static std::tuple<Types...> FromImpl(lua_State* L, int idx, std::index_sequence<Indices...>) {
+			return std::make_tuple(StackValue<std::decay_t<Types>>::From(L, idx + static_cast<int>(Indices))...);
+		}
+	};
 
-template <typename T> struct StackValue<std::vector<T>> {
-    static inline std::string_view ReflectedTypedef() {
-        return std::string("{ ") + StackValue<T>::ReflectedTypedef() + " }";
-    };
+	template <typename T> struct StackValue<std::vector<T>> {
+		static inline std::string_view ReflectedTypedef() {
+			return std::string("{ ") + StackValue<T>::ReflectedTypedef() + " }";
+		};
 
-    static int Push(lua_State *L, const std::vector<T> &value) {
-        auto len = value.size();
-        lua_createtable(L, len, 0);
-        int tableIdx = lua_gettop(L);
-        for (size_t i = 0; i < len; ++i) {
-            StackValue<T>::Push(L, value[i]);
-            lua_rawseti(L, tableIdx, i + 1);
-        }
-        return 1;
-    }
-};
-
+		static int Push(lua_State* L, const std::vector<T>& value) {
+			auto len = value.size();
+			lua_createtable(L, len, 0);
+			int tableIdx = lua_gettop(L);
+			for (size_t i = 0; i < len; ++i) {
+				StackValue<T>::Push(L, value[i]);
+				lua_rawseti(L, tableIdx, i + 1);
+			}
+			return 1;
+		}
+	};
 } // namespace gargantuan

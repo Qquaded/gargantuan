@@ -14,258 +14,254 @@
 #include <vector>
 
 namespace gargantuan {
+	UD_IMPL_PRELUDE(Instance);
+	UD_IMPL_PROPS(Instance);
+	UD_IMPL_METHODS(Instance);
 
-UserdataTag Instance::GetUserdataTag() { return UserdataTag::Instance; };
-std::string_view Instance::GetUserdataType() { return "Instance"; };
+	const Instance::ClassDefinition Instance::DEFINITION = {
+		.Name = "Instance",
+		.Properties =
+			{
+				UD_READWRITE_PROP(Instance, Name, std::string_view),
+				{
+					"ClassName",
+					{
+						+[](lua_State* L, Instance* instance) -> int {
+							StackValue<std::string_view>::Push(L, ClassRegistry::GetDefinition(instance)->Name);
+							return 1;
+						},
+						nullptr,
+					},
+				},
+				{
+					"Parent",
+					{
+						+[](lua_State* L, Instance* instance) -> int {
+							if (auto parent = instance->Parent) {
+								StackValue<Instance::Userdata>::Push(L, parent->shared_from_this());
+							} else {
+								lua_pushnil(L);
+							};
+							return 1;
+						},
+						+[](lua_State* L, Instance* instance) -> int {
+							Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
+							instance->SetParent(newParent);
+							return 0;
+						},
+					},
+				},
+			},
+		.Methods = {
+			{"IsA", Method::Wrap<&Instance::IsA>()},
+			{"GetFullName", Method::Wrap<&Instance::GetFullName>()},
+			{"GetChildren", Method::Wrap<&Instance::GetChildren>()},
+			{"GetDescendants", Method::Wrap<&Instance::GetDescendants>()},
+			{"FindFirstChild", Method::Wrap<&Instance::FindFirstChild>()},
+			{"FindFirstChildOfClass", Method::Wrap<&Instance::FindFirstChildOfClass>()},
+		}
+	};
 
-const Instance::ClassDefinition Instance::DEFINITION = {
-    .Name = "Instance",
-    .Properties =
-        {
-            USERDATA_READWRITE_PROP(Instance, Name, std::string_view),
-            {
-                "ClassName",
-                {
-                    +[](lua_State *L, Instance *instance) -> int {
-                        StackValue<std::string_view>::Push(L, ClassRegistry::GetDefinition(instance)->Name);
-                        return 1;
-                    },
-                    nullptr,
-                },
-            },
-            {
-                "Parent",
-                {
-                    +[](lua_State *L, Instance *instance) -> int {
-                        if (auto parent = instance->Parent) {
-                            StackValue<Instance::Userdata>::Push(L, parent->shared_from_this());
-                        } else {
-                            lua_pushnil(L);
-                        };
-                        return 1;
-                    },
-                    +[](lua_State *L, Instance *instance) -> int {
-                        Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
-                        instance->SetParent(newParent);
-                        return 0;
-                    },
-                },
-            },
-        },
-    .Methods = {
-        {"IsA", Method::Wrap<&Instance::IsA>()},
-        {"GetFullName", Method::Wrap<&Instance::GetFullName>()},
-        {"GetChildren", Method::Wrap<&Instance::GetChildren>()},
-        {"GetDescendants", Method::Wrap<&Instance::GetDescendants>()},
-        {"FindFirstChild", Method::Wrap<&Instance::FindFirstChild>()},
-        {"FindFirstChildOfClass", Method::Wrap<&Instance::FindFirstChildOfClass>()},
-    }
-};
+	// TODO: fire DescendantAdded/Removed signals
+	void Instance::SetParent(std::shared_ptr<Instance> newParent) {
+		std::shared_ptr<Instance> self = shared_from_this();
 
-const Instance::UserdataMethods &Instance::GetUserdataMethods() {
-    static const Instance::UserdataMethods METHODS = {};
-    return METHODS;
-};
+		if (Parent != nullptr) {
+			auto& oldChildren = Parent->Children;
+			if (auto it = std::find(oldChildren.begin(), oldChildren.end(), self); it != oldChildren.end()) {
+				oldChildren.erase(it);
+				Parent->ChildRemoved->Fire(self);
+			}
+		}
 
-// TODO: fire DescendantAdded/Removed signals
-void Instance::SetParent(std::shared_ptr<Instance> newParent) {
-    std::shared_ptr<Instance> self = shared_from_this();
+		Parent = newParent.get();
 
-    if (Parent != nullptr) {
-        auto &oldChildren = Parent->Children;
-        if (auto it = std::find(oldChildren.begin(), oldChildren.end(), self); it != oldChildren.end()) {
-            oldChildren.erase(it);
-            Parent->ChildRemoved->Fire(self);
-        }
-    }
+		if (newParent != nullptr) {
+			newParent->Children.push_back(self);
+			newParent->ChildAdded->Fire(self);
+		}
+	}
 
-    Parent = newParent.get();
+	std::optional<Instance::Userdata::Property> Instance::FindProperty(std::string_view name) {
+		auto currentDefinition = ClassRegistry::GetDefinition(this);
+		while (currentDefinition) {
+			if (auto it = currentDefinition->Properties.find(name); it != currentDefinition->Properties.end()) {
+				return it->second;
+			}
 
-    if (newParent != nullptr) {
-        newParent->Children.push_back(self);
-        newParent->ChildAdded->Fire(self);
-    }
-}
+			auto superclass = currentDefinition->Superclass;
+			if (superclass.has_value()) {
+				currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+				continue;
+			} else {
+				return {};
+			}
+		}
+		return {};
+	}
 
-std::optional<Instance::Userdata::Property> Instance::FindProperty(std::string_view name) {
-    auto currentDefinition = ClassRegistry::GetDefinition(this);
-    while (currentDefinition) {
-        if (auto it = currentDefinition->Properties.find(name); it != currentDefinition->Properties.end()) {
-            return it->second;
-        }
+	std::optional<Instance::Userdata::Method> Instance::FindMethod(std::string_view name) {
+		auto currentDefinition = ClassRegistry::GetDefinition(this);
+		while (currentDefinition) {
+			if (auto it = currentDefinition->Methods.find(name); it != currentDefinition->Methods.end()) {
+				return it->second;
+			}
 
-        auto superclass = currentDefinition->Superclass;
-        if (superclass.has_value()) {
-            currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
-            continue;
-        } else {
-            return {};
-        }
-    }
-    return {};
-}
+			auto superclass = currentDefinition->Superclass;
+			if (superclass.has_value()) {
+				currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+				continue;
+			} else {
+				return {};
+			}
+		}
+		return {};
+	}
 
-std::optional<Instance::Userdata::Method> Instance::FindMethod(std::string_view name) {
-    auto currentDefinition = ClassRegistry::GetDefinition(this);
-    while (currentDefinition) {
-        if (auto it = currentDefinition->Methods.find(name); it != currentDefinition->Methods.end()) {
-            return it->second;
-        }
+	int Instance::UserdataIndex(lua_State* L) {
+		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
+		const char* key = luaL_checkstring(L, 2);
 
-        auto superclass = currentDefinition->Superclass;
-        if (superclass.has_value()) {
-            currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
-            continue;
-        } else {
-            return {};
-        }
-    }
-    return {};
-}
+		if (key && instance) {
+			auto property = instance->FindProperty(key);
+			if (property.has_value()) {
+				if (property->Read) {
+					lua_remove(L, 1);
+					lua_remove(L, 1);
+					property->Read(L, instance.get());
+					return 1;
+				} else {
+					luaL_error(L, "Property %s is write-only", key);
+				}
+			} else if (auto child = instance->FindFirstChild(key)) {
+				lua_settop(L, 0);
+				StackValue<Instance::Pointer>::Push(L, child);
+				return 1;
+			}
+		}
 
-int Instance::UserdataIndex(lua_State *L) {
-    Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
-    const char *key = luaL_checkstring(L, 2);
+		return 0;
+	};
 
-    if (key && instance) {
-        auto property = instance->FindProperty(key);
-        if (property.has_value()) {
-            if (property->Read) {
-                lua_remove(L, 1);
-                lua_remove(L, 1);
-                property->Read(L, instance.get());
-                return 1;
-            } else {
-                luaL_error(L, "Property %s is write-only", key);
-            }
-        } else if (auto child = instance->FindFirstChild(key)) {
-            lua_settop(L, 0);
-            StackValue<Instance::Pointer>::Push(L, child);
-            return 1;
-        }
-    }
+	int Instance::UserdataNewIndex(lua_State* L) {
+		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
+		const char* key = luaL_checkstring(L, 2);
 
-    return 0;
-};
+		if (key && instance) {
+			auto property = instance->FindProperty(key);
+			if (property.has_value()) {
+				if (property->Write) {
+					return property->Write(L, instance.get());
+				} else {
+					luaL_error(L, "Property %s is read-only", key);
+				}
+			}
+		}
 
-int Instance::UserdataNewIndex(lua_State *L) {
-    Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
-    const char *key = luaL_checkstring(L, 2);
+		luaL_error(L, "Unknown property %s", key);
 
-    if (key && instance) {
-        auto property = instance->FindProperty(key);
-        if (property.has_value()) {
-            if (property->Write) {
-                return property->Write(L, instance.get());
-            } else {
-                luaL_error(L, "Property %s is read-only", key);
-            }
-        }
-    }
+		return 0;
+	};
 
-    luaL_error(L, "Unknown property %s", key);
+	int Instance::UserdataNamecall(lua_State* L) {
+		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
+		const char* key = lua_namecallatom(L, nullptr);
 
-    return 0;
-};
+		if (key && instance) {
+			auto method = instance->FindMethod(key);
+			if (method.has_value()) {
+				return method->Call(L, instance.get());
+			}
+		}
 
-int Instance::UserdataNamecall(lua_State *L) {
-    Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
-    const char *key = lua_namecallatom(L, nullptr);
+		luaL_error(L, "%s is not a valid method of %s", key, instance->Name.data());
+		return 0;
+	};
 
-    if (key && instance) {
-        auto method = instance->FindMethod(key);
-        if (method.has_value()) {
-            return method->Call(L, instance.get());
-        }
-    }
+	std::string Instance::GetFullName() {
+		std::vector<std::string_view> path;
 
-    luaL_error(L, "%s is not a valid method of %s", key, instance->Name.data());
-    return 0;
-};
+		// Start from -1 to omit a trailing period
+		size_t totalLength = 0;
+		Instance* current = this;
 
-std::string Instance::GetFullName() {
-    std::vector<std::string_view> path;
+		while (current) {
+			auto& name = current->Name;
+			path.push_back(name);
+			totalLength += name.size() + 1;
+			current = current->Parent;
+		};
 
-    // Start from -1 to omit a trailing period
-    size_t totalLength = 0;
-    Instance *current = this;
+		if (path.empty()) {
+			return "";
+		}
 
-    while (current) {
-        auto &name = current->Name;
-        path.push_back(name);
-        totalLength += name.size() + 1;
-        current = current->Parent;
-    };
+		if (totalLength > 0) {
+			totalLength--;
+		}
 
-    if (path.empty()) {
-        return "";
-    }
+		std::string fullName;
+		fullName.reserve(totalLength);
 
-    if (totalLength > 0) {
-        totalLength--;
-    }
+		auto begin = path.rbegin();
+		for (auto it = begin; it != path.rend(); ++it) {
+			if (it != begin) {
+				fullName.push_back('.');
+			}
+			fullName.append(*it);
+		}
 
-    std::string fullName;
-    fullName.reserve(totalLength);
+		return fullName;
+	};
 
-    auto begin = path.rbegin();
-    for (auto it = begin; it != path.rend(); ++it) {
-        if (it != begin) {
-            fullName.push_back('.');
-        }
-        fullName.append(*it);
-    }
+	bool Instance::IsA(std::string_view className) {
+		auto currentDefinition = ClassRegistry::GetDefinition(this);
+		while (true) {
+			if (currentDefinition->Name == className) {
+				return true;
+			}
 
-    return fullName;
-};
+			auto superclass = currentDefinition->Superclass;
+			if (superclass.has_value()) {
+				currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+			} else {
+				return false;
+			}
+		}
+	}
 
-bool Instance::IsA(std::string_view className) {
-    auto currentDefinition = ClassRegistry::GetDefinition(this);
-    while (true) {
-        if (currentDefinition->Name == className) {
-            return true;
-        }
+	std::vector<std::shared_ptr<Instance>>& Instance::GetChildren() {
+		return Children;
+	}
 
-        auto superclass = currentDefinition->Superclass;
-        if (superclass.has_value()) {
-            currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
-        } else {
-            return false;
-        }
-    }
-}
+	void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>>& descendants) {
+		for (const auto& child : Children) {
+			descendants.push_back(child);
+			child->CollectDescendants(descendants);
+		}
+	}
 
-std::vector<std::shared_ptr<Instance>> &Instance::GetChildren() { return Children; }
+	std::vector<std::shared_ptr<Instance>> Instance::GetDescendants() {
+		std::vector<std::shared_ptr<Instance>> descendants;
+		CollectDescendants(descendants);
+		return descendants;
+	}
 
-void Instance::CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants) {
-    for (const auto &child : Children) {
-        descendants.push_back(child);
-        child->CollectDescendants(descendants);
-    }
-}
+	std::shared_ptr<Instance> Instance::FindFirstChild(std::string_view name, bool recursive) {
+		for (const auto& child : Children) {
+			if (child->Name == name) {
+				return child;
+			}
+		};
+		return nullptr;
+	}
 
-std::vector<std::shared_ptr<Instance>> Instance::GetDescendants() {
-    std::vector<std::shared_ptr<Instance>> descendants;
-    CollectDescendants(descendants);
-    return descendants;
-}
-
-std::shared_ptr<Instance> Instance::FindFirstChild(std::string_view name, bool recursive) {
-    for (const auto &child : Children) {
-        if (child->Name == name) {
-            return child;
-        }
-    };
-    return nullptr;
-}
-
-std::shared_ptr<Instance> Instance::FindFirstChildOfClass(std::string_view className) {
-    for (const auto &child : Children) {
-        if (ClassRegistry::GetDefinition(child.get())->Name == className) {
-            return child;
-        }
-    };
-    return nullptr;
-}
-
+	std::shared_ptr<Instance> Instance::FindFirstChildOfClass(std::string_view className) {
+		for (const auto& child : Children) {
+			if (ClassRegistry::GetDefinition(child.get())->Name == className) {
+				return child;
+			}
+		};
+		return nullptr;
+	}
 } // namespace gargantuan

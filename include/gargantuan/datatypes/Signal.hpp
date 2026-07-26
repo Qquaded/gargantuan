@@ -15,128 +15,133 @@
 #include <vector>
 
 namespace gargantuan {
+	enum class SignalSource {
+		Engine,
+		User,
+	};
 
-enum class SignalSource {
-    Engine,
-    User,
-};
+	struct SignalConnection : public Userdata<SignalConnection, std::shared_ptr<SignalConnection>>,
+							  public std::enable_shared_from_this<SignalConnection> {
+	  public:
+		UD_DECL_PRELUDE(SignalConnection)
 
-struct SignalConnection : public Userdata<SignalConnection, std::shared_ptr<SignalConnection>>,
-                          public std::enable_shared_from_this<SignalConnection> {
-  public:
-    typedef std::shared_ptr<SignalConnection> Pointer;
-    typedef Userdata<SignalConnection, std::shared_ptr<SignalConnection>> This;
+		typedef std::shared_ptr<SignalConnection> Pointer;
+		typedef Userdata<SignalConnection, std::shared_ptr<SignalConnection>> This;
 
-    typedef std::any CallbackArgument;
-    typedef std::function<void(CallbackArgument)> CallbackType;
+		typedef std::any CallbackArgument;
+		typedef std::function<void(CallbackArgument)> CallbackType;
 
-    SignalConnection(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF);
+		SignalConnection(CallbackType callback, lua_State* L = nullptr, int callbackReference = LUA_NOREF);
 
-    CallbackType Callback;
-    lua_State *L;
-    int CallbackReference;
-    bool Connected = true;
+		CallbackType Callback;
+		lua_State* L;
+		int CallbackReference;
+		bool Connected = true;
 
-    void Disconnect();
+		void Disconnect();
 
-    static std::string_view GetUserdataType();
-    static UserdataTag GetUserdataTag();
-    static const SignalConnection::UserdataProperties &GetUserdataProperties();
-    static const SignalConnection::UserdataMethods &GetUserdataMethods();
+		static int LGarbageCollect(lua_State* L, SignalConnection* signal);
+	};
 
-    static int LGarbageCollect(lua_State *L, SignalConnection *signal);
-};
+	// NOTE: Split the Luau implementation into BaseSignal a class to avoid
+	// needing a template, which makes StackValue implementations trivial.
+	// TODO: Unref the connection callbacks somewhere
+	struct BaseSignal : public Userdata<BaseSignal, std::shared_ptr<BaseSignal>>,
+						public std::enable_shared_from_this<BaseSignal> {
+	  public:
+		UD_DECL_PRELUDE(BaseSignal)
 
-// NOTE: Split the Luau implementation into BaseSignal a class to avoid
-// needing a template, which makes StackValue implementations trivial.
-// TODO: Unref the connection callbacks somewhere
-struct BaseSignal : public Userdata<BaseSignal, std::shared_ptr<BaseSignal>>,
-                    public std::enable_shared_from_this<BaseSignal> {
-  public:
-    typedef std::shared_ptr<BaseSignal> Pointer;
-    typedef Userdata<BaseSignal, Pointer> This;
+		typedef std::shared_ptr<BaseSignal> Pointer;
+		typedef Userdata<BaseSignal, Pointer> This;
 
-    typedef std::any CallbackArgument;
-    typedef std::function<void(CallbackArgument)> CallbackType;
+		typedef std::any CallbackArgument;
+		typedef std::function<void(CallbackArgument)> CallbackType;
 
-    static std::string_view GetUserdataType();
-    static UserdataTag GetUserdataTag();
-    static const BaseSignal::UserdataProperties &GetUserdataProperties();
-    static const BaseSignal::UserdataMethods &GetUserdataMethods();
+		SignalSource Source = SignalSource::Engine;
+		std::vector<SignalConnection::Pointer> Connections;
 
-    SignalSource Source = SignalSource::Engine;
-    std::vector<SignalConnection::Pointer> Connections;
+	  protected:
+		SignalConnection::Pointer
+		Connect(CallbackType callback, lua_State* L = nullptr, int callbackReference = LUA_NOREF);
+		SignalConnection::Pointer
+		Once(CallbackType callback, lua_State* L = nullptr, int callbackReference = LUA_NOREF);
+		void Fire(CallbackArgument argument);
 
-  protected:
-    SignalConnection::Pointer Connect(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF);
-    SignalConnection::Pointer Once(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF);
-    void Fire(CallbackArgument argument);
+		virtual int LPushArgument(lua_State* L, CallbackArgument value) = 0;
 
-    virtual int LPushArgument(lua_State *L, CallbackArgument value) = 0;
+		static int LConnect(lua_State* L, BaseSignal* signal);
+		static int LOnce(lua_State* L, BaseSignal* signal);
+		static int LWait(lua_State* L, BaseSignal* signal);
 
-    static int LConnect(lua_State *L, BaseSignal *signal);
-    static int LOnce(lua_State *L, BaseSignal *signal);
-    static int LWait(lua_State *L, BaseSignal *signal);
+		static int LReferenceCallback(lua_State* L, int idx);
+		static void LRunCallback(lua_State* L, BaseSignal* signal, int callbackReference, std::any value);
+	};
 
-    static int LReferenceCallback(lua_State *L, int idx);
-    static void LRunCallback(lua_State *L, BaseSignal *signal, int callbackReference, std::any value);
-};
+	template <typename T> struct Signal : BaseSignal {
+		typedef std::shared_ptr<Signal> Pointer;
+		typedef Userdata<Signal, Pointer> This;
 
-template <typename T> struct Signal : BaseSignal {
-    typedef std::shared_ptr<Signal> Pointer;
-    typedef Userdata<Signal, Pointer> This;
+		typedef T CallbackArgument;
+		typedef std::function<void(T)> CallbackType;
 
-    typedef T CallbackArgument;
-    typedef std::function<void(T)> CallbackType;
+		SignalConnection::Pointer
+		Connect(CallbackType callback, lua_State* L = nullptr, int callbackReference = LUA_NOREF) {
+			SDL_Log("connecting");
+			return BaseSignal::Connect(
+				[callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
+			);
+		}
 
-    SignalConnection::Pointer
-    Connect(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF) {
-        SDL_Log("connecting");
-        return BaseSignal::Connect(
-            [callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
-        );
-    }
+		SignalConnection::Pointer
+		Once(CallbackType callback, lua_State* L = nullptr, int callbackReference = LUA_NOREF) {
 
-    SignalConnection::Pointer Once(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF) {
+			return BaseSignal::Once(
+				[callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
+			);
+		}
 
-        return BaseSignal::Once(
-            [callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
-        );
-    }
+		void Fire(T argument) {
+			// SDL_Log("firing");
+			BaseSignal::Fire(std::any(argument));
+		}
 
-    void Fire(T argument) {
-        // SDL_Log("firing");
-        BaseSignal::Fire(std::any(argument));
-    }
+		int LPushArgument(lua_State* L, std::any value) override {
+			return StackValue<T>::Push(L, std::any_cast<T>(value));
+		};
 
-    int LPushArgument(lua_State *L, std::any value) override {
-        return StackValue<T>::Push(L, std::any_cast<T>(value));
-    };
-
-    static std::string_view GetUserdataType() { return BaseSignal::GetUserdataType(); };
-    static UserdataTag GetUserdataTag() { return BaseSignal::GetUserdataTag(); };
-    static const BaseSignal::UserdataProperties &GetUserdataProperties() {
-        return BaseSignal::GetUserdataProperties();
-    };
-    static const BaseSignal::UserdataMethods &GetUserdataMethods() { return BaseSignal::GetUserdataMethods(); };
-};
+		static std::string_view GetUserdataType() {
+			return BaseSignal::GetUserdataType();
+		};
+		static UserdataTag GetUserdataTag() {
+			return BaseSignal::GetUserdataTag();
+		};
+		static const BaseSignal::UserdataProperties& GetUserdataProperties() {
+			return BaseSignal::GetUserdataProperties();
+		};
+		static const BaseSignal::UserdataMethods& GetUserdataMethods() {
+			return BaseSignal::GetUserdataMethods();
+		};
+	};
 
 #define CLASS_SIGNAL(propertyName, signalType)                                                                         \
-    Signal<signalType>::Pointer propertyName = std::make_shared<Signal<signalType>>();
+	Signal<signalType>::Pointer propertyName = std::make_shared<Signal<signalType>>();
 
-USERDATA_STACKVALUE_WITH_STORED(SignalConnection, SignalConnection::Pointer)
-USERDATA_STACKVALUE_WITH_STORED(BaseSignal, BaseSignal::Pointer)
+	UD_STACKVALUE_WITH_STORED(SignalConnection, SignalConnection::Pointer)
+	UD_STACKVALUE_WITH_STORED(BaseSignal, BaseSignal::Pointer)
 
-template <typename T> struct StackValue<std::shared_ptr<Signal<T>>> {
-    static inline std::string_view ReflectedTypedef() { return StackValue<BaseSignal::Pointer>::ReflectedTypedef(); };
-    static bool Is(lua_State *L, int idx) { return StackValue<BaseSignal::Pointer>::Is(L, idx); };
-    static std::shared_ptr<Signal<T>> From(lua_State *L, int idx) {
-        auto baseSignal = StackValue<BaseSignal::Pointer>::From(L, idx);
-        return std::dynamic_pointer_cast<Signal<T>>(baseSignal);
-    };
-    static int Push(lua_State *L, std::shared_ptr<Signal<T>> value) {
-        return StackValue<BaseSignal::Pointer>::Push(L, std::static_pointer_cast<BaseSignal>(value));
-    };
-};
-
+	template <typename T> struct StackValue<std::shared_ptr<Signal<T>>> {
+		static inline std::string_view ReflectedTypedef() {
+			return StackValue<BaseSignal::Pointer>::ReflectedTypedef();
+		};
+		static bool Is(lua_State* L, int idx) {
+			return StackValue<BaseSignal::Pointer>::Is(L, idx);
+		};
+		static std::shared_ptr<Signal<T>> From(lua_State* L, int idx) {
+			auto baseSignal = StackValue<BaseSignal::Pointer>::From(L, idx);
+			return std::dynamic_pointer_cast<Signal<T>>(baseSignal);
+		};
+		static int Push(lua_State* L, std::shared_ptr<Signal<T>> value) {
+			return StackValue<BaseSignal::Pointer>::Push(L, std::static_pointer_cast<BaseSignal>(value));
+		};
+	};
 } // namespace gargantuan

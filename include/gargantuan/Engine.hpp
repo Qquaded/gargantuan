@@ -13,30 +13,30 @@
 #include <memory>
 
 namespace gargantuan {
+	class Engine {
+	  public:
+		bool IsRunning = true;
+		glm::vec2 ViewportSize = glm::vec2(720, 540);
+		std::shared_ptr<DataModel> DataModel = nullptr;
+		std::shared_ptr<Workspace> Workspace = nullptr;
+		std::shared_ptr<RunService> RunService = nullptr;
 
-class Engine {
-  public:
-    bool IsRunning = true;
-    glm::vec2 ViewportSize = glm::vec2(720, 540);
-    std::shared_ptr<DataModel> DataModel = nullptr;
-    std::shared_ptr<Workspace> Workspace = nullptr;
-    std::shared_ptr<RunService> RunService = nullptr;
+		SDL_Window* Window;
+		SDL_GPUDevice* Gpu;
+		RenderProvider* RenderProvider;
+		ScriptEngine* ScriptEngine;
 
-    SDL_Window *Window;
-    SDL_GPUDevice *Gpu;
-    RenderProvider *RenderProvider;
-    ScriptEngine *ScriptEngine;
+		Engine();
+		~Engine();
 
-    Engine();
-    ~Engine();
+		float GetDeltaTime() {
+			return (CurrentTick - LastTick) / 1000.0f;
+		};
+		void ProcessEvent(SDL_Event event);
+		void Step();
 
-    float GetDeltaTime() { return (CurrentTick - LastTick) / 1000.0f; };
-    void ProcessEvent(SDL_Event event);
-    void Step();
-
-  private:
-    uint64_t CurrentTick = 0;
-    uint64_t LastTick = 0;
-};
-
+	  private:
+		uint64_t CurrentTick = 0;
+		uint64_t LastTick = 0;
+	};
 } // namespace gargantuan

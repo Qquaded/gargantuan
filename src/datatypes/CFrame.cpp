@@ -13,366 +13,362 @@
 #include <trigonometric.hpp>
 
 namespace gargantuan {
+	UD_IMPL_PRELUDE(CFrame);
+	UD_IMPL_PROPS(
+		CFrame,
+		UD_READONLY_PROP(CFrame, Position, glm::vec3),
+		{
+			"Rotation",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				StackValue<CFrame>::Push(L, CFrame({0, 0, 0}, self->Rotation));
+				return 1;
+			}},
+		},
+		{
+			"X",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				lua_pushnumber(L, self->Position.x);
+				return 1;
+			}},
+		},
+		{
+			"Y",
+			Property{
+				.Read = [](lua_State* L, CFrame* self) -> int {
+					lua_pushnumber(L, self->Position.y);
+					return 1;
+				},
+			},
+		},
+		{
+			"Z",
+			Property{
+				.Read = [](lua_State* L, CFrame* self) -> int {
+					lua_pushnumber(L, self->Position.z);
+					return 1;
+				},
+			},
+		},
+		{
+			"RightVector",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				StackValue<CFrame>::Push(L, self->GetRightVector());
+				return 1;
+			}},
+		},
+		{
+			"UpVector",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				StackValue<CFrame>::Push(L, self->GetUpVector());
+				return 1;
+			}},
+		},
+		{
+			"LookVector",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				StackValue<CFrame>::Push(L, self->GetLookVector());
+				return 1;
+			}},
+		},
+		{
+			"XVector",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				StackValue<CFrame>::Push(L, self->GetRightVector());
+				return 1;
+			}},
+		},
+		{
+			"YVector",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				StackValue<CFrame>::Push(L, self->GetUpVector());
+				return 1;
+			}},
+		},
+		{
+			"ZVector",
+			Property{.Read = [](lua_State* L, CFrame* self) -> int {
+				StackValue<CFrame>::Push(L, self->GetLookVector());
+				return 1;
+			}},
+		},
+	);
+	UD_IMPL_METHODS(
+		CFrame,
+		UD_METHOD(CFrame, Inverse),
+		UD_METHOD(CFrame, Lerp),
+		UD_METHOD(CFrame, Orthonormalize),
+		UD_METHOD(CFrame, ToWorldSpace),
+		UD_METHOD(CFrame, ToObjectSpace),
+		// UD_METHOD(CFrame, PointToWorldSpace),
+		// UD_METHOD(CFrame, PointToObjectSpace),
+		// UD_METHOD(CFrame, VectorToWorldSpace),
+		// UD_METHOD(CFrame, VectorToObjectSpace),
+		// UD_METHOD(CFrame, GetComponents),
+		// UD_METHOD(CFrame, ToEulerAngles),
+		// UD_METHOD(CFrame, ToEulerAnglesXYZ),
+		// UD_METHOD(CFrame, ToEulerAnglesYXZ),
+		// UD_METHOD(CFrame, ToOrientation),
+		// UD_METHOD(CFrame, ToAxisAngle),
+		// UD_METHOD(CFrame, FuzzyEq),
+		// UD_METHOD(CFrame, AngleBetween),
+		// {"__add", Method{CFrame::LAdd}},
+		// {"__sub", Method{CFrame::LSubtract}},
+		{"__mul", Method{CFrame::LMultiply}},
+		{"__tostring", Method{CFrame::LTostring}},
+	);
 
-UserdataTag CFrame::GetUserdataTag() { return UserdataTag::CFrame; };
-std::string_view CFrame::GetUserdataType() { return "CFrame"; };
+	CFrame::CFrame() : Position(0.0f, 0.0f, 0.0f), Rotation(CFrame::DEFAULT_ROTATION) {};
+	CFrame::CFrame(glm::vec3 position) : Position(position), Rotation(CFrame::DEFAULT_ROTATION) {};
+	CFrame::CFrame(float x, float y, float z) : Position(x, y, z), Rotation(CFrame::DEFAULT_ROTATION) {};
+	CFrame::CFrame(glm::vec3 position, glm::vec3 target)
+		: Position(position), Rotation(BuildLookRotation(position, target)) {};
+	CFrame::CFrame(glm::vec3 position, glm::mat3 rotation) : Position(position), Rotation(rotation) {};
+	CFrame::CFrame(
+		float x,
+		float y,
+		float z,
+		float r00,
+		float r01,
+		float r02,
+		float r10,
+		float r11,
+		float r12,
+		float r20,
+		float r21,
+		float r22
+	)
+		: Position(x, y, z), Rotation(r00, r01, r02, r10, r11, r12, r20, r21, r22) {};
 
-const CFrame::UserdataProperties &CFrame::GetUserdataProperties() {
-    static const CFrame::UserdataProperties PROPERTIES = {
-        USERDATA_READONLY_PROP(CFrame, Position, glm::vec3),
-        {
-            "Rotation",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    StackValue<CFrame>::Push(L, CFrame({0, 0, 0}, cframe->Rotation));
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "X",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    lua_pushnumber(L, cframe->Position.x);
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "Y",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    lua_pushnumber(L, cframe->Position.y);
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "Z",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    lua_pushnumber(L, cframe->Position.z);
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "RightVector",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    StackValue<CFrame>::Push(L, cframe->GetRightVector());
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "UpVector",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    StackValue<CFrame>::Push(L, cframe->GetUpVector());
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "LookVector",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    StackValue<CFrame>::Push(L, cframe->GetLookVector());
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "XVector",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    StackValue<CFrame>::Push(L, cframe->GetRightVector());
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "YVector",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    StackValue<CFrame>::Push(L, cframe->GetUpVector());
-                    return 1;
-                },
-                nullptr,
-            },
-        },
-        {
-            "ZVector",
-            {
-                [](lua_State *L, CFrame *cframe) -> int {
-                    StackValue<CFrame>::Push(L, cframe->GetLookVector());
-                    return 1;
-                },
-                nullptr,
-            },
-        }
-    };
-    return PROPERTIES;
-};
+	glm::vec3 CFrame::GetRightVector() {
+		return {Rotation[0][0], Rotation[1][0], Rotation[2][0]};
+	}
+	glm::vec3 CFrame::GetUpVector() {
+		return {Rotation[0][1], Rotation[1][1], Rotation[2][1]};
+	}
+	glm::vec3 CFrame::GetLookVector() {
+		return {-Rotation[0][2], -Rotation[1][2], -Rotation[2][2]};
+	}
 
-const CFrame::UserdataMethods &CFrame::GetUserdataMethods() {
-    static const CFrame::UserdataMethods METHODS = {
-        USERDATA_METHOD(CFrame, Inverse),
-        USERDATA_METHOD(CFrame, Lerp),
-        USERDATA_METHOD(CFrame, Orthonormalize),
-        USERDATA_METHOD(CFrame, ToWorldSpace),
-        USERDATA_METHOD(CFrame, ToObjectSpace),
-        // USERDATA_METHOD(CFrame, PointToWorldSpace),
-        // USERDATA_METHOD(CFrame, PointToObjectSpace),
-        // USERDATA_METHOD(CFrame, VectorToWorldSpace),
-        // USERDATA_METHOD(CFrame, VectorToObjectSpace),
-        // USERDATA_METHOD(CFrame, GetComponents),
-        // USERDATA_METHOD(CFrame, ToEulerAngles),
-        // USERDATA_METHOD(CFrame, ToEulerAnglesXYZ),
-        // USERDATA_METHOD(CFrame, ToEulerAnglesYXZ),
-        // USERDATA_METHOD(CFrame, ToOrientation),
-        // USERDATA_METHOD(CFrame, ToAxisAngle),
-        // USERDATA_METHOD(CFrame, FuzzyEq),
-        // USERDATA_METHOD(CFrame, AngleBetween),
-        // {"__add", Method{CFrame::LAdd}},
-        // {"__sub", Method{CFrame::LSubtract}},
-        {"__mul", Method{CFrame::LMultiply}},
-        {"__tostring", Method{CFrame::LTostring}},
-    };
-    return METHODS;
-};
+	CFrame CFrame::Angles(float x, float y, float z) {
+		glm::mat4 rot4 = glm::eulerAngleXYZ(x, y, z);
+		return CFrame(glm::vec3(0, 0, 0), glm::mat3(rot4));
+	}
 
-CFrame::CFrame() : Position(0.0f, 0.0f, 0.0f), Rotation(CFrame::DEFAULT_ROTATION) {};
-CFrame::CFrame(glm::vec3 position) : Position(position), Rotation(CFrame::DEFAULT_ROTATION) {};
-CFrame::CFrame(float x, float y, float z) : Position(x, y, z), Rotation(CFrame::DEFAULT_ROTATION) {};
-CFrame::CFrame(glm::vec3 position, glm::vec3 target)
-    : Position(position), Rotation(BuildLookRotation(position, target)) {};
-CFrame::CFrame(glm::vec3 position, glm::mat3 rotation) : Position(position), Rotation(rotation) {};
-CFrame::CFrame(
-    float x, float y, float z, float r00, float r01, float r02, float r10, float r11, float r12, float r20, float r21,
-    float r22
-)
-    : Position(x, y, z), Rotation(r00, r01, r02, r10, r11, r12, r20, r21, r22) {};
+	CFrame CFrame::fromMatrix(glm::vec3 position, glm::vec3 x, glm::vec3 y, glm::vec3 z) {
+		glm::mat3 rot(x, y, z);
+		return CFrame(position, rot);
+	}
 
-glm::vec3 CFrame::GetRightVector() { return {Rotation[0][0], Rotation[1][0], Rotation[2][0]}; }
-glm::vec3 CFrame::GetUpVector() { return {Rotation[0][1], Rotation[1][1], Rotation[2][1]}; }
-glm::vec3 CFrame::GetLookVector() { return {-Rotation[0][2], -Rotation[1][2], -Rotation[2][2]}; }
+	CFrame CFrame::fromQuaternion(float x, float y, float z, float w, glm::vec3 position) {
+		auto len = glm::sqrt(x * x + y * y + z * z + w * w);
+		x = x / len, y = y / len, z = z / len, w = w / len;
 
-CFrame CFrame::Angles(float x, float y, float z) {
-    glm::mat4 rot4 = glm::eulerAngleXYZ(x, y, z);
-    return CFrame(glm::vec3(0, 0, 0), glm::mat3(rot4));
-}
+		auto xx = x * x, yy = y * y, zz = z * z;
+		auto xy = x * y, xz = x * z, yz = y * z;
+		auto wx = w * x, wy = w * y, wz = w * z;
 
-CFrame CFrame::fromMatrix(glm::vec3 position, glm::vec3 x, glm::vec3 y, glm::vec3 z) {
-    glm::mat3 rot(x, y, z);
-    return CFrame(position, rot);
-}
+		auto m00 = 1 - 2 * (yy + zz);
+		auto m01 = 2 * (xy - wz);
+		auto m02 = 2 * (xz + wy);
 
-CFrame CFrame::fromQuaternion(float x, float y, float z, float w, glm::vec3 position) {
-    auto len = glm::sqrt(x * x + y * y + z * z + w * w);
-    x = x / len, y = y / len, z = z / len, w = w / len;
+		auto m10 = 2 * (xy + wz);
+		auto m11 = 1 - 2 * (xx + zz);
+		auto m12 = 2 * (yz - wx);
 
-    auto xx = x * x, yy = y * y, zz = z * z;
-    auto xy = x * y, xz = x * z, yz = y * z;
-    auto wx = w * x, wy = w * y, wz = w * z;
+		auto m20 = 2 * (xz - wy);
+		auto m21 = 2 * (yz + wx);
+		auto m22 = 1 - 2 * (xx + yy);
 
-    auto m00 = 1 - 2 * (yy + zz);
-    auto m01 = 2 * (xy - wz);
-    auto m02 = 2 * (xz + wy);
+		glm::vec3 right{m00, m10, m20};
+		glm::vec3 up{m01, m11, m21};
+		glm::vec3 look{-m02, -m12, -m22};
 
-    auto m10 = 2 * (xy + wz);
-    auto m11 = 1 - 2 * (xx + zz);
-    auto m12 = 2 * (yz - wx);
+		return fromMatrix(position, right, up, look);
+	}
 
-    auto m20 = 2 * (xz - wy);
-    auto m21 = 2 * (yz + wx);
-    auto m22 = 1 - 2 * (xx + yy);
+	CFrame CFrame::Inverse() {
+		glm::mat3 newRotation;
+		for (int col = 0; col < 3; col++) {
+			for (int row = 0; row < 3; row++) {
+				newRotation[col][row] = Rotation[row][col];
+			}
+		}
+		glm::vec3 newPosition = -1.0f * (newRotation * Position);
 
-    glm::vec3 right{m00, m10, m20};
-    glm::vec3 up{m01, m11, m21};
-    glm::vec3 look{-m02, -m12, -m22};
+		return CFrame(newPosition, newRotation);
+	};
 
-    return fromMatrix(position, right, up, look);
-}
+	CFrame CFrame::Lerp(CFrame goal, double alpha) {
+		glm::vec3 position{
+			Position.x + (goal.Position.x - Position.x) * alpha,
+			Position.y + (goal.Position.y - Position.y) * alpha,
+			Position.z + (goal.Position.z - Position.z) * alpha,
+		};
 
-CFrame CFrame::Inverse() {
-    glm::mat3 newRotation;
-    for (int col = 0; col < 3; col++) {
-        for (int row = 0; row < 3; row++) {
-            newRotation[col][row] = Rotation[row][col];
-        }
-    }
-    glm::vec3 newPosition = -1.0f * (newRotation * Position);
+		auto [x0, y0, z0, w0] = ToQuaternion();
+		auto [x1, y1, z1, w1] = goal.ToQuaternion();
 
-    return CFrame(newPosition, newRotation);
-};
+		auto dot = x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1;
 
-CFrame CFrame::Lerp(CFrame goal, double alpha) {
-    glm::vec3 position{
-        Position.x + (goal.Position.x - Position.x) * alpha,
-        Position.y + (goal.Position.y - Position.y) * alpha,
-        Position.z + (goal.Position.z - Position.z) * alpha,
-    };
+		if (dot < 0) {
+			dot = -dot;
+			x1 = -x1, y1 = -y1, z1 = -z1, w1 = -w1;
+		}
 
-    auto [x0, y0, z0, w0] = ToQuaternion();
-    auto [x1, y1, z1, w1] = goal.ToQuaternion();
+		float x, y, z, w;
 
-    auto dot = x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1;
+		if (dot > 0.9995) {
+			x = x0 + (x1 - x0) * alpha;
+			y = y0 + (y1 - y0) * alpha;
+			z = z0 + (z1 - z0) * alpha;
+			w = w0 + (w1 - w0) * alpha;
+		} else {
+			auto theta0 = glm::acos(dot);
+			auto sinTheta0 = glm::sin(theta0);
 
-    if (dot < 0) {
-        dot = -dot;
-        x1 = -x1, y1 = -y1, z1 = -z1, w1 = -w1;
-    }
+			auto theta = theta0 * alpha;
+			auto sinTheta = glm::sin(theta);
 
-    float x, y, z, w;
+			auto s0 = glm::cos(theta) - dot * sinTheta / sinTheta0;
+			auto s1 = sinTheta / sinTheta0;
 
-    if (dot > 0.9995) {
-        x = x0 + (x1 - x0) * alpha;
-        y = y0 + (y1 - y0) * alpha;
-        z = z0 + (z1 - z0) * alpha;
-        w = w0 + (w1 - w0) * alpha;
-    } else {
-        auto theta0 = glm::acos(dot);
-        auto sinTheta0 = glm::sin(theta0);
+			x = x0 * s0 + x1 * s1;
+			y = y0 * s0 + y1 * s1;
+			z = z0 * s0 + z1 * s1;
+			w = w0 * s0 + w1 * s1;
+		}
 
-        auto theta = theta0 * alpha;
-        auto sinTheta = glm::sin(theta);
+		return fromQuaternion(x, y, z, w, position);
+	};
 
-        auto s0 = glm::cos(theta) - dot * sinTheta / sinTheta0;
-        auto s1 = sinTheta / sinTheta0;
+	CFrame CFrame::Orthonormalize() {
+		glm::vec3 x = GetRightVector();
+		glm::vec3 y = GetUpVector();
 
-        x = x0 * s0 + x1 * s1;
-        y = y0 * s0 + y1 * s1;
-        z = z0 * s0 + z1 * s1;
-        w = w0 * s0 + w1 * s1;
-    }
+		x = glm::normalize(x);
+		y = glm::normalize(y - x * glm::dot(x, y));
+		glm::vec3 z = glm::cross(x, y);
 
-    return fromQuaternion(x, y, z, w, position);
-};
+		return CFrame(Position.x, Position.y, Position.z, x.x, y.x, z.x, x.y, y.y, z.y, x.z, y.z, z.z);
+	}
 
-CFrame CFrame::Orthonormalize() {
-    glm::vec3 x = GetRightVector();
-    glm::vec3 y = GetUpVector();
+	CFrame CFrame::ToWorldSpace(CFrame cf) {
+		return *this * cf;
+	}
 
-    x = glm::normalize(x);
-    y = glm::normalize(y - x * glm::dot(x, y));
-    glm::vec3 z = glm::cross(x, y);
+	CFrame CFrame::ToObjectSpace(CFrame cf) {
+		return this->Inverse() * cf;
+	}
 
-    return CFrame(Position.x, Position.y, Position.z, x.x, y.x, z.x, x.y, y.y, z.y, x.z, y.z, z.z);
-}
+	glm::quat CFrame::ToQuaternion() {
+		auto cf = Orthonormalize();
+		auto r = cf.Rotation;
 
-CFrame CFrame::ToWorldSpace(CFrame cf) { return *this * cf; }
+		auto trace = r[0][0] + r[1][1] + r[2][2];
 
-CFrame CFrame::ToObjectSpace(CFrame cf) { return this->Inverse() * cf; }
+		float s, w, x, y, z;
 
-glm::quat CFrame::ToQuaternion() {
-    auto cf = Orthonormalize();
-    auto r = cf.Rotation;
+		if (trace > 0) {
+			s = glm::sqrt(trace + 1.0) * 2;
+			w = 0.25 * s;
+			x = (r[2][1] - r[1][2]) / s;
+			y = (r[0][2] - r[2][0]) / s;
+			z = (r[1][0] - r[0][1]) / s;
+		} else if (r[0][0] > r[1][1] && r[0][0] > r[2][2]) {
+			s = glm::sqrt(1.0 + r[0][0] - r[1][1] - r[2][2]) * 2;
+			w = (r[2][1] - r[1][2]) / s;
+			x = 0.25 * s;
+			y = (r[0][1] + r[1][0]) / s;
+			z = (r[0][2] + r[2][0]) / s;
+		} else if (r[1][1] > r[2][2]) {
+			s = glm::sqrt(1.0 + r[1][1] - r[0][0] - r[2][2]) * 2;
+			w = (r[0][2] - r[2][0]) / s;
+			x = (r[0][1] + r[1][0]) / s;
+			y = 0.25 * s;
+			z = (r[1][2] + r[2][1]) / s;
+		} else {
+			s = glm::sqrt(1.0 + r[2][2] - r[0][0] - r[1][1]) * 2;
+			w = (r[1][0] - r[0][1]) / s;
+			x = (r[0][2] + r[2][0]) / s;
+			y = (r[1][2] + r[2][1]) / s;
+			z = 0.25 * s;
+		};
 
-    auto trace = r[0][0] + r[1][1] + r[2][2];
+		return glm::quat(x, y, z, w);
+	}
 
-    float s, w, x, y, z;
+	int CFrame::LMultiply(lua_State* L, CFrame* self) {
+		if (lua_isvector(L, 2)) {
+			auto other = StackValue<glm::vec3>::From(L, 2);
+			StackValue<glm::vec3>::Push(L, *self * other);
+		} else if (StackValue<CFrame>::Is(L, 2)) {
+			auto other = StackValue<CFrame>::From(L, 2);
+			StackValue<CFrame>::Push(L, *self * other);
+		} else {
+			luaL_typeerror(L, 2, "Vector3 or CFrame");
+			return 0;
+		}
 
-    if (trace > 0) {
-        s = glm::sqrt(trace + 1.0) * 2;
-        w = 0.25 * s;
-        x = (r[2][1] - r[1][2]) / s;
-        y = (r[0][2] - r[2][0]) / s;
-        z = (r[1][0] - r[0][1]) / s;
-    } else if (r[0][0] > r[1][1] && r[0][0] > r[2][2]) {
-        s = glm::sqrt(1.0 + r[0][0] - r[1][1] - r[2][2]) * 2;
-        w = (r[2][1] - r[1][2]) / s;
-        x = 0.25 * s;
-        y = (r[0][1] + r[1][0]) / s;
-        z = (r[0][2] + r[2][0]) / s;
-    } else if (r[1][1] > r[2][2]) {
-        s = glm::sqrt(1.0 + r[1][1] - r[0][0] - r[2][2]) * 2;
-        w = (r[0][2] - r[2][0]) / s;
-        x = (r[0][1] + r[1][0]) / s;
-        y = 0.25 * s;
-        z = (r[1][2] + r[2][1]) / s;
-    } else {
-        s = glm::sqrt(1.0 + r[2][2] - r[0][0] - r[1][1]) * 2;
-        w = (r[1][0] - r[0][1]) / s;
-        x = (r[0][2] + r[2][0]) / s;
-        y = (r[1][2] + r[2][1]) / s;
-        z = 0.25 * s;
-    };
+		return 1;
+	}
 
-    return glm::quat(x, y, z, w);
-}
+	int CFrame::LTostring(lua_State* L, CFrame* self) {
+		lua_pushfstringL(
+			L,
+			"%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f",
+			self->Position.x,
+			self->Position.y,
+			self->Position.z,
+			self->Rotation[0][0],
+			self->Rotation[0][1],
+			self->Rotation[0][2],
+			self->Rotation[1][0],
+			self->Rotation[1][1],
+			self->Rotation[1][2],
+			self->Rotation[2][0],
+			self->Rotation[2][1],
+			self->Rotation[2][2]
+		);
+		return 1;
+	}
 
-int CFrame::LMultiply(lua_State *L, CFrame *self) {
-    if (lua_isvector(L, 2)) {
-        auto other = StackValue<glm::vec3>::From(L, 2);
-        StackValue<glm::vec3>::Push(L, *self * other);
-    } else if (StackValue<CFrame>::Is(L, 2)) {
-        auto other = StackValue<CFrame>::From(L, 2);
-        StackValue<CFrame>::Push(L, *self * other);
-    } else {
-        luaL_typeerror(L, 2, "Vector3 or CFrame");
-        return 0;
-    }
+	glm::vec3 CFrame::SafeUnit(glm::vec3 vec, glm::vec3 fallback) {
+		auto magSq = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
+		if (magSq <= CF_EPSILON * CF_EPSILON) {
+			return fallback;
+		}
 
-    return 1;
-}
+		auto mag = glm::sqrt(magSq);
+		return vec / mag;
+	}
 
-int CFrame::LTostring(lua_State *L, CFrame *self) {
-    lua_pushfstringL(
-        L, "%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f", self->Position.x, self->Position.y,
-        self->Position.z, self->Rotation[0][0], self->Rotation[0][1], self->Rotation[0][2], self->Rotation[1][0],
-        self->Rotation[1][1], self->Rotation[1][2], self->Rotation[2][0], self->Rotation[2][1], self->Rotation[2][2]
-    );
-    return 1;
-}
+	glm::mat3 CFrame::BuildLookRotation(glm::vec3 position, glm::vec3 target, glm::vec3 up) {
+		glm::vec3 dir = target - position;
+		float lenSq = glm::dot(dir, dir);
+		if (lenSq < 1e-8f) {
+			return DEFAULT_ROTATION;
+		}
 
-glm::vec3 CFrame::SafeUnit(glm::vec3 vec, glm::vec3 fallback) {
-    auto magSq = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
-    if (magSq <= CF_EPSILON * CF_EPSILON) {
-        return fallback;
-    }
+		glm::vec3 z = -glm::normalize(dir);
 
-    auto mag = glm::sqrt(magSq);
-    return vec / mag;
-}
+		if (glm::abs(glm::dot(up, z)) > 0.999f) {
+			up = glm::vec3(0, 0, 1);
+		}
 
-glm::mat3 CFrame::BuildLookRotation(glm::vec3 position, glm::vec3 target, glm::vec3 up) {
-    glm::vec3 dir = target - position;
-    float lenSq = glm::dot(dir, dir);
-    if (lenSq < 1e-8f) {
-        return DEFAULT_ROTATION;
-    }
+		glm::vec3 x = glm::normalize(glm::cross(up, z));
+		glm::vec3 y = glm::cross(z, x);
 
-    glm::vec3 z = -glm::normalize(dir);
+		return glm::mat3(x, y, z);
+	}
 
-    if (glm::abs(glm::dot(up, z)) > 0.999f) {
-        up = glm::vec3(0, 0, 1);
-    }
-
-    glm::vec3 x = glm::normalize(glm::cross(up, z));
-    glm::vec3 y = glm::cross(z, x);
-
-    return glm::mat3(x, y, z);
-}
-
-glm::mat3 CFrame::MultiplyRotation(glm::mat3 lhs, glm::mat3 rhs) {
-    return lhs * rhs;
-    // glm::mat3 result;
-    // for (int col = 0; col < 3; col++) {
-    //     for (int row = 0; row < 3; row++) {
-    //         result[col][row] = lhs[0][row] * rhs[col][0] + lhs[1][row] * rhs[col][1] + lhs[2][row] * rhs[col][2];
-    //     }
-    // }
-    // return result;
-}
-
+	glm::mat3 CFrame::MultiplyRotation(glm::mat3 lhs, glm::mat3 rhs) {
+		return lhs * rhs;
+		// glm::mat3 result;
+		// for (int col = 0; col < 3; col++) {
+		//     for (int row = 0; row < 3; row++) {
+		//         result[col][row] = lhs[0][row] * rhs[col][0] + lhs[1][row] * rhs[col][1] + lhs[2][row] * rhs[col][2];
+		//     }
+		// }
+		// return result;
+	}
 } // namespace gargantuan

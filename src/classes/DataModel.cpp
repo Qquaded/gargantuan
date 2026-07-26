@@ -4,18 +4,16 @@
 #include "gargantuan/services/Workspace.hpp"
 
 namespace gargantuan {
+	const DataModel::ClassDefinition DataModel::DEFINITION = {
+		.Name = "DataModel",
+		.Superclass = "ServiceProvider",
+	};
 
-const DataModel::ClassDefinition DataModel::DEFINITION = {
-    .Name = "DataModel",
-    .Superclass = "ServiceProvider",
-};
-
-const DataModel::ServiceConstructors &DataModel::GetServiceConstructors() const {
-    static const DataModel::ServiceConstructors CONSTRUCTORS = {
-        {"Workspace", Workspace::DEFINITION.Constructor},
-        {"RunService", RunService::DEFINITION.Constructor},
-    };
-    return CONSTRUCTORS;
-};
-
+	const DataModel::ServiceConstructors& DataModel::GetServiceConstructors() const {
+		static const DataModel::ServiceConstructors CONSTRUCTORS = {
+			{"Workspace", Workspace::DEFINITION.Constructor},
+			{"RunService", RunService::DEFINITION.Constructor},
+		};
+		return CONSTRUCTORS;
+	};
 } // namespace gargantuan

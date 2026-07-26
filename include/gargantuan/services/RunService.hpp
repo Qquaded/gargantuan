@@ -5,11 +5,11 @@
 
 namespace gargantuan {
 
-class RunService : public Instance {
-  public:
-    static const ClassDefinition DEFINITION;
+	class RunService : public Instance {
+	  public:
+		static const ClassDefinition DEFINITION;
 
-    CLASS_SIGNAL(PreRender, double);
-};
+		CLASS_SIGNAL(PreRender, double);
+	};
 
 } // namespace gargantuan

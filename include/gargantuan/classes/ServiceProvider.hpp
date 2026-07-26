@@ -7,17 +7,15 @@
 #include <unordered_map>
 
 namespace gargantuan {
+	class ServiceProvider : public Instance {
+	  public:
+		typedef std::unordered_map<std::string, std::function<Instance::Pointer()>> ServiceConstructors;
 
-class ServiceProvider : public Instance {
-  public:
-    typedef std::unordered_map<std::string, std::function<Instance::Pointer()>> ServiceConstructors;
+		static const ClassDefinition DEFINITION;
+		std::unordered_map<std::string, Instance::Pointer> Services;
 
-    static const ClassDefinition DEFINITION;
-    std::unordered_map<std::string, Instance::Pointer> Services;
-
-    virtual Instance::Pointer FindService(std::string_view name);
-    virtual Instance::Pointer GetService(std::string_view name);
-    virtual const ServiceConstructors &GetServiceConstructors() const = 0;
-};
-
+		virtual Instance::Pointer FindService(std::string_view name);
+		virtual Instance::Pointer GetService(std::string_view name);
+		virtual const ServiceConstructors& GetServiceConstructors() const = 0;
+	};
 } // namespace gargantuan

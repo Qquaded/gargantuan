@@ -8,21 +8,19 @@
 #include <glm/glm.hpp>
 
 namespace gargantuan {
+	class BasePart : public Instance {
+	  public:
+		static const ClassDefinition DEFINITION;
 
-class BasePart : public Instance {
-  public:
-    static const ClassDefinition DEFINITION;
+		bool Anchored = false;
+		bool CanCollide = true;
+		bool CastShadow = true;
+		CFrame CFrame;
+		Color3 Color;
+		glm::vec3 Size = glm::vec3(2, 1, 4);
+		float Transparency = 0.0f;
 
-    bool Anchored = false;
-    bool CanCollide = true;
-    bool CastShadow = true;
-    CFrame CFrame;
-    Color3 Color;
-    glm::vec3 Size = glm::vec3(2, 1, 4);
-    float Transparency = 0.0f;
-
-    glm::mat4 GetModelMatrix();
-    virtual std::unique_ptr<GpuMesh> &GetMesh() const = 0;
-};
-
+		glm::mat4 GetModelMatrix();
+		virtual std::unique_ptr<GpuMesh>& GetMesh() const = 0;
+	};
 } // namespace gargantuan

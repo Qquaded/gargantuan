@@ -7,13 +7,11 @@
 #include <vector>
 
 namespace gargantuan {
+	class WorldRoot : public Instance {
+	  public:
+		static const ClassDefinition DEFINITION;
+		std::vector<std::shared_ptr<BasePart>> Parts;
 
-class WorldRoot : public Instance {
-  public:
-    static const ClassDefinition DEFINITION;
-    std::vector<std::shared_ptr<BasePart>> Parts;
-
-    WorldRoot();
-};
-
+		WorldRoot();
+	};
 } // namespace gargantuan

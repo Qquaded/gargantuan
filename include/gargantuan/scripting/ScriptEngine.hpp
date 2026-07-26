@@ -8,32 +8,29 @@
 #include <lualib.h>
 
 namespace gargantuan {
+	void DumpLuaStack(lua_State* L);
 
-// temp
-void DumpLuaStack(lua_State *L);
+	int OpenLibBase(lua_State* L);
+	int OpenLibCFrame(lua_State* L);
+	int OpenLibColor3(lua_State* L);
+	int OpenLibVector2(lua_State* L);
+	int OpenLibVector3(lua_State* L);
+	int OpenLibInstance(lua_State* L);
+	int OpenLibTask(lua_State* L, ThreadEngine* threadEngine);
 
-int OpenLibBase(lua_State *L);
-int OpenLibCFrame(lua_State *L);
-int OpenLibColor3(lua_State *L);
-int OpenLibVector2(lua_State *L);
-int OpenLibVector3(lua_State *L);
-int OpenLibInstance(lua_State *L);
-int OpenLibTask(lua_State *L, ThreadEngine *threadEngine);
+	class ScriptEngine {
+	  public:
+		ScriptEngine();
+		~ScriptEngine();
 
-class ScriptEngine {
-  public:
-    ScriptEngine();
-    ~ScriptEngine();
+		lua_State* L = nullptr;
+		ThreadEngine ThreadEngine;
 
-    lua_State *L = nullptr;
-    ThreadEngine ThreadEngine;
+		void Step();
 
-    void Step();
-
-  private:
-    lua_State *testbedThread;
-    bool testbedFinished = false;
-    void CreateTestbedThread();
-};
-
+	  private:
+		lua_State* testbedThread;
+		bool testbedFinished = false;
+		void CreateTestbedThread();
+	};
 } // namespace gargantuan

@@ -4,23 +4,21 @@
 #include "gargantuan/datatypes/Instance.hpp"
 
 namespace gargantuan {
+	namespace Enums {
+		enum class PartType {
+			Ball,
+			Block,
+			Cylinder,
+			Wedge,
+			CornerWedge,
+		};
+	};
 
-namespace Enums {
-enum class PartType {
-    Ball,
-    Block,
-    Cylinder,
-    Wedge,
-    CornerWedge,
-};
-};
+	class Part : public BasePart {
+	  public:
+		static const ClassDefinition DEFINITION;
 
-class Part : public BasePart {
-  public:
-    static const ClassDefinition DEFINITION;
-
-    Enums::PartType Shape = Enums::PartType::Block;
-    std::unique_ptr<GpuMesh> &GetMesh() const override;
-};
-
+		Enums::PartType Shape = Enums::PartType::Block;
+		std::unique_ptr<GpuMesh>& GetMesh() const override;
+	};
 } // namespace gargantuan
