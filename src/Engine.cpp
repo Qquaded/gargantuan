@@ -32,8 +32,12 @@ namespace gargantuan {
 			throw std::runtime_error("Failed to instantiate GPU");
 		}
 
-		this->Window =
-			SDL_CreateWindow("Gargantuan", ViewportSize.x, ViewportSize.y, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+		this->Window = SDL_CreateWindow(
+			"Gargantuan",
+			ViewportSize.x,
+			ViewportSize.y,
+			SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_HIGH_PIXEL_DENSITY
+		);
 		if (!Window) {
 			throw std::runtime_error("Failed to instantiate window");
 		}
