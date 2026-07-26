@@ -9,8 +9,10 @@
 
 ### By API Completeness
 
+- [x] Camera
 - [ ] Part
 - [ ] MeshPart
+- [ ] ServiceProvider
 
 ## Data Types
 
@@ -27,7 +29,7 @@
 - [x] Signal
 - [x] SignalConnection
 - [ ] TweenInfo
-- [ ] Vector2
+- [x] Vector2
 - [x] Vector3
 
 ### By API Completeness
@@ -44,16 +46,16 @@
 - [x] Signal
 - [x] SignalConnection
 - [ ] TweenInfo
-- [ ] Vector2
+- [x] Vector2
 - [x] Vector3
 
 ## Render
 
 - [ ] Textures
-- [ ] Render Pass Infrastructure
-- [ ] Pipeline Infrastructure
-- [ ] Shadows
-- [ ] Lighting
+- [x] Render Pass Infrastructure
+- [x] Pipeline Infrastructure
+- [x] Shadows
+- [ ] Lighting service
 - [ ] PBR
 
 ## Scripting
