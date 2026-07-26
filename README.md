@@ -21,7 +21,8 @@
 
 ## About Gargantuan
 
-Gargantuan is an independent 3D game engine, scriptable using Luau.
+Gargantuan is an 3D game engine, scriptable using Luau, independently developed
+and maintained by Team Fireworks.
 
 - **Gargantuan is powerful,** boasting a feature rich 2D and 3D featureset.
 - **Gargantuan is productive,** with a familiar Luau API surface that enables rapid prototyping.
