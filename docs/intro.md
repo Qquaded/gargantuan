@@ -41,3 +41,14 @@ program:
 For now, set Luau LSP's `platform` to Roblox. Eventually, Gargantuan will have
 procedurally generated type definitions for consumption, alongside proper
 project management and a test framework.
+
+## Adding Data Types
+
+It's easy!
+
+- Make a datatype class that extends Userdata
+- Implement a StackValue (theres the G_UD_STACKVALUE macro to simplify this)
+- Add a matching UserdataTag
+- If you're writing a Lib for the data type, edit ScriptEngine.hpp to include a OpenLib function for it, then implement it under scripting
+- Call your datatypes CreateUserdataMetatable inside ScriptEngine.hpp
+- It's done
