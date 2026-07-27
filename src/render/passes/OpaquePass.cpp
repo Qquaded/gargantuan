@@ -38,7 +38,7 @@ namespace gargantuan {
 			glm::mat4 ViewMatrix;
 			glm::mat4 ProjectionMatrix;
 			glm::mat4 ShadowBiasMatrix;
-			glm::vec3 LightDirection;
+			glm::vec4 LightDirection;
 		};
 
 		struct alignas(16) PartUniforms {
@@ -97,7 +97,7 @@ namespace gargantuan {
 				.ViewMatrix = context.Camera->GetViewMatrix(),
 				.ProjectionMatrix = context.Camera->GetProjectionMatrix(),
 				.ShadowBiasMatrix = SHADOW_BIAS_MATRIX * context.ShadowMatrix,
-				.LightDirection = context.LightDirection,
+				.LightDirection = glm::vec4(context.LightDirection, 0.0f),
 			};
 			SDL_PushGPUVertexUniformData(context.Commands, 0, &worldUniforms, sizeof(WorldUniforms));
 			SDL_PushGPUFragmentUniformData(context.Commands, 0, &worldUniforms, sizeof(WorldUniforms));

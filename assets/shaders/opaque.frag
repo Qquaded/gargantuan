@@ -11,10 +11,10 @@ layout(set = 0, binding = 0) uniform WorldUniforms {
     mat4 ViewMatrix;
     mat4 ProjectionMatrix;
     mat4 ShadowBiasMatrix;
-    vec3 LightDirection;
+    vec4 LightDirection;
 } world;
 
-layout(set = 0, binding = 0) uniform sampler2DShadow ShadowMap;
+layout(set = 1, binding = 0) uniform sampler2DShadow ShadowMap;
 
 float SHADOW_SPREAD = 2.0;
 vec2 SHADOW_TEXEL_SIZE = vec2(1.0 / 2048.0);
@@ -29,7 +29,7 @@ void main() {
     vec3 shadowCoordinate = ShadowPosition.xyz / ShadowPosition.w;
 
     vec3 n = normalize(FragmentNormal);
-    vec3 l = normalize(world.LightDirection);
+    vec3 l = normalize(world.LightDirection.xyz);
     float nDotL = max(dot(n, l), 0.0);
 
     float bias = max(0.003 * (1.0 - nDotL), 0.0005);

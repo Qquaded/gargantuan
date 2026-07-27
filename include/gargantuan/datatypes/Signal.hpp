@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gargantuan/reflection/Enums.hpp"
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
@@ -18,10 +19,7 @@
 	Signal<signalType>::Pointer propertyName = std::make_shared<Signal<signalType>>();
 
 namespace gargantuan {
-	enum class SignalSource {
-		Engine,
-		User,
-	};
+	G_ENUM(SignalSource, Engine, User);
 
 	struct SignalConnection : public Userdata<SignalConnection, std::shared_ptr<SignalConnection>>,
 							  public std::enable_shared_from_this<SignalConnection> {
@@ -60,7 +58,7 @@ namespace gargantuan {
 		typedef std::any CallbackArgument;
 		typedef std::function<void(CallbackArgument)> CallbackType;
 
-		SignalSource Source = SignalSource::Engine;
+		Enums::SignalSource Source;
 		std::vector<SignalConnection::Pointer> Connections;
 
 	  protected:
@@ -86,6 +84,8 @@ namespace gargantuan {
 
 		typedef T CallbackArgument;
 		typedef std::function<void(T)> CallbackType;
+
+		Enums::SignalSource Source = Enums::SignalSource::Engine;
 
 		SignalConnection::Pointer
 		Connect(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF) {
@@ -126,6 +126,13 @@ namespace gargantuan {
 		};
 	};
 
+	struct UserSignal : BaseSignal {
+		typedef std::shared_ptr<UserSignal> Pointer;
+		typedef Userdata<UserSignal, Pointer> This;
+
+		Enums::SignalSource Source = Enums::SignalSource::User;
+	};
+
 	G_UD_STACKVALUE_WITH_STORED(SignalConnection, SignalConnection::Pointer)
 	G_UD_STACKVALUE_WITH_STORED(BaseSignal, BaseSignal::Pointer)
 
@@ -141,6 +148,22 @@ namespace gargantuan {
 			return std::dynamic_pointer_cast<Signal<T>>(baseSignal);
 		};
 		static int Push(lua_State *L, std::shared_ptr<Signal<T>> value) {
+			return StackValue<BaseSignal::Pointer>::Push(L, std::static_pointer_cast<BaseSignal>(value));
+		};
+	};
+
+	template <> struct StackValue<std::shared_ptr<UserSignal>> {
+		static inline std::string_view ReflectedTypedef() {
+			return StackValue<BaseSignal::Pointer>::ReflectedTypedef();
+		};
+		static bool Is(lua_State *L, int idx) {
+			return StackValue<BaseSignal::Pointer>::Is(L, idx);
+		};
+		static std::shared_ptr<UserSignal> From(lua_State *L, int idx) {
+			auto baseSignal = StackValue<BaseSignal::Pointer>::From(L, idx);
+			return std::dynamic_pointer_cast<UserSignal>(baseSignal);
+		};
+		static int Push(lua_State *L, std::shared_ptr<UserSignal> value) {
 			return StackValue<BaseSignal::Pointer>::Push(L, std::static_pointer_cast<BaseSignal>(value));
 		};
 	};

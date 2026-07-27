@@ -10,7 +10,10 @@ namespace gargantuan {
 	G_UD_IMPL_PRELUDE(SignalConnection);
 	G_UD_IMPL_PROPS(SignalConnection, G_UD_READONLY_PROP(SignalConnection, Connected, bool));
 	G_UD_IMPL_METHODS(
-		SignalConnection, G_UD_METHOD(SignalConnection, Disconnect), {"__gc", {&SignalConnection::LGarbageCollect}}
+		SignalConnection,
+
+		G_UD_METHOD(SignalConnection, Disconnect),
+		{"__gc", {&SignalConnection::LGarbageCollect}}
 	);
 
 	SignalConnection::SignalConnection(CallbackType callback, lua_State *L, int callbackReference)
@@ -45,7 +48,11 @@ namespace gargantuan {
 
 	G_UD_IMPL_PROPS(BaseSignal);
 	G_UD_IMPL_METHODS(
-		BaseSignal, {"Connect", {BaseSignal::LConnect}}, {"Once", {BaseSignal::LOnce}}, {"Wait", {BaseSignal::LWait}},
+		BaseSignal,
+
+		{"Connect", {BaseSignal::LConnect}},
+		{"Once", {BaseSignal::LOnce}},
+		{"Wait", {BaseSignal::LWait}},
 	)
 
 	SignalConnection::Pointer
