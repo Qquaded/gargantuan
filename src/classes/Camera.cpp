@@ -14,6 +14,7 @@ namespace gargantuan {
 		.Superclass = "Instance",
 		.Constructor = ClassDefinition::WrapConstructor<Camera>(),
 		.Properties = {
+			G_UD_READWRITE_PROP(Camera, CameraType, Enums::CameraType),
 			G_UD_READWRITE_PROP(Camera, CFrame, gargantuan::CFrame),
 			G_UD_READWRITE_PROP(Camera, FieldOfView, float),
 			G_UD_READWRITE_PROP(Camera, ViewportSize, gargantuan::Vector2),
