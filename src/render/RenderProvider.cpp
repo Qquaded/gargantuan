@@ -77,6 +77,10 @@ namespace gargantuan {
 	}
 
 	void RenderProvider::Draw(DrawContext drawContext) {
+		// static uint64_t frameCount = 0;
+		// static uint64_t nullSwapchainCount = 0;
+		// frameCount++;
+
 		SDL_GPUCommandBuffer *commands = SDL_AcquireGPUCommandBuffer(Gpu);
 		if (!commands) {
 			SDL_Log("Failed to acquire command buffer: %s", SDL_GetError());
@@ -111,7 +115,10 @@ namespace gargantuan {
 		}
 
 		if (!frameContext.Commands) SDL_Log("Commands is null");
-		if (!frameContext.SwapchainTexture) SDL_Log("SwapchainTexture is null");
+		if (!frameContext.SwapchainTexture) {
+			// nullSwapchainCount++;
+			// SDL_Log("SwapchainTexture missed on frame %llu (total: %llu)", frameCount, nullSwapchainCount);
+		}
 		if (!frameContext.DepthTexture) SDL_Log("DepthTexture is null");
 		if (!frameContext.ShadowMapTexture) SDL_Log("ShadowMapTexture is null");
 		if (!frameContext.Commands || !frameContext.SwapchainTexture || !frameContext.DepthTexture ||
@@ -145,7 +152,7 @@ namespace gargantuan {
 		if (width < 1 || height < 1) {
 			return;
 		}
-
+		// SDL_SetGPUSwapchainParameters(Gpu, Window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_IMMEDIATE);
 		SDL_SetGPUSwapchainParameters(Gpu, Window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC);
 
 		if (DepthTexture != nullptr) {
