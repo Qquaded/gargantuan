@@ -110,11 +110,14 @@ namespace gargantuan {
 			return;
 		}
 
+		if (!frameContext.Commands) SDL_Log("Commands is null");
+		if (!frameContext.SwapchainTexture) SDL_Log("SwapchainTexture is null");
+		if (!frameContext.DepthTexture) SDL_Log("DepthTexture is null");
+		if (!frameContext.ShadowMapTexture) SDL_Log("ShadowMapTexture is null");
 		if (!frameContext.Commands || !frameContext.SwapchainTexture || !frameContext.DepthTexture ||
-			!frameContext.ShadowMapTexture) {
-			SDL_Log("i got nothing bruh");
+				!frameContext.ShadowMapTexture) {
 			return;
-		}
+}
 
 		SDL_GPUColorTargetInfo colorTarget = {
 			.texture = frameContext.SwapchainTexture,
