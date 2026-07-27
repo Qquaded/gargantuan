@@ -75,6 +75,7 @@ namespace gargantuan {
 		{"Enum", OpenLibEnum},
 		{"Instance", OpenLibInstance},
 		{"UDim", OpenLibUDim},
+		{"Signal", OpenLibSignal},
 		{"Vector2", OpenLibVector2},
 		{"Vector3", OpenLibVector3},
 
