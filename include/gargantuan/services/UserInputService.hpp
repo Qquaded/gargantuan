@@ -15,10 +15,10 @@
 #include <vector>
 
 namespace gargantuan {
-	G_ENUM(MouseBehavior);
-	G_ENUM(PreferredInput);
-	G_ENUM(KeyCodeStringFormat);
-	G_ENUM(SwipeDirection);
+	G_ENUM(MouseBehavior, Default, LockCenter, LockCurrentPosition);
+	G_ENUM(PreferredInput, KeyboardAndMouse, Gamepad, Touch);
+	G_ENUM(KeyCodeStringFormat, Default, Abbreviated);
+	G_ENUM(SwipeDirection, Right, Left, Up, Down, None);
 
 	typedef std::string_view Content;
 	typedef std::string_view ContentId;
@@ -45,13 +45,13 @@ namespace gargantuan {
 		bool GyroscopeEnabled = false;
 
 		// std::shared_ptr<VirtualInput> CreateVirtualInput();
-		bool GamepadSupports(Enums::UserInputType num, Enums::KeyCode keyCode);
+		bool GamepadSupports(Enums::UserInputType gamepadType, Enums::KeyCode keyCode);
 		std::vector<Enums::UserInputType> GetConnectedGamepads();
 		std::shared_ptr<InputObject> GetDeviceAcceleration();
 		std::shared_ptr<InputObject> GetDeviceGravity();
 		std::tuple<std::shared_ptr<InputObject>, CFrame> GetDeviceRotation();
 		// std::shared_ptr<TextBox> GetFocusedTextBox();
-		bool GetGamepadConnected(Enums::UserInputType num);
+		bool GetGamepadConnected(Enums::UserInputType gamepadType);
 		std::vector<std::shared_ptr<InputObject>> GetGamepadState(Enums::UserInputType num);
 		ContentId GetImageForKeyCode(Enums::KeyCode keyCode);
 		std::vector<std::shared_ptr<InputObject>> GetKeysPressed();
@@ -61,12 +61,12 @@ namespace gargantuan {
 		Vector2 GetMouseLocation();
 		std::vector<Enums::UserInputType> GetNavigationGamepads();
 		std::string GetStringForKeyCode(Enums::KeyCode keyCode, Enums::KeyCodeStringFormat format);
-		std::vector<Enums::KeyCode> GetSupportedGamepadKeyCodes(Enums::UserInputType num);
-		bool IsGamepadButtonDown(Enums::UserInputType num, Enums::KeyCode keyCode);
+		std::vector<Enums::KeyCode> GetSupportedGamepadKeyCodes(Enums::UserInputType gamepadType);
+		bool IsGamepadButtonDown(Enums::UserInputType gamepadType, Enums::KeyCode keyCode);
 		bool IsKeyDown(Enums::KeyCode keyCode);
-		bool IsMouseButtonPressed(Enums::UserInputType num);
-		bool IsNavigationGamepad(Enums::UserInputType num);
-		void SetNavigationGamepad(Enums::UserInputType num, bool enabled);
+		bool IsMouseButtonPressed(Enums::UserInputType mouseType);
+		bool IsNavigationGamepad(Enums::UserInputType gamepadType);
+		void SetNavigationGamepad(Enums::UserInputType gamepadType, bool enabled);
 
 		typedef std::tuple<std::shared_ptr<InputObject>, CFrame> DeviceRotationChangedSignalType;
 		G_SIGNAL(DeviceAccelerationChanged, std::shared_ptr<InputObject>);
