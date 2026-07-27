@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <functional>
 
 namespace gargantuan {
 

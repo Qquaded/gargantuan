@@ -1,5 +1,6 @@
 #include "gargantuan/render/GpuMesh.hpp"
 #include "gargantuan/render/Mesh.hpp"
+#include <cstring>
 
 namespace gargantuan {
 	GpuMesh::GpuMesh(Mesh mesh) {
