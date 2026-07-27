@@ -8,42 +8,31 @@
 
 namespace gargantuan {
 	G_ENUM(EasingDirection, In, Out, InOut);
-	G_ENUM(
-		EasingStyle,
-		Linear,
-		Sine,
-		Back,
-		Quad,
-		Quart,
-		Quint,
-		Bounce,
-		Elastic,
-		Exponential,
-		Circular,
-		Cubic
-    )
-	
+	G_ENUM(EasingStyle, Linear, Sine, Back, Quad, Quart, Quint, Bounce, Elastic, Exponential, Circular, Cubic)
+
 	struct TweenInfo : public Userdata<TweenInfo> {
-        public: 
-            G_UD_DECL_PRELUDE(TweenInfo);
+	  public:
+		G_UD_DECL_PRELUDE(TweenInfo);
 
-			// using roblox's defaults
-			float Time = 1.0f;
-			bool Reverses = false;
-			int32_t RepeatCount = 0;
-			float DelayTime = 0;
-			Enums::EasingDirection EasingDirection = Enums::EasingDirection::Out;
-			Enums::EasingStyle EasingStyle = Enums::EasingStyle::Quad;
+		using Pointer = std::shared_ptr<TweenInfo>;
 
-			TweenInfo(
-				float time = 1.0f,
-				Enums::EasingStyle easingStyle = Enums::EasingStyle::Quad,
-				Enums::EasingDirection easingDirection = Enums::EasingDirection::Out,
-				int32_t repeatCount = 0,
-				bool reverses = false,
-				float delayTime = 0
-            );
-    };
+		// using roblox's defaults
+		float Time = 1.0f;
+		bool Reverses = false;
+		int32_t RepeatCount = 0;
+		float DelayTime = 0;
+		Enums::EasingDirection EasingDirection = Enums::EasingDirection::Out;
+		Enums::EasingStyle EasingStyle = Enums::EasingStyle::Quad;
+
+		TweenInfo(
+			float time = 1.0f,
+			Enums::EasingStyle easingStyle = Enums::EasingStyle::Quad,
+			Enums::EasingDirection easingDirection = Enums::EasingDirection::Out,
+			int32_t repeatCount = 0,
+			bool reverses = false,
+			float delayTime = 0
+		);
+	};
 
 	G_UD_STACKVALUE(TweenInfo);
 }
