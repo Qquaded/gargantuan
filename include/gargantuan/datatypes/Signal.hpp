@@ -19,7 +19,7 @@
 	Signal<signalType>::Pointer propertyName = std::make_shared<Signal<signalType>>();
 
 namespace gargantuan {
-	G_ENUM(SignalSource, Engine, User);
+	G_ENUM(SignalType, Engine, User);
 
 	struct SignalConnection : public Userdata<SignalConnection, std::shared_ptr<SignalConnection>>,
 							  public std::enable_shared_from_this<SignalConnection> {
@@ -58,7 +58,6 @@ namespace gargantuan {
 		typedef std::any CallbackArgument;
 		typedef std::function<void(CallbackArgument)> CallbackType;
 
-		Enums::SignalSource Source;
 		std::vector<SignalConnection::Pointer> Connections;
 
 	  protected:
@@ -73,9 +72,12 @@ namespace gargantuan {
 		static int LConnect(lua_State *L, BaseSignal *signal);
 		static int LOnce(lua_State *L, BaseSignal *signal);
 		static int LWait(lua_State *L, BaseSignal *signal);
+		static int LFire(lua_State *L, BaseSignal *signal);
 
 		static int LReferenceCallback(lua_State *L, int idx);
 		static void LRunCallback(lua_State *L, BaseSignal *signal, int callbackReference, std::any value);
+
+		virtual Enums::SignalType GetSignalType() = 0;
 	};
 
 	template <typename T> struct Signal : BaseSignal {
@@ -85,11 +87,12 @@ namespace gargantuan {
 		typedef T CallbackArgument;
 		typedef std::function<void(T)> CallbackType;
 
-		Enums::SignalSource Source = Enums::SignalSource::Engine;
+		Enums::SignalType GetSignalType() override {
+			return Enums::SignalType::Engine;
+		}
 
 		SignalConnection::Pointer
 		Connect(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF) {
-			SDL_Log("connecting");
 			return BaseSignal::Connect(
 				[callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
 			);
@@ -97,14 +100,12 @@ namespace gargantuan {
 
 		SignalConnection::Pointer
 		Once(CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF) {
-
 			return BaseSignal::Once(
 				[callback](std::any value) { callback(std::any_cast<T>(value)); }, L, callbackReference
 			);
 		}
 
 		void Fire(T argument) {
-			// SDL_Log("firing");
 			BaseSignal::Fire(std::any(argument));
 		}
 
@@ -130,7 +131,11 @@ namespace gargantuan {
 		typedef std::shared_ptr<UserSignal> Pointer;
 		typedef Userdata<UserSignal, Pointer> This;
 
-		Enums::SignalSource Source = Enums::SignalSource::User;
+		Enums::SignalType GetSignalType() override {
+			return Enums::SignalType::User;
+		}
+
+		int LPushArgument(lua_State *L, std::any value) override;
 	};
 
 	G_UD_STACKVALUE_WITH_STORED(SignalConnection, SignalConnection::Pointer)

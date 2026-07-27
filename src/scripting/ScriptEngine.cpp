@@ -73,6 +73,7 @@ namespace gargantuan {
 		{"Color3", OpenLibColor3},
 		{"Enum", OpenLibEnum},
 		{"Instance", OpenLibInstance},
+		{"Signal", OpenLibSignal},
 		{"Vector2", OpenLibVector2},
 		{"Vector3", OpenLibVector3},
 
