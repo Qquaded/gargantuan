@@ -1,15 +1,12 @@
 #pragma once
 
-#include "gargantuan/reflection/Enums.hpp"
+#include "gargantuan/math/EasingCurves.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
 #include <cstdint>
 #include <lua.h>
 
 namespace gargantuan {
-	G_ENUM(EasingDirection, In, Out, InOut);
-	G_ENUM(EasingStyle, Linear, Sine, Back, Quad, Quart, Quint, Bounce, Elastic, Exponential, Circular, Cubic)
-
 	struct TweenInfo : public Userdata<TweenInfo> {
 	  public:
 		G_UD_DECL_PRELUDE(TweenInfo);

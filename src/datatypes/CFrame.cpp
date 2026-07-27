@@ -139,13 +139,13 @@ namespace gargantuan {
 	)
 		: Position(x, y, z), Rotation(r00, r01, r02, r10, r11, r12, r20, r21, r22) {};
 
-	glm::vec3 CFrame::GetRightVector() {
+	glm::vec3 CFrame::GetRightVector() const {
 		return {Rotation[0][0], Rotation[1][0], Rotation[2][0]};
 	}
-	glm::vec3 CFrame::GetUpVector() {
+	glm::vec3 CFrame::GetUpVector() const {
 		return {Rotation[0][1], Rotation[1][1], Rotation[2][1]};
 	}
-	glm::vec3 CFrame::GetLookVector() {
+	glm::vec3 CFrame::GetLookVector() const {
 		return {-Rotation[0][2], -Rotation[1][2], -Rotation[2][2]};
 	}
 
@@ -186,7 +186,7 @@ namespace gargantuan {
 		return fromMatrix(position, right, up, look);
 	}
 
-	CFrame CFrame::Inverse() {
+	CFrame CFrame::Inverse() const {
 		glm::mat3 newRotation;
 		for (int col = 0; col < 3; col++) {
 			for (int row = 0; row < 3; row++) {
@@ -198,7 +198,7 @@ namespace gargantuan {
 		return CFrame(newPosition, newRotation);
 	};
 
-	CFrame CFrame::Lerp(CFrame goal, double alpha) {
+	CFrame CFrame::Lerp(const CFrame &goal, double alpha) const {
 		glm::vec3 position{
 			Position.x + (goal.Position.x - Position.x) * alpha,
 			Position.y + (goal.Position.y - Position.y) * alpha,
@@ -241,7 +241,7 @@ namespace gargantuan {
 		return fromQuaternion(x, y, z, w, position);
 	};
 
-	CFrame CFrame::Orthonormalize() {
+	CFrame CFrame::Orthonormalize() const {
 		glm::vec3 x = GetRightVector();
 		glm::vec3 y = GetUpVector();
 
@@ -252,15 +252,15 @@ namespace gargantuan {
 		return CFrame(Position.x, Position.y, Position.z, x.x, y.x, z.x, x.y, y.y, z.y, x.z, y.z, z.z);
 	}
 
-	CFrame CFrame::ToWorldSpace(CFrame cf) {
+	CFrame CFrame::ToWorldSpace(const CFrame &cf) const {
 		return *this * cf;
 	}
 
-	CFrame CFrame::ToObjectSpace(CFrame cf) {
+	CFrame CFrame::ToObjectSpace(const CFrame &cf) const {
 		return this->Inverse() * cf;
 	}
 
-	glm::quat CFrame::ToQuaternion() {
+	glm::quat CFrame::ToQuaternion() const {
 		auto cf = Orthonormalize();
 		auto r = cf.Rotation;
 

@@ -49,29 +49,29 @@ namespace gargantuan {
 		static CFrame fromMatrix(glm::vec3 position, glm::vec3 right, glm::vec3 up, glm::vec3 look);
 		static CFrame fromQuaternion(float x, float y, float z, float w, glm::vec3 position);
 
-		glm::vec3 GetRightVector();
-		glm::vec3 GetUpVector();
-		glm::vec3 GetLookVector();
+		glm::vec3 GetRightVector() const;
+		glm::vec3 GetUpVector() const;
+		glm::vec3 GetLookVector() const;
 
-		CFrame Inverse();
-		CFrame Lerp(CFrame goal, double alpha);
-		CFrame Orthonormalize();
+		CFrame Inverse() const;
+		CFrame Lerp(const CFrame &goal, double alpha) const;
+		CFrame Orthonormalize() const;
 		// NOTE: XToY functions are supposedly tuples on Roblox, not gon do allat rn
-		CFrame ToWorldSpace(CFrame cf);
-		CFrame ToObjectSpace(CFrame cf);
-		glm::vec3 PointToWorldSpace(glm::vec3 point);
-		glm::vec3 PointToObjectSpace(glm::vec3 point);
-		glm::vec3 VectorToWorldSpace(glm::vec3 point);
-		glm::vec3 VectorToObjectSpace(glm::vec3 point);
-		Components GetComponents();
+		CFrame ToWorldSpace(const CFrame &cf) const;
+		CFrame ToObjectSpace(const CFrame &cf) const;
+		glm::vec3 PointToWorldSpace(const glm::vec3 &point) const;
+		glm::vec3 PointToObjectSpace(const glm::vec3 &point) const;
+		glm::vec3 VectorToWorldSpace(const glm::vec3 &point) const;
+		glm::vec3 VectorToObjectSpace(const glm::vec3 &point) const;
+		Components GetComponents() const;
 		// std::tuple<double, double, double> ToEulerAngles(RotationOrder order);
-		std::tuple<double, double, double> ToEulerAnglesXYZ();
-		std::tuple<double, double, double> ToEulerAnglesYXZ();
-		std::tuple<double, double, double> ToOrientation();
-		std::tuple<glm::vec3, double> ToAxisAngle();
-		CFrame FuzzyEq(CFrame other, double epsilon = 1e-5);
-		double AngleBetween(CFrame other);
-		glm::quat ToQuaternion();
+		std::tuple<double, double, double> ToEulerAnglesXYZ() const;
+		std::tuple<double, double, double> ToEulerAnglesYXZ() const;
+		std::tuple<double, double, double> ToOrientation() const;
+		std::tuple<glm::vec3, double> ToAxisAngle() const;
+		CFrame FuzzyEq(const CFrame &other, double epsilon = 1e-5) const;
+		double AngleBetween(const CFrame &other) const;
+		glm::quat ToQuaternion() const;
 
 		static int LAdd(lua_State *L, CFrame *self);
 		static int LSubtract(lua_State *L, CFrame *self);
@@ -82,11 +82,11 @@ namespace gargantuan {
 		static glm::mat3 BuildLookRotation(glm::vec3 position, glm::vec3 target, glm::vec3 up = {0, 1, 0});
 		static glm::mat3 MultiplyRotation(glm::mat3 lhs, glm::mat3 rhs);
 
-		glm::vec3 operator*(glm::vec3 other) {
+		glm::vec3 operator*(const glm::vec3 &other) const {
 			return Position + (Rotation * other);
 		};
 
-		CFrame operator*(CFrame other) {
+		CFrame operator*(const CFrame &other) const {
 			glm::vec3 transformedPosition = Position + (Rotation * other.Position);
 			glm::mat3 transformedRotation = Rotation * other.Rotation;
 			return CFrame(transformedPosition, transformedRotation);

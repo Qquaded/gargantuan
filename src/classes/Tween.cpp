@@ -1,17 +1,21 @@
 #include "gargantuan/classes/Tween.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/datatypes/TweenInfo.hpp"
+#include "gargantuan/math/EasingCurves.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
+// Todo: make play into a LPlay luau function cuz we need lua_State to
+// read/write stuff
 namespace gargantuan {
 	const Tween::ClassDefinition Tween::DEFINITION = {
 		.Name = "Tween",
 		.Superclass = "Instance",
-		// Constructed via TweenService
 		.Properties =
-			{G_UD_READONLY_PROP(Tween, instance, Instance::Pointer),
-			 G_UD_READONLY_PROP(Tween, tweenInfo, TweenInfo),
-			 G_UD_READONLY_PROP(Tween, playbackState, Enums::PlaybackState)},
+			{
+				G_UD_READONLY_PROP(Tween, instance, Instance::Pointer),
+				G_UD_READONLY_PROP(Tween, TweenInfo, gargantuan::TweenInfo),
+				G_UD_READONLY_PROP(Tween, PlaybackState, Enums::PlaybackState),
+			},
 		.Methods = {
 			G_UD_METHOD(Tween, Play),
 			G_UD_METHOD(Tween, Pause),
@@ -20,53 +24,58 @@ namespace gargantuan {
 	};
 
 	void Tween::Play() {
-		if (playbackState == Enums::PlaybackState::Playing) {
-			return; // we're already playing
-		}
+		if (PlaybackState == Enums::PlaybackState::Playing) return;
 
-		isPaused = false;
-		isCancelled = false;
+		Paused = false;
+		Cancelled = false;
 
-		if (t <= 0.0f && tweenInfo.DelayTime > 0.0f) {
-			playbackState = Enums::PlaybackState::Delayed;
+		if (Elapsed <= 0.0f && TweenInfo.DelayTime > 0.0f) {
+			PlaybackState = Enums::PlaybackState::Delayed;
 		} else {
-			playbackState = Enums::PlaybackState::Playing;
+			PlaybackState = Enums::PlaybackState::Playing;
 		}
 
-		if (startProperties.empty()) {
+		if (InitialProperties.empty()) {
 			for (auto &[name, goalValue] : goalProperties) {
-				startProperties[name];
+				InitialProperties[name];
 			}
 		}
 	}
 
 	void Tween::Pause() {
-		if (playbackState != Enums::PlaybackState::Playing) {
+		if (PlaybackState != Enums::PlaybackState::Playing) {
 			return;
 		}
 
-		isPaused = true;
-		playbackState = Enums::PlaybackState::Paused;
+		Paused = true;
+		PlaybackState = Enums::PlaybackState::Paused;
 	}
 
 	void Tween::Cancel() {
-		isCancelled = true;
-		isPaused = false;
-		t = 0.0f;
-		playbackState = Enums::PlaybackState::Cancelled;
+		Cancelled = true;
+		Paused = false;
+		Elapsed = 0.0f;
+		PlaybackState = Enums::PlaybackState::Cancelled;
 
-		Completed->Fire(playbackState);
+		Completed->Fire(PlaybackState);
 	}
 
 	void Tween::Step(float deltaTime) {
-		if (playbackState == Enums::PlaybackState::Delayed) {
-			delayElapsed += deltaTime;
+		if (PlaybackState == Enums::PlaybackState::Delayed) {
+			DelayElapsed += deltaTime;
 			return;
-		} else if (playbackState != Enums::PlaybackState::Playing) {
+		} else if (PlaybackState != Enums::PlaybackState::Playing) {
 			return;
 		}
 
-		t += deltaTime;
-		// do stuff
+		Elapsed += deltaTime;
+
+		auto endTime = Elapsed + TweenInfo.Time;
+		auto progress = Elapsed / endTime;
+		auto alpha = EasingCurves::CalculateAlpha(progress);
+
+		for (auto &[name, goalValue] : goalProperties) {
+			InitialProperties[name];
+		}
 	}
 }

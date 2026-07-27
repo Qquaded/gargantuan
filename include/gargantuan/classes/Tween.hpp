@@ -21,37 +21,35 @@ namespace gargantuan {
 		Playing,
 		Paused,
 		Completed,
-		Cancelled,
+		Cancelled
 	)
 
 	class Tween : public Instance {
 	  public:
-		// this MIGHT need to split into TweenBase in the future?
-		// can be decoupled later
 		static const ClassDefinition DEFINITION;
 
 		Instance::Pointer instance;
-		TweenInfo tweenInfo;
+		TweenInfo TweenInfo;
 
 		using TweenableValue = std::variant<float, Color3, Vector2, glm::vec3>;
 		using GoalPropertyMap = std::unordered_map<std::string, TweenableValue>;
 		GoalPropertyMap goalProperties;
 
-		Enums::PlaybackState playbackState;
+		Enums::PlaybackState PlaybackState;
 
-		Tween(Instance::Pointer instance, TweenInfo tweenInfo, GoalPropertyMap goalProperties);
+		Tween(Instance::Pointer instance, gargantuan::TweenInfo tweenInfo, GoalPropertyMap goalProperties);
 
 		void Play();
 		void Cancel();
 		void Pause();
-		void Step(float deltaTime); // not available to luau
+		void Step(float deltaTime);
 
 		G_SIGNAL(Completed, Enums::PlaybackState)
 	  private:
-		float t = 0;
-		bool isPaused = false;
-		bool isCancelled = false;
-		float delayElapsed = 0.0f;
-		GoalPropertyMap startProperties;
+		float Elapsed = 0.0f;
+		float DelayElapsed = 0.0f;
+		bool Paused = false;
+		bool Cancelled = false;
+		GoalPropertyMap InitialProperties;
 	};
 }

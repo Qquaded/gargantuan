@@ -14,6 +14,8 @@
 #include <lua.h>
 #include <memory>
 
+#include "gargantuan/math/LerpValue.hpp"
+
 namespace gargantuan {
 	class Engine {
 	  public:
