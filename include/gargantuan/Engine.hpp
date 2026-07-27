@@ -4,6 +4,7 @@
 #include "gargantuan/render/RenderProvider.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/RunService.hpp"
+#include "gargantuan/services/TweenService.hpp"
 #include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
