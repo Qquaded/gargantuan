@@ -75,6 +75,7 @@ namespace gargantuan {
 		{"Instance", OpenLibInstance},
 		{"Vector2", OpenLibVector2},
 		{"Vector3", OpenLibVector3},
+		{"TweenInfo", OpenLibTweenInfo},
 
 		{nullptr, nullptr},
 	};

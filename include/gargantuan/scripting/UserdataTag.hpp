@@ -13,6 +13,7 @@ namespace gargantuan {
 		SignalConnection,
 		Vector2,
 		Vector3,
+		TweenInfo,
 	};
 
 }
