@@ -15,6 +15,7 @@ namespace gargantuan {
 		UDim2,
 		Vector2,
 		Vector3,
+		TweenInfo,
 	};
 
 }
