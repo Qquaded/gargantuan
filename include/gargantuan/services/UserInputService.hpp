@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 namespace gargantuan {
@@ -22,8 +23,6 @@ namespace gargantuan {
 	typedef std::string_view Content;
 	typedef std::string_view ContentId;
 
-	// TODO: this class depends on alot of instance classes and data types
-	// which has not been implemented
 	class UserInputService : public Instance {
 	  public:
 		static const ClassDefinition DEFINITION;
@@ -82,8 +81,7 @@ namespace gargantuan {
 		G_SIGNAL(InputChanged, InputSignalType);
 		G_SIGNAL(InputEnded, InputSignalType);
 
-		// TODO: StackValue that represents none
-		// G_SIGNAL(JumpRequest, ???);
+		G_SIGNAL(JumpRequest, std::monostate);
 
 		G_SIGNAL(LastInputTypeChanged, Enums::UserInputType);
 		typedef std::tuple<float, Vector2, float, bool> PointerActionSignalType;
@@ -108,8 +106,7 @@ namespace gargantuan {
 		G_SIGNAL(TouchTap, TouchTapSignalType);
 		G_SIGNAL(TouchTapInWorld, TouchTapInWorldSignalType);
 
-		// TODO: StackValue that represents none
-		// G_SIGNAL(WindowFocused, ???);
-		// G_SIGNAL(WindowFocusReleased, ???);
+		G_SIGNAL(WindowFocused, std::monostate)
+		G_SIGNAL(WindowFocusReleased, std::monostate);
 	};
 }
