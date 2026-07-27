@@ -5,6 +5,7 @@
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -267,4 +268,10 @@ namespace gargantuan {
 
 		static std::shared_ptr<InputObject> fromEvent(SDL_Event &event);
 	};
+
 }
+
+template <> struct magic_enum::customize::enum_range<gargantuan::Enums::KeyCode> {
+	static constexpr int min = 0;
+	static constexpr int max = 2048;
+};

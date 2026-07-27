@@ -4,6 +4,7 @@
 #include "gargantuan/render/RenderProvider.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/RunService.hpp"
+#include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
@@ -20,6 +21,7 @@ namespace gargantuan {
 		std::shared_ptr<DataModel> DataModel = nullptr;
 		std::shared_ptr<Workspace> Workspace = nullptr;
 		std::shared_ptr<RunService> RunService = nullptr;
+		std::shared_ptr<UserInputService> UserInputService = nullptr;
 
 		SDL_Window *Window;
 		SDL_GPUDevice *Gpu;

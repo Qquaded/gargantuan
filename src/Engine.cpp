@@ -54,6 +54,9 @@ namespace gargantuan {
 		auto runService = this->DataModel->GetService("RunService");
 		this->RunService = std::dynamic_pointer_cast<gargantuan::RunService>(runService);
 
+		auto uis = this->DataModel->GetService("UserInputService");
+		this->UserInputService = std::dynamic_pointer_cast<gargantuan::UserInputService>(uis);
+
 		StackValue<Instance::Pointer>::Push(ScriptEngine->L, this->DataModel);
 		lua_pushvalue(ScriptEngine->L, -1);
 		lua_setglobal(ScriptEngine->L, "game");
@@ -97,7 +100,11 @@ namespace gargantuan {
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
-			ProcessEvent(event);
+			if (event.type == SDL_EVENT_QUIT) {
+				IsRunning = false;
+				return;
+			}
+			UserInputService->ProcessEvent(event);
 			Workspace->CurrentCamera->OnEvent(Window, event);
 		}
 

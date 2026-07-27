@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gargantuan/datatypes/Signal.hpp"
+#include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
 #include <functional>
@@ -82,4 +83,31 @@ namespace gargantuan {
 	};
 
 	G_UD_STACKVALUE_WITH_STORED(Instance, Instance::Pointer)
+
+	template <typename Subclass>
+		requires std::is_base_of_v<Instance, Subclass>
+	struct StackValue<std::shared_ptr<Subclass>> {
+	  public:
+		static inline std::string_view ReflectedTypedef() {
+			return CLASS_NAME;
+		};
+
+		static bool Is(lua_State *L, int idx) {
+			if (!StackValue<Instance::Pointer>::Is(L, idx)) return false;
+			auto instance = StackValue<Instance::Pointer>::From(L, idx);
+			return instance->IsA(CLASS_NAME);
+		};
+
+		static std::shared_ptr<Subclass> From(lua_State *L, int idx) {
+			auto instance = gargantuan::StackValue<Instance::Pointer>::From(L, idx);
+			return instance->Cast<Subclass>();
+		};
+
+		static int Push(lua_State *L, std::shared_ptr<Subclass> value) {
+			return gargantuan::StackValue<Instance::Pointer>::Push(L, value);
+		};
+
+	  private:
+		static constexpr std::string_view CLASS_NAME = Subclass::DEFINITION.Name;
+	};
 } // namespace gargantuan
