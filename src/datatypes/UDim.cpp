@@ -11,4 +11,6 @@ namespace gargantuan {
 	)
 	G_UD_IMPL_METHODS(UDim)
 
+	UDim::UDim(float scale, int offset) : Scale(scale), Offset(offset) {};
+
 } // namespace gargantuan

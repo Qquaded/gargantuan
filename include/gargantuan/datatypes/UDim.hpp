@@ -11,7 +11,7 @@ namespace gargantuan {
 		int Offset = 0;
 
 		UDim();
-		UDim(float Scale, int Offset);
+		UDim(float scale = 0.0f, int offset = 0);
 	};
 
 	G_UD_STACKVALUE(UDim);
