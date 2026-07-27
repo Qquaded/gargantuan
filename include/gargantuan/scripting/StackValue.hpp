@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 namespace gargantuan {
@@ -137,6 +138,24 @@ namespace gargantuan {
 				lua_pushnil(L);
 				return 1;
 			}
+		};
+	};
+
+	template <> struct StackValue<std::monostate> {
+		static inline std::string_view ReflectedTypedef() {
+			return "()";
+		};
+
+		static bool Is(lua_State *L, int idx) {
+			return lua_isnone(L, idx);
+		};
+
+		static std::monostate From(lua_State *L, int idx) {
+			return {};
+		};
+
+		static int Push(lua_State *L, std::monostate value) {
+			return 0;
 		};
 	};
 } // namespace gargantuan

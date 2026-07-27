@@ -1,7 +1,9 @@
 #pragma once
 
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/scripting/StackValue.hpp"
 
+#include <memory>
 #include <string_view>
 #include <typeindex>
 #include <vector>
