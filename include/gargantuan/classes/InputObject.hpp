@@ -3,7 +3,9 @@
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/reflection/Enums.hpp"
 
+#include <SDL3/SDL.h>
 #include <glm/glm.hpp>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -76,6 +78,7 @@ namespace gargantuan {
 		Minus = 45,
 		Period = 46,
 		Slash = 47,
+
 		Zero = 48,
 		One = 49,
 		Two = 50,
@@ -86,6 +89,7 @@ namespace gargantuan {
 		Seven = 55,
 		Eight = 56,
 		Nine = 57,
+
 		Colon = 58,
 		Semicolon = 59,
 		LessThan = 60,
@@ -93,13 +97,13 @@ namespace gargantuan {
 		GreaterThan = 62,
 		Question = 63,
 		At = 64,
-
 		LeftBracket = 91,
 		BackSlash = 92,
 		RightBracket = 93,
 		Caret = 94,
 		Underscore = 95,
 		Backquote = 96,
+
 		A = 97,
 		B = 98,
 		C = 99,
@@ -122,9 +126,11 @@ namespace gargantuan {
 		T = 116,
 		U = 117,
 		V = 118,
+		W = 119,
 		X = 120,
 		Y = 121,
 		Z = 122,
+
 		LeftCurly = 123,
 		Pipe = 124,
 		RightCurly = 125,
@@ -145,9 +151,10 @@ namespace gargantuan {
 		KeypadDivide = 267,
 		KeypadMultiply = 268,
 		KeypadMinus = 269,
-		KeypaddPlus = 270,
+		KeypadPlus = 270,
 		KeypadEnter = 271,
 		KeypadEquals = 272,
+
 		Up = 273,
 		Down = 274,
 		Right = 275,
@@ -157,6 +164,7 @@ namespace gargantuan {
 		End = 279,
 		PageUp = 280,
 		PageDown = 281,
+
 		F1 = 282,
 		F2 = 283,
 		F3 = 284,
@@ -241,6 +249,8 @@ namespace gargantuan {
 
 	G_ENUM(ModifierKey, Shift, Ctrl, Alt, Meta);
 
+	extern const std::unordered_map<SDL_Keycode, Enums::KeyCode> SDL_TO_KEYCODE;
+	extern const std::unordered_map<Enums::KeyCode, std::unordered_set<SDL_Keycode>> KEYCODE_TO_SDL;
 	extern const std::unordered_map<Enums::ModifierKey, std::unordered_set<Enums::KeyCode>> MODIFIER_TO_KEYCODE;
 
 	class InputObject : public Instance {
@@ -254,5 +264,7 @@ namespace gargantuan {
 		Enums::UserInputType UserInputType = Enums::UserInputType::None;
 
 		bool IsModifierKeyDown(Enums::ModifierKey modifierKey);
+
+		static std::shared_ptr<InputObject> fromEvent(SDL_Event &event);
 	};
 }

@@ -2,10 +2,20 @@
 #include "gargantuan/classes/InputObject.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_keyboard.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_scancode.h>
 #include <memory>
 #include <variant>
+#include <vector>
 
 namespace gargantuan {
+	bool IsMouseButtonType(Enums::UserInputType inputType) {
+		return inputType == Enums::UserInputType::MouseButton1 || inputType == Enums::UserInputType::MouseButton2 ||
+			   inputType == Enums::UserInputType::MouseButton3;
+	}
+
 	const UserInputService::ClassDefinition UserInputService::DEFINITION = {
 		.Name = "UserInputService",
 		.Superclass = "Instance",
@@ -99,4 +109,85 @@ namespace gargantuan {
 			G_UD_METHOD(UserInputService, SetNavigationGamepad),
 		}
 	};
+
+	std::vector<std::shared_ptr<InputObject>> UserInputService::GetKeysPressed() {
+		std::vector<std::shared_ptr<InputObject>> result;
+		result.reserve(ActiveKeys.size());
+		for (const auto &[_, inputObject] : ActiveKeys) {
+			result.push_back(inputObject);
+		}
+		return result;
+	}
+
+	Enums::UserInputType UserInputService::GetLastInputType() {
+		return LastInputType;
+	}
+
+	Vector2 UserInputService::GetMouseDelta() {
+		return MouseDelta;
+	}
+
+	std::vector<std::shared_ptr<InputObject>> UserInputService::GetMouseButtonsPressed() {
+		std::vector<std::shared_ptr<InputObject>> result;
+		result.reserve(ActiveMouseButtons.size());
+		for (const auto &[_, inputObject] : ActiveMouseButtons) {
+			result.push_back(inputObject);
+		}
+		return result;
+	}
+
+	Vector2 UserInputService::GetMouseLocation() {
+		return MouseLocation;
+	}
+
+	bool UserInputService::IsKeyDown(Enums::KeyCode keyCode) {
+		return ActiveKeys.contains(keyCode);
+	}
+
+	bool UserInputService::IsMouseButtonPressed(Enums::UserInputType mouseType) {
+		return ActiveMouseButtons.contains(mouseType);
+	}
+
+	void UserInputService::ProcessEvent(SDL_Event &event) {
+		if (event.type == SDL_EVENT_WINDOW_FOCUS_GAINED) return WindowFocused->Fire({});
+		if (event.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
+			ActiveKeys.clear();
+			ActiveMouseButtons.clear();
+			return WindowFocusReleased->Fire({});
+		};
+
+		auto input = InputObject::fromEvent(event);
+		if (!input) return;
+
+		auto inputType = input->UserInputType;
+		auto inputState = input->UserInputState;
+
+		if (LastInputType != inputType) {
+			LastInputType = inputType;
+			LastInputTypeChanged->Fire(inputType);
+		}
+
+		if (inputState == Enums::UserInputState::Begin) {
+			if (inputType == Enums::UserInputType::Keyboard) {
+				if (!ActiveKeys.contains(input->KeyCode)) ActiveKeys.emplace(input->KeyCode, input);
+				if (input->KeyCode == Enums::KeyCode::Space) JumpRequest->Fire({});
+			} else if (IsMouseButtonType(inputType)) {
+				if (!ActiveMouseButtons.contains(input->UserInputType)) ActiveKeys.emplace(input->KeyCode, input);
+			}
+			InputBegan->Fire({input, false});
+		} else if (inputState == Enums::UserInputState::Change) {
+			if (inputType == Enums::UserInputType::MouseMovement) {
+				MouseDelta = Vector2(input->Delta);
+				MouseLocation = Vector2(input->Delta);
+			}
+			InputChanged->Fire({input, false});
+		} else if (inputState == Enums::UserInputState::End) {
+			if (inputType == Enums::UserInputType::Keyboard) {
+				if (ActiveKeys.contains(input->KeyCode)) ActiveKeys.erase(input->KeyCode);
+			} else if (IsMouseButtonType(inputType)) {
+				if (ActiveMouseButtons.contains(input->UserInputType)) ActiveKeys.erase(input->KeyCode);
+			}
+			InputEnded->Fire({input, false});
+		}
+	}
 }
