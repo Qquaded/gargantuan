@@ -4,6 +4,7 @@
 #include "gargantuan/datatypes/Enum.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/datatypes/Signal.hpp"
+#include "gargantuan/datatypes/UDim.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
@@ -73,6 +74,7 @@ namespace gargantuan {
 		{"Color3", OpenLibColor3},
 		{"Enum", OpenLibEnum},
 		{"Instance", OpenLibInstance},
+		{"UDim", OpenLibUDim},
 		{"Signal", OpenLibSignal},
 		{"Vector2", OpenLibVector2},
 		{"Vector3", OpenLibVector3},
@@ -102,6 +104,7 @@ namespace gargantuan {
 		EnumItem::CreateUserdataMetatable(L);
 		Instance::CreateUserdataMetatable(L);
 		SignalConnection::CreateUserdataMetatable(L);
+		UDim::CreateUserdataMetatable(L);
 		Vector2::CreateUserdataMetatable(L);
 
 		const luaL_Reg *lib = SCRIPT_LIBS;
