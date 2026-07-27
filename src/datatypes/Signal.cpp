@@ -1,9 +1,11 @@
 #include "gargantuan/datatypes/Signal.hpp"
-#include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
-#include <SDL3/SDL_log.h>
+
+#include <SDL3/SDL.h>
+#include <algorithm>
 #include <lua.h>
+#include <lualib.h>
 #include <memory>
 
 namespace gargantuan {
@@ -46,13 +48,18 @@ namespace gargantuan {
 		return UserdataTag::Signal;
 	};
 
-	G_UD_IMPL_PROPS(BaseSignal);
+	G_UD_IMPL_PROPS(
+		BaseSignal,
+
+		{"Type", Property{.Read = Method::Wrap<&BaseSignal::GetSignalType>().Call}}
+	);
 	G_UD_IMPL_METHODS(
 		BaseSignal,
 
 		{"Connect", {BaseSignal::LConnect}},
 		{"Once", {BaseSignal::LOnce}},
 		{"Wait", {BaseSignal::LWait}},
+		{"Fire", {BaseSignal::LFire}},
 	)
 
 	SignalConnection::Pointer
@@ -94,9 +101,7 @@ namespace gargantuan {
 	}
 
 	int BaseSignal::LConnect(lua_State *L, BaseSignal *signal) {
-		// DumpLuaStack(L);
 		int callbackReference = LReferenceCallback(L, 2);
-		// DumpLuaStack(L);
 		return StackValue<SignalConnection::Pointer>::Push(
 			L,
 			signal->Connect(
@@ -137,6 +142,56 @@ namespace gargantuan {
 			LUA_NOREF
 		);
 		return lua_yield(L, 0);
+	}
+
+	int BaseSignal::LFire(lua_State *L, BaseSignal *signal) {
+		// TODO: This should be on a per-signal basis, ie. you might wanna fire
+		// RunService.PreRender on the server or smshit
+		if (signal->GetSignalType() != Enums::SignalType::User) {
+			luaL_error(L, "Cannot fire Signals created by the engine");
+			return 0;
+		}
+
+		auto stackCount = lua_gettop(L);
+		auto argumentCount = std::max(stackCount - 1, 0);
+		auto argumentVector = std::make_shared<std::vector<int>>();
+		argumentVector->reserve(argumentCount);
+
+		for (int i = 2; i <= stackCount; ++i) {
+			lua_pushvalue(L, i);
+			int ref = lua_ref(L, -1);
+			lua_pop(L, 1);
+			argumentVector->push_back(ref);
+		}
+
+		signal->Fire(argumentVector);
+		return 0;
+	}
+
+	int UserSignal::LPushArgument(lua_State *L, std::any value) {
+		if (!value.has_value()) {
+			return 0;
+		}
+
+		auto argumentsPointer = std::any_cast<std::shared_ptr<std::vector<int>>>(&value);
+		if (!argumentsPointer || !*argumentsPointer) {
+			return 0;
+		}
+
+		lua_State *mainState = lua_mainthread(L);
+		int pushedCount = 0;
+
+		for (int ref : **argumentsPointer) {
+			lua_getref(mainState, ref);
+
+			if (L != mainState) {
+				lua_xmove(mainState, L, 1);
+			}
+
+			pushedCount++;
+		}
+
+		return pushedCount;
 	}
 
 	int BaseSignal::LReferenceCallback(lua_State *L, int idx) {

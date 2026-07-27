@@ -11,6 +11,8 @@ namespace gargantuan {
 		EnumItem,
 		Signal,
 		SignalConnection,
+		UDim,
+		UDim2,
 		Vector2,
 		Vector3,
 		TweenInfo,
