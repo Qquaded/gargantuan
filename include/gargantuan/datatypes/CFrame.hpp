@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gargantuan/datatypes/Vector3.hpp"
+#include "gargantuan/reflection/Enums.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
 #include <glm/glm.hpp>
@@ -9,7 +10,7 @@
 #include <tuple>
 
 namespace gargantuan {
-	// enum class RotationOrder : int { XYZ, XZY, YZX, YXZ, ZXY, ZYX };
+	G_ENUM(RotationOrder, XYZ, XZY, YZX, YXZ, ZXY, ZYX);
 
 	struct CFrame : public Userdata<CFrame> {
 	  public:
@@ -45,7 +46,15 @@ namespace gargantuan {
 			float r22
 		);
 
+		static CFrame lookAt(glm::vec3 from, glm::vec3 to, glm::vec3 up);
+		static CFrame lookAlong(glm::vec3 from, glm::vec3 to, glm::vec3 up);
+		static CFrame fromRotationBetweenVectors(glm::vec3 from, glm::vec3 to);
+		static CFrame fromEulerAngles(float rx, float ry, float rz, Enums::RotationOrder order);
+		static CFrame fromEulerAnglesXYZ(float rx, float ry, float rz);
+		static CFrame fromEulerAnglesYXZ(float rx, float ry, float rz);
 		static CFrame Angles(float x, float y, float z);
+		static CFrame fromAxisAngle(glm::vec3 v, float r);
+		static CFrame fromOrientation(float rx, float ry, float rz);
 		static CFrame fromMatrix(glm::vec3 position, glm::vec3 right, glm::vec3 up, glm::vec3 look);
 		static CFrame fromQuaternion(float x, float y, float z, float w, glm::vec3 position);
 
@@ -56,7 +65,6 @@ namespace gargantuan {
 		CFrame Inverse() const;
 		CFrame Lerp(const CFrame &goal, double alpha) const;
 		CFrame Orthonormalize() const;
-		// NOTE: XToY functions are supposedly tuples on Roblox, not gon do allat rn
 		CFrame ToWorldSpace(const CFrame &cf) const;
 		CFrame ToObjectSpace(const CFrame &cf) const;
 		glm::vec3 PointToWorldSpace(const glm::vec3 &point) const;
@@ -64,23 +72,22 @@ namespace gargantuan {
 		glm::vec3 VectorToWorldSpace(const glm::vec3 &point) const;
 		glm::vec3 VectorToObjectSpace(const glm::vec3 &point) const;
 		Components GetComponents() const;
-		// std::tuple<double, double, double> ToEulerAngles(RotationOrder order);
+		std::tuple<double, double, double> ToEulerAngles(Enums::RotationOrder order);
 		std::tuple<double, double, double> ToEulerAnglesXYZ() const;
 		std::tuple<double, double, double> ToEulerAnglesYXZ() const;
 		std::tuple<double, double, double> ToOrientation() const;
 		std::tuple<glm::vec3, double> ToAxisAngle() const;
-		CFrame FuzzyEq(const CFrame &other, double epsilon = 1e-5) const;
+		bool FuzzyEq(const CFrame &other, double epsilon = 1e-5) const;
 		double AngleBetween(const CFrame &other) const;
 		glm::quat ToQuaternion() const;
 
 		static int LAdd(lua_State *L, CFrame *self);
-		static int LSubtract(lua_State *L, CFrame *self);
-		static int LMultiply(lua_State *L, CFrame *self);
+		static int LSub(lua_State *L, CFrame *self);
+		static int LMul(lua_State *L, CFrame *self);
 		static int LTostring(lua_State *L, CFrame *self);
 
 		static glm::vec3 SafeUnit(glm::vec3 vec, glm::vec3 fallback);
 		static glm::mat3 BuildLookRotation(glm::vec3 position, glm::vec3 target, glm::vec3 up = {0, 1, 0});
-		static glm::mat3 MultiplyRotation(glm::mat3 lhs, glm::mat3 rhs);
 
 		glm::vec3 operator*(const glm::vec3 &other) const {
 			return Position + (Rotation * other);

@@ -93,15 +93,15 @@ namespace gargantuan {
 		}
 
 		if (AccumulatedDeltaX != 0.0f || AccumulatedDeltaY != 0.0f) {
-			Yaw += AccumulatedDeltaX * FreecamSensitivity;
+			Yaw -= AccumulatedDeltaX * FreecamSensitivity;
 
-			Pitch += AccumulatedDeltaY * FreecamSensitivity;
+			Pitch -= AccumulatedDeltaY * FreecamSensitivity;
 			Pitch = glm::clamp(Pitch, -89.0f, 89.0f);
 
 			AccumulatedDeltaX = 0.0f;
 			AccumulatedDeltaY = 0.0f;
 
-			auto rotation = CFrame::Angles(glm::radians(Pitch), glm::radians(Yaw), 0.0f);
+			auto rotation = CFrame::fromEulerAnglesYXZ(glm::radians(Pitch), glm::radians(Yaw), 0.0f);
 			CFrame = gargantuan::CFrame(CFrame.Position, rotation.Rotation);
 		}
 

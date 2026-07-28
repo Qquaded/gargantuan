@@ -8,7 +8,6 @@
 #include <memory>
 
 namespace gargantuan {
-
 	const Instance::ClassDefinition Part::DEFINITION = {
 		.Name = "Part",
 		.Superclass = "BasePart",
@@ -22,5 +21,4 @@ namespace gargantuan {
 		std::string key = "gargantuan://meshes/" + std::string(magic_enum::enum_name(Shape));
 		return MeshProvider::GetGpuMesh(key);
 	};
-
-} // namespace gargantuan
+}
