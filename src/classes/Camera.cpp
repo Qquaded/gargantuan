@@ -14,23 +14,23 @@ namespace gargantuan {
 		.Superclass = "Instance",
 		.Constructor = ClassDefinition::WrapConstructor<Camera>(),
 		.Properties = {
-			G_UD_READWRITE_PROP(Camera, CameraType, Enums::CameraType),
-			G_UD_READWRITE_PROP(Camera, CFrame, gargantuan::CFrame),
-			G_UD_READWRITE_PROP(Camera, FieldOfView, float),
-			G_UD_READWRITE_PROP(Camera, ViewportSize, gargantuan::Vector2),
+			{"CameraType", Property::fromSimple<&Camera::CameraType>(true, true)},
+			{"CFrame", Property::fromSimple<&Camera::CFrame>(true, true)},
+			{"FieldOfView", Property::fromSimple<&Camera::FieldOfView>(true, true)},
+			{"ViewportSize", Property::fromSimple<&Camera::ViewportSize>(true, true)},
 			{
 				"HorizontalFieldOfView",
-				Property{
-					Method::Wrap<&Camera::GetHorizontalFieldOfView>().Call,
-					Method::Wrap<&Camera::SetHorizontalFieldOfView>().Call,
-				},
+				Property::fromReadWrite<float>(
+					[](Instance *self) { return self->Cast<Camera>()->GetHorizontalFieldOfView(); },
+					[](Instance *self, float value) { self->Cast<Camera>()->SetHorizontalFieldOfView(value); }
+				),
 			},
 			{
 				"DiagonalFieldOfView",
-				Property{
-					Method::Wrap<&Camera::GetDiagonalFieldOfView>().Call,
-					Method::Wrap<&Camera::SetDiagonalFieldOfView>().Call,
-				},
+				Property::fromReadWrite<float>(
+					[](Instance *self) { return self->Cast<Camera>()->GetDiagonalFieldOfView(); },
+					[](Instance *self, float value) { self->Cast<Camera>()->SetDiagonalFieldOfView(value); }
+				),
 			},
 		},
 	};

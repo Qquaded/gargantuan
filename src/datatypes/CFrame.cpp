@@ -16,81 +16,18 @@ namespace gargantuan {
 	G_UD_IMPL_PRELUDE(CFrame);
 	G_UD_IMPL_PROPS(
 		CFrame,
-		G_UD_READONLY_PROP(CFrame, Position, glm::vec3),
-		{
-			"Rotation",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				StackValue<CFrame>::Push(L, CFrame({0, 0, 0}, self->Rotation));
-				return 1;
-			}},
-		},
-		{
-			"X",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				lua_pushnumber(L, self->Position.x);
-				return 1;
-			}},
-		},
-		{
-			"Y",
-			Property{
-				.Read = [](lua_State *L, CFrame *self) -> int {
-					lua_pushnumber(L, self->Position.y);
-					return 1;
-				},
-			},
-		},
-		{
-			"Z",
-			Property{
-				.Read = [](lua_State *L, CFrame *self) -> int {
-					lua_pushnumber(L, self->Position.z);
-					return 1;
-				},
-			},
-		},
-		{
-			"RightVector",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				StackValue<CFrame>::Push(L, self->GetRightVector());
-				return 1;
-			}},
-		},
-		{
-			"UpVector",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				StackValue<CFrame>::Push(L, self->GetUpVector());
-				return 1;
-			}},
-		},
-		{
-			"LookVector",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				StackValue<CFrame>::Push(L, self->GetLookVector());
-				return 1;
-			}},
-		},
-		{
-			"XVector",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				StackValue<CFrame>::Push(L, self->GetRightVector());
-				return 1;
-			}},
-		},
-		{
-			"YVector",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				StackValue<CFrame>::Push(L, self->GetUpVector());
-				return 1;
-			}},
-		},
-		{
-			"ZVector",
-			Property{.Read = [](lua_State *L, CFrame *self) -> int {
-				StackValue<CFrame>::Push(L, self->GetLookVector());
-				return 1;
-			}},
-		},
+
+		{"Position", Property::fromSimple<&CFrame::Position>(true, false)},
+		{"Rotation", Property::fromRead([](CFrame *self) { return CFrame(glm::vec3(), self->Rotation); })},
+		{"X", Property::fromRead([](CFrame *self) { return self->Position.x; })},
+		{"Y", Property::fromRead([](CFrame *self) { return self->Position.y; })},
+		{"Z", Property::fromRead([](CFrame *self) { return self->Position.z; })},
+		{"XVector", Property::fromRead([](CFrame *self) { return self->GetRightVector(); })},
+		{"RightVector", Property::fromRead([](CFrame *self) { return self->GetRightVector(); })},
+		{"YVector", Property::fromRead([](CFrame *self) { return self->GetUpVector(); })},
+		{"UpVector", Property::fromRead([](CFrame *self) { return self->GetUpVector(); })},
+		{"ZVector", Property::fromRead([](CFrame *self) { return self->GetLookVector(); })},
+		{"LookVector", Property::fromRead([](CFrame *self) { return self->GetLookVector(); })},
 	);
 	G_UD_IMPL_METHODS(
 		CFrame,

@@ -14,7 +14,7 @@ namespace gargantuan {
 		.Superclass = "BasePart",
 		.Constructor = ClassDefinition::WrapConstructor<Part>(),
 		.Properties = {
-			G_UD_READWRITE_PROP(Part, Shape, Enums::PartType),
+			{"Part", Property::fromSimple<&Part::Shape>(true, false)},
 		}
 	};
 

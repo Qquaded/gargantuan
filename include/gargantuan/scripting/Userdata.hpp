@@ -3,23 +3,91 @@
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
 
+#include <any>
+#include <functional>
 #include <lua.h>
 #include <lualib.h>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
-#include <functional>
 
 namespace gargantuan {
-
 	template <typename Class, typename StoredAs = Class> class Userdata {
 	  public:
 		typedef Userdata<Class, StoredAs> This;
 
 		struct Property {
-			int (*Read)(lua_State *L, Class *instance);
-			int (*Write)(lua_State *L, Class *instance);
+			int (*PushStack)(lua_State *L, std::any value) = nullptr;
+			std::any (*Read)(Class *instance) = nullptr;
+
+			std::any (*CheckStack)(lua_State *L, int idx) = nullptr;
+			void (*Write)(Class *instance, std::any value) = nullptr;
+
+			template <typename MemberType> struct MemberTraits;
+			template <typename C, typename T> struct MemberTraits<T C::*> {
+				using Target = C;
+				using Value = T;
+			};
+
+			template <auto MemberPointer>
+			static Property fromSimple(bool enableRead = false, bool enableWrite = false) {
+				using MemberClass = typename MemberTraits<decltype(MemberPointer)>::Target;
+				using Value = typename MemberTraits<decltype(MemberPointer)>::Value;
+
+				Property self{nullptr, nullptr};
+
+				if (enableRead) {
+					self.PushStack = [](lua_State *L, std::any value) -> int {
+						return StackValue<Value>::Push(L, std::any_cast<Value>(value));
+					};
+					self.Read = [](Class *instance) -> std::any {
+						return static_cast<MemberClass *>(instance)->*MemberPointer;
+					};
+				}
+
+				if (enableWrite) {
+					self.CheckStack = [](lua_State *L, int idx) -> std::any { return CheckStackValue<Value>(L, idx); };
+					self.Write = [](Class *instance, std::any value) {
+						static_cast<MemberClass *>(instance)->*MemberPointer = std::any_cast<Value>(value);
+					};
+				}
+
+				return self;
+			}
+
+			template <typename Reader> static Property fromRead(Reader &&read) {
+				using ReadType = std::invoke_result_t<Reader, Class *>;
+				Property self;
+
+				self.PushStack = [](lua_State *L, std::any value) -> int {
+					return StackValue<ReadType>::Push(L, std::any_cast<ReadType>(value));
+				};
+				static auto storedRead = std::forward<Reader>(read);
+				self.Read = [](Class *instance) -> std::any { return storedRead(instance); };
+
+				return self;
+			}
+
+			template <typename WriteType, typename Reader, typename Writer>
+			static Property fromReadWrite(Reader &&read, Writer &&write) {
+				using ReadType = std::invoke_result_t<Reader, Class *>;
+				Property self;
+
+				self.PushStack = [](lua_State *L, std::any value) -> int {
+					return StackValue<ReadType>::Push(L, std::any_cast<ReadType>(value));
+				};
+				static auto storedRead = std::forward<Reader>(read);
+				self.Read = [](Class *instance) -> std::any { return storedRead(instance); };
+
+				self.CheckStack = [](lua_State *L, int idx) -> std::any { return CheckStackValue<WriteType>(L, idx); };
+				static auto storedWrite = std::forward<Writer>(write);
+				self.Write = [](Class *instance, std::any value) {
+					storedWrite(instance, std::any_cast<WriteType>(value));
+				};
+
+				return self;
+			}
 		};
 
 		struct Method {
@@ -74,12 +142,15 @@ namespace gargantuan {
 		static UserdataTag GetUserdataTag() {
 			return Class::GetUserdataTag();
 		};
+
 		static std::string_view GetUserdataType() {
 			return Class::GetUserdataType();
 		};
+
 		static const UserdataProperties &GetUserdataProperties() {
 			return Class::GetUserdataProperties();
 		};
+
 		static const UserdataMethods &GetUserdataMethods() {
 			return Class::GetUserdataMethods();
 		};
@@ -96,8 +167,8 @@ namespace gargantuan {
 			if (auto it = properties.find(key); it != properties.end()) {
 				const Property &property = it->second;
 				if (property.Read) {
-					property.Read(L, instance);
-					return 1;
+					auto value = property.Read(instance);
+					return property.PushStack(L, value);
 				}
 				return 0;
 			}
@@ -117,7 +188,8 @@ namespace gargantuan {
 			if (auto it = properties.find(key); it != properties.end()) {
 				const Property &property = it->second;
 				if (property.Write) {
-					property.Write(L, instance);
+					auto value = property.CheckStack(L, instance);
+					property.Write(instance, value);
 				} else {
 					luaL_error(L, "%s is read-only", key.data());
 				}
@@ -245,51 +317,8 @@ namespace gargantuan {
 		};
 	};
 
-#define G_UD_READONLY_PROP_IMPL(classType, propertyName, valueType)                                                    \
-	[](lua_State *L, void *rawInstance) -> int {                                                                       \
-		auto *instance = static_cast<classType *>(rawInstance);                                                        \
-		::gargantuan::StackValue<valueType>::Push(L, instance->propertyName);                                          \
-		return 1;                                                                                                      \
-	}
-
-#define G_UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)                                                   \
-	[](lua_State *L, void *rawInstance) -> int {                                                                       \
-		auto *instance = static_cast<classType *>(rawInstance);                                                        \
-		valueType value = ::gargantuan::CheckStackValue<valueType>(L, -1);                                             \
-		instance->propertyName = value;                                                                                \
-		return 0;                                                                                                      \
-	}
-
-#define G_UD_READONLY_PROP(classType, propertyName, valueType)                                                         \
-	{                                                                                                                  \
-		#propertyName, {                                                                                               \
-			[](lua_State *L, auto *inst) -> int {                                                                      \
-				return G_UD_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                           \
-			},                                                                                                         \
-				nullptr                                                                                                \
-		}                                                                                                              \
-	}
-
-#define G_UD_WRITEONLY_PROP(classType, propertyName, valueType)                                                        \
-	{                                                                                                                  \
-		#propertyName, {                                                                                               \
-			nullptr, [](lua_State *L, auto *inst) -> int {                                                             \
-				return G_UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                          \
-			}                                                                                                          \
-		}                                                                                                              \
-	}
-
-#define G_UD_READWRITE_PROP(classType, propertyName, valueType)                                                        \
-	{                                                                                                                  \
-		#propertyName, {                                                                                               \
-			[](lua_State *L, auto *inst) -> int {                                                                      \
-				return G_UD_READONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                           \
-			},                                                                                                         \
-				[](lua_State *L, auto *inst) -> int {                                                                  \
-					return G_UD_WRITEONLY_PROP_IMPL(classType, propertyName, valueType)(L, inst);                      \
-				}                                                                                                      \
-		}                                                                                                              \
-	}
+#define G_MEMBER_PROPERTY(classType, propertyName, enableRead, enableWrite)                                            \
+	{#propertyName, Property::fromMember<&classType::propertyName>(enableRead, enableWrite)}
 
 #define G_UD_STACKVALUE_WITH_STORED(classType, storedType)                                                             \
 	template <> struct StackValue<storedType> {                                                                        \

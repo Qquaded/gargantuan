@@ -28,7 +28,7 @@ namespace gargantuan {
 	  public:
 		static const ClassDefinition DEFINITION;
 
-		Instance::Pointer instance;
+		Instance::Pointer Instance;
 		TweenInfo TweenInfo;
 
 		using TweenableValue = std::variant<float, Color3, Vector2, glm::vec3>;
@@ -42,14 +42,16 @@ namespace gargantuan {
 		void Play();
 		void Cancel();
 		void Pause();
-		void Step(float deltaTime);
+
+		static int LPlay(lua_State *L, gargantuan::Instance *self);
+		static int LStep(lua_State *L, gargantuan::Instance *self);
 
 		G_SIGNAL(Completed, Enums::PlaybackState)
 	  private:
-		float Elapsed = 0.0f;
-		float DelayElapsed = 0.0f;
-		bool Paused = false;
-		bool Cancelled = false;
+		bool IsPlaying;
+		double StartTime;
+		double LerpStartTime;
+		double EndTime;
 		GoalPropertyMap InitialProperties;
 	};
 }

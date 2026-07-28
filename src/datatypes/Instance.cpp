@@ -22,34 +22,21 @@ namespace gargantuan {
 		.Name = "Instance",
 		.Properties =
 			{
-				G_UD_READWRITE_PROP(Instance, Name, std::string_view),
+				{"Name", Property::fromSimple<&Instance::Name>(true, true)},
 				{
 					"ClassName",
-					{
-						+[](lua_State *L, Instance *instance) -> int {
-							StackValue<std::string_view>::Push(L, ClassRegistry::GetDefinition(instance)->Name);
-							return 1;
-						},
-						nullptr,
-					},
+					Property::fromRead([](Instance *instance) -> std::string_view {
+						return ClassRegistry::GetDefinition(instance)->Name;
+					}),
 				},
 				{
 					"Parent",
-					{
-						+[](lua_State *L, Instance *instance) -> int {
-							if (auto parent = instance->Parent) {
-								StackValue<Instance::Userdata>::Push(L, parent->shared_from_this());
-							} else {
-								lua_pushnil(L);
-							};
-							return 1;
+					Property::fromReadWrite<Instance::Pointer>(
+						[](Instance *instance) -> std::optional<Instance::Pointer> {
+							return instance->Parent ? instance->Parent->shared_from_this() : nullptr;
 						},
-						+[](lua_State *L, Instance *instance) -> int {
-							Instance::Pointer newParent = CheckStackValue<Instance::Pointer>(L, -1);
-							instance->SetParent(newParent);
-							return 0;
-						},
-					},
+						[](Instance *instance, Instance::Pointer newParent) { instance->SetParent(newParent); }
+					),
 				},
 			},
 		.Methods = {
@@ -119,7 +106,7 @@ namespace gargantuan {
 	}
 
 	int Instance::UserdataIndex(lua_State *L) {
-		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
+		Instance::Pointer instance = CheckStackValue<Instance::Pointer>(L, 1);
 		const char *key = luaL_checkstring(L, 2);
 
 		if (key && instance) {
@@ -128,8 +115,7 @@ namespace gargantuan {
 				if (property->Read) {
 					lua_remove(L, 1);
 					lua_remove(L, 1);
-					property->Read(L, instance.get());
-					return 1;
+					return property->PushStack(L, property->Read(instance.get()));
 				} else {
 					luaL_error(L, "Property %s is write-only", key);
 				}
@@ -144,14 +130,16 @@ namespace gargantuan {
 	};
 
 	int Instance::UserdataNewIndex(lua_State *L) {
-		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
+		Instance::Pointer instance = CheckStackValue<Instance::Pointer>(L, 1);
 		const char *key = luaL_checkstring(L, 2);
 
 		if (key && instance) {
 			auto property = instance->FindProperty(key);
 			if (property.has_value()) {
 				if (property->Write) {
-					return property->Write(L, instance.get());
+					auto value = property->CheckStack(L, 3);
+					property->Write(instance.get(), value);
+					return 0;
 				} else {
 					luaL_error(L, "Property %s is read-only", key);
 				}
@@ -164,7 +152,7 @@ namespace gargantuan {
 	};
 
 	int Instance::UserdataNamecall(lua_State *L) {
-		Instance::Pointer instance = StackValue<Instance::Pointer>::From(L, 1);
+		Instance::Pointer instance = CheckStackValue<Instance::Pointer>(L, 1);
 		const char *key = lua_namecallatom(L, nullptr);
 
 		if (key && instance) {
@@ -181,7 +169,6 @@ namespace gargantuan {
 	std::string Instance::GetFullName() {
 		std::vector<std::string_view> path;
 
-		// Start from -1 to omit a trailing period
 		size_t totalLength = 0;
 		Instance *current = this;
 

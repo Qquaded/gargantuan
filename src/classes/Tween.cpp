@@ -1,8 +1,9 @@
 #include "gargantuan/classes/Tween.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
-#include "gargantuan/datatypes/TweenInfo.hpp"
-#include "gargantuan/math/EasingCurves.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
+
+#include <lua.h>
+#include <objc/objc.h>
 
 // Todo: make play into a LPlay luau function cuz we need lua_State to
 // read/write stuff
@@ -12,70 +13,78 @@ namespace gargantuan {
 		.Superclass = "Instance",
 		.Properties =
 			{
-				G_UD_READONLY_PROP(Tween, instance, Instance::Pointer),
-				G_UD_READONLY_PROP(Tween, TweenInfo, gargantuan::TweenInfo),
-				G_UD_READONLY_PROP(Tween, PlaybackState, Enums::PlaybackState),
+				{"Instance", Property::fromSimple<&Tween::Instance>(true, false)},
+				{"TweenInfo", Property::fromSimple<&Tween::TweenInfo>(true, false)},
+				{"PlaybackState", Property::fromSimple<&Tween::PlaybackState>(true, false)},
 			},
 		.Methods = {
-			G_UD_METHOD(Tween, Play),
-			G_UD_METHOD(Tween, Pause),
-			G_UD_METHOD(Tween, Cancel),
+			// G_UD_METHOD(Tween, Pause),
+			// G_UD_METHOD(Tween, Cancel),
+			// {"Play", Method{&Tween::LPlay}},
 		}
 	};
 
-	void Tween::Play() {
-		if (PlaybackState == Enums::PlaybackState::Playing) return;
+	int Tween::LPlay(lua_State *L, gargantuan::Instance *self) {
+		// Tween *tween = self->Cast<Tween>();
 
-		Paused = false;
-		Cancelled = false;
+		// if (tween->IsPlaying) return 0;
 
-		if (Elapsed <= 0.0f && TweenInfo.DelayTime > 0.0f) {
-			PlaybackState = Enums::PlaybackState::Delayed;
-		} else {
-			PlaybackState = Enums::PlaybackState::Playing;
-		}
+		// tween->IsPlaying = true;
+		// tween->StartTime = lua_clock();
+		// tween->LerpStartTime = tween->StartTime + tween->TweenInfo.DelayTime;
+		// tween->EndTime = tween->LerpStartTime + tween->TweenInfo.Time * (tween->TweenInfo.RepeatCount + 1);
 
-		if (InitialProperties.empty()) {
-			for (auto &[name, goalValue] : goalProperties) {
-				InitialProperties[name];
-			}
-		}
+		// tween->PlaybackState =
+		// 	tween->TweenInfo.DelayTime > 0 ? Enums::PlaybackState::Delayed : Enums::PlaybackState::Playing;
+
+		// if (tween->InitialProperties.empty()) {
+		// 	auto instance = tween->Instance.get();
+		// 	for (auto &[name, _] : tween->goalProperties) {
+		// 		auto property = tween->Instance->FindProperty(name);
+		// 		if (!property) continue;
+		// 		if (!property->Read || !property->Write) continue;
+		// 		// This will so not work
+		// 		tween->InitialProperties[name] = property->Read(L, instance);
+		// 	}
+		// }
+
+		return 0;
 	}
 
-	void Tween::Pause() {
-		if (PlaybackState != Enums::PlaybackState::Playing) {
-			return;
-		}
+	// void Tween::Pause() {
+	// 	if (PlaybackState != Enums::PlaybackState::Playing) {
+	// 		return;
+	// 	}
 
-		Paused = true;
-		PlaybackState = Enums::PlaybackState::Paused;
-	}
+	// 	Paused = true;
+	// 	PlaybackState = Enums::PlaybackState::Paused;
+	// }
 
-	void Tween::Cancel() {
-		Cancelled = true;
-		Paused = false;
-		Elapsed = 0.0f;
-		PlaybackState = Enums::PlaybackState::Cancelled;
+	// void Tween::Cancel() {
+	// 	Cancelled = true;
+	// 	Paused = false;
+	// 	Elapsed = 0.0f;
+	// 	PlaybackState = Enums::PlaybackState::Cancelled;
 
-		Completed->Fire(PlaybackState);
-	}
+	// 	Completed->Fire(PlaybackState);
+	// }
 
-	void Tween::Step(float deltaTime) {
-		if (PlaybackState == Enums::PlaybackState::Delayed) {
-			DelayElapsed += deltaTime;
-			return;
-		} else if (PlaybackState != Enums::PlaybackState::Playing) {
-			return;
-		}
+	// int Tween::LStep(lua_State *L, gargantuan::Instance *self) {
+	// 	if (PlaybackState == Enums::PlaybackState::Delayed) {
+	// 		DelayElapsed += deltaTime;
+	// 		return;
+	// 	} else if (PlaybackState != Enums::PlaybackState::Playing) {
+	// 		return;
+	// 	}
 
-		Elapsed += deltaTime;
+	// 	Elapsed += deltaTime;
 
-		auto endTime = Elapsed + TweenInfo.Time;
-		auto progress = Elapsed / endTime;
-		auto alpha = EasingCurves::CalculateAlpha(progress);
+	// 	auto endTime = Elapsed + TweenInfo.Time;
+	// 	auto progress = Elapsed / endTime;
+	// 	auto alpha = EasingCurves::CalculateAlpha(progress);
 
-		for (auto &[name, goalValue] : goalProperties) {
-			InitialProperties[name];
-		}
-	}
+	// 	for (auto &[name, goalValue] : goalProperties) {
+	// 		InitialProperties[name];
+	// 	}
+	// }
 }

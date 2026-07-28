@@ -11,10 +11,10 @@ namespace gargantuan {
 	G_UD_IMPL_PRELUDE(Vector2);
 	G_UD_IMPL_PROPS(
 		Vector2,
-		{"X", {Method::Wrap<&Vector2::GetX>().Call, nullptr}},
-		{"Y", {Method::Wrap<&Vector2::GetY>().Call, nullptr}},
-		{"Magnitude", {Method::Wrap<&Vector2::GetMagnitude>().Call, nullptr}},
-		{"Unit", {Method::Wrap<&Vector2::GetUnit>().Call, nullptr}},
+		{"X", Property::fromRead([](Vector2 *self) { return self->GetX(); })},
+		{"Y", Property::fromRead([](Vector2 *self) { return self->GetY(); })},
+		{"Unit", Property::fromRead([](Vector2 *self) { return self->GetUnit(); })},
+		{"Magnitude", Property::fromRead([](Vector2 *self) { return self->GetMagnitude(); })}
 	)
 	G_UD_IMPL_METHODS(
 		Vector2,
