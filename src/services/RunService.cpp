@@ -1,5 +1,4 @@
 #include "gargantuan/services/RunService.hpp"
-#include "gargantuan/datatypes/Signal.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
 namespace gargantuan {
@@ -8,7 +7,7 @@ namespace gargantuan {
 		.Superclass = "Instance",
 		.Constructor = ClassDefinition::WrapConstructor<RunService>(),
 		.Properties = {
-			G_UD_READONLY_PROP(RunService, PreRender, Signal<double>::Pointer),
+			{"PreRender", Property::fromSimple<&RunService::PreRender>(true, false)},
 		}
 	};
 }

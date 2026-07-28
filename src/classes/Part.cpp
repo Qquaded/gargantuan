@@ -14,7 +14,7 @@ namespace gargantuan {
 		.Superclass = "BasePart",
 		.Constructor = ClassDefinition::WrapConstructor<Part>(),
 		.Properties = {
-			{"Part", Property::fromSimple<&Part::Shape>(true, false)},
+			{"Shape", Property::fromSimple<&Part::Shape>(true, true)},
 		}
 	};
 

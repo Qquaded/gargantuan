@@ -188,7 +188,7 @@ namespace gargantuan {
 			if (auto it = properties.find(key); it != properties.end()) {
 				const Property &property = it->second;
 				if (property.Write) {
-					auto value = property.CheckStack(L, instance);
+					auto value = property.CheckStack(L, 3);
 					property.Write(instance, value);
 				} else {
 					luaL_error(L, "%s is read-only", key.data());

@@ -89,25 +89,22 @@ namespace gargantuan {
 	struct StackValue<std::shared_ptr<Subclass>> {
 	  public:
 		static inline std::string_view ReflectedTypedef() {
-			return CLASS_NAME;
+			return Subclass::DEFINITION.Name;
 		};
 
 		static bool Is(lua_State *L, int idx) {
 			if (!StackValue<Instance::Pointer>::Is(L, idx)) return false;
 			auto instance = StackValue<Instance::Pointer>::From(L, idx);
-			return instance->IsA(CLASS_NAME);
+			return instance->IsA(Subclass::DEFINITION.Name);
 		};
 
 		static std::shared_ptr<Subclass> From(lua_State *L, int idx) {
 			auto instance = gargantuan::StackValue<Instance::Pointer>::From(L, idx);
-			return instance->Cast<Subclass>();
+			return instance ? std::dynamic_pointer_cast<Subclass>(instance) : nullptr;
 		};
 
 		static int Push(lua_State *L, std::shared_ptr<Subclass> value) {
 			return gargantuan::StackValue<Instance::Pointer>::Push(L, value);
 		};
-
-	  private:
-		static constexpr std::string_view CLASS_NAME = Subclass::DEFINITION.Name;
 	};
 } // namespace gargantuan
