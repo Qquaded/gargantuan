@@ -26,11 +26,11 @@ and maintained by Team Fireworks.
 
 - **Gargantuan is powerful,** boasting a feature rich 2D and 3D featureset.
 - **Gargantuan is productive,** with a familiar Luau API surface that enables rapid prototyping.
-- **Gargantuan is multiplatform,** bringing one game for MacOS, Windows, Linux, mobile, and VR.
+- **Gargantuan is multiplatform,** so one game runs across MacOS, Windows, Linux, mobile, and VR.
 
 And finally,
 
-- **Gargantuan is 100% yours,** From the platform, assets, multiplayer, and even core scripts.
+- **Gargantuan is 100% yours,** from the platform, assets, multiplayer, and even core scripts.
 
 Sparked your interest? [Read the documentation.](./docs/index.md)
 
