@@ -1,4 +1,5 @@
 #include "gargantuan/datatypes/Random.hpp"
+#include "gargantuan/datatypes/Vector3.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
 

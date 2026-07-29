@@ -21,16 +21,13 @@ namespace gargantuan {
 					lua_pushliteral(L, "https://github.com/teamfireworks/gargantuan.git/");
 					lua_setfield(L, -2, "url");
 				}
-				// lua_pushvalue(L, -1);
-				// lua_setreadonly(L, -1, true);
+				lua_setreadonly(L, -1, true);
 				lua_setfield(L, -2, "git");
 			}
-			// lua_pushvalue(L, -1);
-			// lua_setreadonly(L, -1, true);
+			lua_setreadonly(L, -1, true);
 			lua_setfield(L, -2, "version");
 		}
-		// lua_pushvalue(L, -1);
-		// lua_setreadonly(L, -1, true);
+		lua_setreadonly(L, -1, true);
 		lua_setglobal(L, "_RUNTIME");
 
 		return 0;

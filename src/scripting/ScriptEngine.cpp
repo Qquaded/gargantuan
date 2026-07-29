@@ -71,15 +71,28 @@ namespace gargantuan {
 	static const luaL_Reg SCRIPT_LIBS[] = {
 		{"", OpenLibBase},
 
+		{"Axes", OpenLibAxes},
 		{"CFrame", OpenLibCFrame},
 		{"Color3", OpenLibColor3},
+		// {"ColorSequence", OpenLibColorSequence},
+		// {"ColorSequenceKeypoint", OpenLibColorSequenceKeypoint},
 		{"Enum", OpenLibEnum},
+		// {"Faces", OpenLibFaces},
+		// {"Font", OpenLibFont},
 		{"Instance", OpenLibInstance},
+		// {"NumberRange", OpenLibNumberRange},
+		// {"NumberSequence", OpenLibNumberSequence},
+		// {"NumberSequenceKeypoint", OpenLibNumberSequenceKeypoint},
+		{"Random", OpenLibRandom},
+		// {"RaycastParams", OpenLibRaycastParams},
+		// {"Rect", OpenLibRect},
+		// {"Region3", OpenLibRegion3},
 		{"UDim", OpenLibUDim},
+		// {"UDim2", OpenLibUDim2},
 		{"Signal", OpenLibSignal},
+		{"TweenInfo", OpenLibTweenInfo},
 		{"Vector2", OpenLibVector2},
 		{"Vector3", OpenLibVector3},
-		{"TweenInfo", OpenLibTweenInfo},
 
 		{nullptr, nullptr},
 	};
@@ -110,9 +123,9 @@ namespace gargantuan {
 		Enum::CreateUserdataMetatable(L);
 		EnumItem::CreateUserdataMetatable(L);
 		Instance::CreateUserdataMetatable(L);
+		Random::CreateUserdataMetatable(L);
 		SignalConnection::CreateUserdataMetatable(L);
 		UDim::CreateUserdataMetatable(L);
-		Random::CreateUserdataMetatable(L);
 		Vector2::CreateUserdataMetatable(L);
 
 		const luaL_Reg *lib = SCRIPT_LIBS;

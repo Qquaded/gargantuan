@@ -15,9 +15,6 @@ namespace gargantuan::InstanceClassRegistry {
 	}
 
 	namespace {
-		// Name to entry. A superclass is named rather than pointed at, so
-		// resolving one used to be a scan of every registered class comparing
-		// strings -- once per level, on every property read and write.
 		std::unordered_map<std::string_view, InstanceClassDefinition *> &GetNameIndex() {
 			static std::unordered_map<std::string_view, InstanceClassDefinition *> index;
 			return index;
@@ -38,11 +35,6 @@ namespace gargantuan::InstanceClassRegistry {
 			NameIndexBuilt = true;
 		}
 
-		// Walks the chain once and copies what it finds into the class it
-		// started from. Nearest first, and emplace leaves an existing entry
-		// alone, so a class that redeclares an inherited member still shadows
-		// it -- which is what the walk this replaces did by stopping at its
-		// first hit.
 		void Flatten(InstanceClassDefinition *definition) {
 			definition->AllProperties.clear();
 			definition->AllMethods.clear();
@@ -82,8 +74,6 @@ namespace gargantuan::InstanceClassRegistry {
 	}
 
 	InstanceClassDefinition *GetDefinitionByType(std::type_index type) {
-		// NOTE: a reference -- copying the map would hand back a pointer into a
-		// temporary that dies with this call
 		auto &map = GetDefinitionsMap();
 		auto it = map.find(type);
 		if (it == map.end()) {
@@ -100,10 +90,6 @@ namespace gargantuan::InstanceClassRegistry {
 	InstanceClassDefinition *GetDefinition(Instance *instance) {
 		if (!instance) return nullptr;
 
-		// Worked out once per instance: finding it costs a typeid and a hash of
-		// the resulting type_index, and an instance cannot change class. The
-		// tables it points at can still have been dropped since, which is what
-		// the second check is for.
 		if (instance->CachedDefinition) {
 			if (!instance->CachedDefinition->Flattened) {
 				Flatten(instance->CachedDefinition);
