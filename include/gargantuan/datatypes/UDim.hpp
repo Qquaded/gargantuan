@@ -11,6 +11,7 @@ namespace gargantuan {
 
 		UDim(float scale = 0.0f, int offset = 0);
 
+		UDim Lerp(const UDim &goal, float alpha) const;
 		UDim Add(const UDim &other) const;
 		UDim Sub(const UDim &other) const;
 		UDim Unm() const;

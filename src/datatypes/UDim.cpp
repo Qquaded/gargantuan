@@ -1,6 +1,7 @@
 #include "gargantuan/datatypes/UDim.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
+#include <common.hpp>
 #include <sstream>
 
 namespace gargantuan {
@@ -14,6 +15,7 @@ namespace gargantuan {
 				{"Offset", Property::fromReadonlyMember<&UDim::Offset>()},
 			},
 		.Methods = {
+			{"Lerp", Method::fromMember<&UDim::Lerp>()},
 			{"__add", Method::fromMember<&UDim::Add>()},
 			{"__sub", Method::fromMember<&UDim::Sub>()},
 			{"__unm", Method::fromMember<&UDim::Unm>()},
@@ -23,6 +25,10 @@ namespace gargantuan {
 	);
 
 	UDim::UDim(float scale, int offset) : Scale(scale), Offset(offset) {};
+
+	UDim UDim::Lerp(const UDim &goal, float alpha) const {
+		return UDim(Scale + (goal.Scale - Scale) * alpha, (int)glm::round(Offset + (goal.Offset - Offset) * alpha));
+	}
 
 	UDim UDim::Add(const UDim &other) const {
 		return UDim(Scale + other.Scale, Offset + other.Offset);
