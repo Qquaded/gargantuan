@@ -1,3 +1,4 @@
+#include "gargantuan/Profiler.hpp"
 #include "gargantuan/datatypes/Signal.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
@@ -7,6 +8,8 @@
 #include <lua.h>
 #include <lualib.h>
 #include <memory>
+#include <string>
+#include <string_view>
 
 namespace gargantuan {
 	G_USERDATA_IMPL(
@@ -234,6 +237,30 @@ namespace gargantuan {
 		}
 
 		lua_xmove(mainState, thread, 1);
+
+		// Labelled with whichever script the handler was written in, taken off
+		// the function itself rather than asked for. A place with several
+		// scripts connected to PreRender otherwise reports one lump of time
+		// with nothing to say about which of them is spending it, and the
+		// answer is already sitting in the function's debug info.
+		std::string label;
+		if (G_PROFILE_ACTIVE()) {
+			lua_Debug info;
+			if (lua_getinfo(thread, -1, "s", &info) && info.short_src) {
+				label = info.short_src;
+
+				// Luau reports a chunk loaded from a buffer as [string "Name"],
+				// which is three quarters punctuation in a row that is already
+				// short of width
+				constexpr std::string_view WRAPPER = "[string \"";
+				if (label.starts_with(WRAPPER) && label.ends_with("\"]")) {
+					label = label.substr(WRAPPER.size(), label.size() - WRAPPER.size() - 2);
+				}
+			} else {
+				label = "?";
+			}
+		}
+		G_PROFILE_NAMED("Script", label.data(), label.size());
 
 		int arguments = signal->LPushArgument(thread, value);
 		int status = lua_resume(thread, mainState, arguments);
