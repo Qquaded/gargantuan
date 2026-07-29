@@ -1,4 +1,5 @@
 #include "gargantuan/Engine.hpp"
+#include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/MeshProvider.hpp"
@@ -98,28 +99,53 @@ namespace gargantuan {
 		}
 		float deltaTime = GetDeltaTime();
 
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_EVENT_QUIT) {
-				IsRunning = false;
-				return;
+		{
+			G_PROFILE("Main Thread");
+
+			SDL_Event event;
+			{
+				G_PROFILE("Events");
+				while (SDL_PollEvent(&event)) {
+					if (event.type == SDL_EVENT_QUIT) {
+						IsRunning = false;
+						return;
+					}
+					UserInputService->ProcessEvent(event);
+					Workspace->CurrentCamera->OnEvent(Window, event);
+				}
 			}
-			UserInputService->ProcessEvent(event);
-			Workspace->CurrentCamera->OnEvent(Window, event);
+
+			{
+				G_PROFILE("Simulation");
+				RunService->PreSimulation->Fire(deltaTime);
+				Workspace->CurrentCamera->Step(deltaTime);
+				RunService->PostSimulation->Fire(deltaTime);
+			}
+
+			{
+				G_PROFILE("PreRender");
+				RunService->PreRender->Fire(deltaTime);
+			}
+			{
+				G_PROFILE("Mesh Upload");
+				MeshProvider::UploadToGpu(Gpu);
+			}
+			{
+				G_PROFILE("Draw");
+				RenderProvider->Draw({
+					.WorldRoot = std::static_pointer_cast<WorldRoot>(Workspace),
+					.Camera = Workspace->CurrentCamera,
+				});
+			}
+
+			{
+				G_PROFILE("Scripts");
+				ScriptEngine->Step();
+			}
 		}
 
-		RunService->PreSimulation->Fire(deltaTime);
-		Workspace->CurrentCamera->Step(deltaTime);
-		RunService->PostSimulation->Fire(deltaTime);
-
-		RunService->PreRender->Fire(deltaTime);
-		MeshProvider::UploadToGpu(Gpu);
-		RenderProvider->Draw({
-			.WorldRoot = std::static_pointer_cast<WorldRoot>(Workspace),
-			.Camera = Workspace->CurrentCamera,
-		});
-
-		ScriptEngine->Step();
+		// Outside the zone: it separates frames rather than belonging to one
+		G_PROFILE_FRAME();
 
 		LastTick = CurrentTick;
 	}
