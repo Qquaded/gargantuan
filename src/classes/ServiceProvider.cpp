@@ -1,16 +1,19 @@
 #include "gargantuan/classes/ServiceProvider.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
+
 #include <SDL3/SDL_log.h>
+#include <format>
 #include <stdexcept>
 #include <string_view>
 
 namespace gargantuan {
-	const ServiceProvider::ClassDefinition ServiceProvider::DEFINITION = {
-		.Name = "ServiceProvider",
+	G_INSTANCE_ABSTRACT_IMPL(
+		ServiceProvider,
 		.Methods = {
-			{"FindService", Method::Wrap<&ServiceProvider::FindService>()},
-			{"GetService", Method::Wrap<&ServiceProvider::GetService>()},
-		}
-	};
+			{"FindService", Method::fromMember<&ServiceProvider::FindService>()},
+			{"GetService", Method::fromMember<&ServiceProvider::GetService>()},
+		},
+	);
 
 	Instance::Pointer ServiceProvider::FindService(std::string_view name) {
 		auto it = Services.find(std::string(name));
@@ -30,13 +33,11 @@ namespace gargantuan {
 					throw std::runtime_error("Missing constructor for service " + std::string(name));
 				}
 				auto service = constructor->second();
-				// FIXME: instances should auto set names but im lazy
-				service->Name = name;
 				service->SetParent(this->shared_from_this());
 				Services.emplace(name, service);
 				return service;
 			} else {
-				throw std::runtime_error("Unknown service");
+				throw std::runtime_error(std::format("Unknown service named '{}'", name));
 			}
 		}
 		return it->second;

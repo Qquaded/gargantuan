@@ -23,6 +23,7 @@ AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortLoopsOnASingleLine: false
 
 BreakBeforeBraces: Custom
+BreakBeforeConceptDeclarations: Never
 BraceWrapping:
     AfterClass: false
     AfterControlStatement: Never
@@ -34,6 +35,7 @@ BraceWrapping:
     BeforeElse: false
     BeforeLambdaBody: false
     BeforeWhile: false
+    AfterObjCDeclaration: false
     SplitEmptyFunction: false
     SplitEmptyRecord: false
 
@@ -54,3 +56,8 @@ AlignConsecutiveDeclarations:
     Enabled: false
 
 FixNamespaceComments: false
+
+PenaltyBreakAssignment: 100
+
+Macros:
+    - G_USERDATA_IMPL(name, ...) = const classType::Definition classType::DEFINITION = {__VA_ARGS__}

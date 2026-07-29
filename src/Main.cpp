@@ -2,6 +2,7 @@
 #include "gargantuan/datatypes/Enum.hpp"
 
 #include "gargantuan/math/LerpValue.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
@@ -22,6 +23,10 @@ int main() {
 		SDL_Log("enum %s", it.first.data());
 	};
 	SDL_Log("end enums");
+
+	for (auto &[_, def] : gargantuan::InstanceClassRegistry::GetDefinitionsMap()) {
+		SDL_Log("instance %s", def.ClassName.data());
+	};
 
 	gargantuan::Engine engine;
 	while (engine.IsRunning) {

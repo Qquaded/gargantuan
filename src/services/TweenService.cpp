@@ -1,12 +1,6 @@
 #include "gargantuan/services/TweenService.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 namespace gargantuan {
-	const TweenService::ClassDefinition TweenService::DEFINITION = {
-		.Name = "TweenService",
-		.Superclass = "Instance",
-		.Constructor = ClassDefinition::WrapConstructor<TweenService>(),
-		.Properties = {
-
-		}
-	};
+	G_INSTANCE_IMPL(TweenService);
 }

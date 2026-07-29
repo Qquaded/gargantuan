@@ -10,7 +10,7 @@
 namespace gargantuan {
 	class BasePart : public Instance {
 	  public:
-		static const ClassDefinition DEFINITION;
+		G_INSTANCE_DECL(BasePart);
 
 		bool Anchored = false;
 		bool CanCollide = true;

@@ -42,7 +42,7 @@ namespace gargantuan {
 		typedef std::tuple<Vector2, bool> TouchTapInWorldSignalType;
 
 	  public:
-		static const ClassDefinition DEFINITION;
+		G_INSTANCE_DECL(UserInputService);
 
 		Enums::MouseBehavior MouseBehavior;
 		ContentId MouseIcon = "";

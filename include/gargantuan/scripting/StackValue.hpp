@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -23,6 +24,13 @@ namespace gargantuan {
 		};
 
 		static_assert(GARGANTUAN_STACK_VALUE_IS_UNIMPLEMENTED_FOR<T>::value);
+	};
+
+	template <typename T> concept IsStackValue = requires(lua_State *L, int idx, T val) {
+		{ StackValue<T>::ReflectedTypedef() } -> std::convertible_to<std::string_view>;
+		{ StackValue<T>::Is(L, idx) } -> std::same_as<bool>;
+		{ StackValue<T>::From(L, idx) } -> std::same_as<T>;
+		{ StackValue<T>::Push(L, val) } -> std::same_as<int>;
 	};
 
 	template <typename T> T CheckStackValue(lua_State *L, int idx) {
@@ -119,9 +127,9 @@ namespace gargantuan {
 	};
 
 	template <typename T> struct StackValue<std::optional<T>> {
-		static inline std::string_view ReflectedTypedef() {
-			return StackValue<T>::ReflectedTypedef() + "?";
-		};
+		static inline std::string ReflectedTypedef() {
+			return std::string(StackValue<T>::ReflectedTypedef()) + "?";
+		}
 
 		static bool Is(lua_State *L, int idx) {
 			return lua_isnoneornil(L, idx) || StackValue<T>::Is(L, idx);
@@ -158,4 +166,4 @@ namespace gargantuan {
 			return 0;
 		};
 	};
-} // namespace gargantuan
+}

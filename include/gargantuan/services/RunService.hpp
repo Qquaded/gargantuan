@@ -6,7 +6,7 @@
 namespace gargantuan {
 	class RunService : public Instance {
 	  public:
-		static const ClassDefinition DEFINITION;
+		G_INSTANCE_DECL(RunService);
 
 		G_SIGNAL(PreSimulation, double);
 		G_SIGNAL(PostSimulation, double);

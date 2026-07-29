@@ -32,7 +32,7 @@ namespace gargantuan {
 
 	class Camera : public Instance {
 	  public:
-		static const ClassDefinition DEFINITION;
+		G_INSTANCE_DECL(Camera);
 
 		Enums::CameraType CameraType = Enums::CameraType::Freecam;
 		CFrame CFrame;

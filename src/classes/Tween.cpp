@@ -1,28 +1,24 @@
 #include "gargantuan/classes/Tween.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
-#include "gargantuan/scripting/Userdata.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 #include <lua.h>
-#include <objc/objc.h>
 
-// Todo: make play into a LPlay luau function cuz we need lua_State to
-// read/write stuff
 namespace gargantuan {
-	const Tween::ClassDefinition Tween::DEFINITION = {
-		.Name = "Tween",
-		.Superclass = "Instance",
+	G_INSTANCE_IMPL(
+		Tween,
 		.Properties =
 			{
-				{"Instance", Property::fromSimple<&Tween::Instance>(true, false)},
-				{"TweenInfo", Property::fromSimple<&Tween::TweenInfo>(true, false)},
-				{"PlaybackState", Property::fromSimple<&Tween::PlaybackState>(true, false)},
+				{"Instance", Property::fromMember<&Tween::Instance>(true, false)},
+				{"TweenInfo", Property::fromMember<&Tween::TweenInfo>(true, false)},
+				{"PlaybackState", Property::fromMember<&Tween::PlaybackState>(true, false)},
 			},
 		.Methods = {
 			// G_UD_METHOD(Tween, Pause),
 			// G_UD_METHOD(Tween, Cancel),
 			// {"Play", Method{&Tween::LPlay}},
-		}
-	};
+		},
+	);
 
 	int Tween::LPlay(lua_State *L, gargantuan::Instance *self) {
 		// Tween *tween = self->Cast<Tween>();

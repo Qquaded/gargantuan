@@ -3,19 +3,20 @@
 namespace gargantuan {
 
 	enum class UserdataTag : int {
-		Instance = 1,
-		Color3,
+		None,
 		CFrame,
+		Color3,
 		Enum,
-		Enums,
 		EnumItem,
+		Enums,
+		Instance,
 		Signal,
 		SignalConnection,
+		TweenInfo,
 		UDim,
 		UDim2,
 		Vector2,
 		Vector3,
-		TweenInfo,
 	};
 
 }

@@ -7,13 +7,9 @@
 #include <lua.h>
 
 namespace gargantuan {
-	struct TweenInfo : public Userdata<TweenInfo> {
-	  public:
-		G_UD_DECL_PRELUDE(TweenInfo);
+	G_USERDATA_DECL(
+		TweenInfo, using Pointer = std::shared_ptr<TweenInfo>;
 
-		using Pointer = std::shared_ptr<TweenInfo>;
-
-		// using roblox's defaults
 		float Time = 1.0f;
 		bool Reverses = false;
 		int32_t RepeatCount = 0;
@@ -29,7 +25,5 @@ namespace gargantuan {
 			bool reverses = false,
 			float delayTime = 0
 		);
-	};
-
-	G_UD_STACKVALUE(TweenInfo);
+	)
 }

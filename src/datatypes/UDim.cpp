@@ -1,15 +1,17 @@
 #include "gargantuan/datatypes/UDim.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
+#include "gargantuan/scripting/UserdataTag.hpp"
 
 namespace gargantuan {
-	G_UD_IMPL_PRELUDE(UDim);
-	G_UD_IMPL_PROPS(
+	G_USERDATA_IMPL(
 		UDim,
-
-		{"Scale", Property::fromSimple<&UDim::Scale>(true, false)},
-		{"Offset", Property::fromSimple<&UDim::Offset>(true, false)}
-	)
-	G_UD_IMPL_METHODS(UDim)
+		.Tag = UserdataTag::UDim,
+		.Type = "UDim",
+		.Properties = {
+			{"Scale", Property::fromReadonlyMember<&UDim::Scale>()},
+			{"Offset", Property::fromReadonlyMember<&UDim::Offset>()},
+		}
+	);
 
 	UDim::UDim(float scale, int offset) : Scale(scale), Offset(offset) {};
 

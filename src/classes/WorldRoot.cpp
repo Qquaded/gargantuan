@@ -1,14 +1,12 @@
 #include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/classes/BasePart.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 #include <SDL3/SDL_log.h>
 #include <memory>
 
 namespace gargantuan {
-	const WorldRoot::ClassDefinition WorldRoot::DEFINITION = {
-		.Name = "WorldRoot",
-		.Superclass = "Instance",
-	};
+	G_INSTANCE_ABSTRACT_IMPL(WorldRoot);
 
 	WorldRoot::WorldRoot() {
 		ChildAdded->Connect([this](Instance::Pointer instance) {

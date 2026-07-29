@@ -66,8 +66,8 @@ namespace gargantuan {
 		lua_pushcfunction(L, Enums_tostring, "Enums.__tostring");
 		lua_setfield(L, -2, "__tostring");
 
-		lua_pushvalue(L, -1);
-		lua_setreadonly(L, -1, true);
+		// lua_pushvalue(L, -1);
+		// lua_setreadonly(L, -1, true);
 		lua_setuserdatametatable(L, (int)UserdataTag::Enums);
 
 		void *p = lua_newuserdatataggedwithmetatable(L, 0, (int)UserdataTag::Enums);

@@ -1,5 +1,6 @@
 #include "gargantuan/classes/Part.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 #include "gargantuan/render/MeshProvider.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
@@ -8,14 +9,13 @@
 #include <memory>
 
 namespace gargantuan {
-	const Instance::ClassDefinition Part::DEFINITION = {
-		.Name = "Part",
+	G_INSTANCE_IMPL(
+		Part,
 		.Superclass = "BasePart",
-		.Constructor = ClassDefinition::WrapConstructor<Part>(),
 		.Properties = {
-			{"Shape", Property::fromSimple<&Part::Shape>(true, true)},
-		}
-	};
+			{"Shape", Property::fromMember<&Part::Shape>(true, true)},
+		},
+	);
 
 	std::unique_ptr<GpuMesh> &Part::GetMesh() const {
 		std::string key = "gargantuan://meshes/" + std::string(magic_enum::enum_name(Shape));

@@ -1,7 +1,9 @@
 #include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/classes/InputObject.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
+
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_mouse.h>
@@ -10,90 +12,89 @@
 #include <vector>
 
 namespace gargantuan {
+	G_INSTANCE_IMPL(
+		UserInputService,
+		.Properties =
+			{
+				{"MouseBehavior", Property::fromMember<&UserInputService::MouseBehavior>(true, false)},
+				{"MouseIcon", Property::fromMember<&UserInputService::MouseIcon>(true, false)},
+				{"MouseIconContent", Property::fromMember<&UserInputService::MouseIconContent>(true, false)},
+				{"MouseIconEnabled", Property::fromMember<&UserInputService::MouseIconEnabled>(true, false)},
+
+				{"KeyboardEnabled", Property::fromMember<&UserInputService::KeyboardEnabled>(true, false)},
+				{"OnScreenKeyboardVisible",
+				 Property::fromMember<&UserInputService::OnScreenKeyboardVisible>(true, false)},
+				{"OnScreenKeyboardPosition",
+				 Property::fromMember<&UserInputService::OnScreenKeyboardPosition>(true, false)},
+				{"OnScreenKeyboardSize", Property::fromMember<&UserInputService::OnScreenKeyboardSize>(true, false)},
+
+				{"TouchEnabled", Property::fromMember<&UserInputService::TouchEnabled>(true, false)},
+				{"TouchScreenEnabled", Property::fromMember<&UserInputService::TouchScreenEnabled>(true, false)},
+
+				{"AccelerometerEnabled", Property::fromMember<&UserInputService::AccelerometerEnabled>(true, false)},
+				{"GamepadEnabled", Property::fromMember<&UserInputService::GamepadEnabled>(true, false)},
+				{"GyroscopeEnabled", Property::fromMember<&UserInputService::GyroscopeEnabled>(true, false)},
+
+				{"DeviceAccelerationChanged",
+				 Property::fromMember<&UserInputService::DeviceAccelerationChanged>(true, false)},
+				{"DeviceGravityChanged", Property::fromMember<&UserInputService::DeviceGravityChanged>(true, false)},
+				{"DeviceRotationChanged", Property::fromMember<&UserInputService::DeviceRotationChanged>(true, false)},
+
+				{"GamepadConnected", Property::fromMember<&UserInputService::GamepadConnected>(true, false)},
+				{"GamepadDisconnected", Property::fromMember<&UserInputService::GamepadDisconnected>(true, false)},
+
+				{"InputBegan", Property::fromMember<&UserInputService::InputBegan>(true, false)},
+				{"InputChanged", Property::fromMember<&UserInputService::InputChanged>(true, false)},
+				{"InputEnded", Property::fromMember<&UserInputService::InputEnded>(true, false)},
+
+				{"JumpRequest", Property::fromMember<&UserInputService::JumpRequest>(true, false)},
+
+				{"LastInputTypeChanged", Property::fromMember<&UserInputService::LastInputTypeChanged>(true, false)},
+				{"PointerAction", Property::fromMember<&UserInputService::PointerAction>(true, false)},
+
+				{"TouchStarted", Property::fromMember<&UserInputService::TouchStarted>(true, false)},
+				{"TouchEnded", Property::fromMember<&UserInputService::TouchEnded>(true, false)},
+				{"TouchDrag", Property::fromMember<&UserInputService::TouchDrag>(true, false)},
+				{"TouchLongPress", Property::fromMember<&UserInputService::TouchLongPress>(true, false)},
+				{"TouchMoved", Property::fromMember<&UserInputService::TouchMoved>(true, false)},
+				{"TouchPan", Property::fromMember<&UserInputService::TouchPan>(true, false)},
+				{"TouchPinch", Property::fromMember<&UserInputService::TouchPinch>(true, false)},
+				{"TouchRotate", Property::fromMember<&UserInputService::TouchRotate>(true, false)},
+				{"TouchTap", Property::fromMember<&UserInputService::TouchTap>(true, false)},
+				{"TouchTapInWorld", Property::fromMember<&UserInputService::TouchTapInWorld>(true, false)},
+
+				{"WindowFocused", Property::fromMember<&UserInputService::WindowFocused>(true, false)},
+				{"WindowFocusReleased", Property::fromMember<&UserInputService::WindowFocusReleased>(true, false)},
+			},
+		.Methods = {
+			// G_UD_METHOD(UserInputService, GamepadSupports),
+			// G_UD_METHOD(UserInputService, GetConnectedGamepads),
+			// G_UD_METHOD(UserInputService, GetDeviceAcceleration),
+			// G_UD_METHOD(UserInputService, GetDeviceGravity),
+			// G_UD_METHOD(UserInputService, GetDeviceRotation),
+			// G_UD_METHOD(UserInputService, GetGamepadConnected),
+			// G_UD_METHOD(UserInputService, GetGamepadState),
+			// G_UD_METHOD(UserInputService, GetImageForKeyCode),
+			{"GetKeysPressed", Method::fromMember<&UserInputService::GetKeysPressed>()},
+			{"GetLastInputType", Method::fromMember<&UserInputService::GetLastInputType>()},
+			{"GetMouseButtonsPressed", Method::fromMember<&UserInputService::GetMouseButtonsPressed>()},
+			{"GetMouseDelta", Method::fromMember<&UserInputService::GetMouseDelta>()},
+			{"GetMouseLocation", Method::fromMember<&UserInputService::GetMouseLocation>()},
+			// G_UD_METHOD(UserInputService, GetNavigationGamepads),
+			// G_UD_METHOD(UserInputService, GetStringForKeyCode),
+			// G_UD_METHOD(UserInputService, GetSupportedGamepadKeyCodes),
+			// G_UD_METHOD(UserInputService, IsGamepadButtonDown),
+			{"IsKeyDown", Method::fromMember<&UserInputService::IsKeyDown>()},
+			{"IsMouseButtonPressed", Method::fromMember<&UserInputService::IsMouseButtonPressed>()},
+			// G_UD_METHOD(UserInputService, IsNavigationGamepad),
+			// G_UD_METHOD(UserInputService, SetNavigationGamepad),
+		}
+	);
+
 	bool IsMouseButtonType(Enums::UserInputType inputType) {
 		return inputType == Enums::UserInputType::MouseButton1 || inputType == Enums::UserInputType::MouseButton2 ||
 			   inputType == Enums::UserInputType::MouseButton3;
 	}
-
-	const UserInputService::ClassDefinition UserInputService::DEFINITION =
-		{.Name = "UserInputService",
-		 .Superclass = "Instance",
-		 .Constructor = ClassDefinition::WrapConstructor<UserInputService>(),
-		 .Properties =
-			 {
-				 {"MouseBehavior", Property::fromSimple<&UserInputService::MouseBehavior>(true, false)},
-				 {"MouseIcon", Property::fromSimple<&UserInputService::MouseIcon>(true, false)},
-				 {"MouseIconContent", Property::fromSimple<&UserInputService::MouseIconContent>(true, false)},
-				 {"MouseIconEnabled", Property::fromSimple<&UserInputService::MouseIconEnabled>(true, false)},
-
-				 {"KeyboardEnabled", Property::fromSimple<&UserInputService::KeyboardEnabled>(true, false)},
-				 {"OnScreenKeyboardVisible",
-				  Property::fromSimple<&UserInputService::OnScreenKeyboardVisible>(true, false)},
-				 {"OnScreenKeyboardPosition",
-				  Property::fromSimple<&UserInputService::OnScreenKeyboardPosition>(true, false)},
-				 {"OnScreenKeyboardSize", Property::fromSimple<&UserInputService::OnScreenKeyboardSize>(true, false)},
-
-				 {"TouchEnabled", Property::fromSimple<&UserInputService::TouchEnabled>(true, false)},
-				 {"TouchScreenEnabled", Property::fromSimple<&UserInputService::TouchScreenEnabled>(true, false)},
-
-				 {"AccelerometerEnabled", Property::fromSimple<&UserInputService::AccelerometerEnabled>(true, false)},
-				 {"GamepadEnabled", Property::fromSimple<&UserInputService::GamepadEnabled>(true, false)},
-				 {"GyroscopeEnabled", Property::fromSimple<&UserInputService::GyroscopeEnabled>(true, false)},
-
-				 {"DeviceAccelerationChanged",
-				  Property::fromSimple<&UserInputService::DeviceAccelerationChanged>(true, false)},
-				 {"DeviceGravityChanged", Property::fromSimple<&UserInputService::DeviceGravityChanged>(true, false)},
-				 {"DeviceRotationChanged", Property::fromSimple<&UserInputService::DeviceRotationChanged>(true, false)},
-
-				 {"GamepadConnected", Property::fromSimple<&UserInputService::GamepadConnected>(true, false)},
-				 {"GamepadDisconnected", Property::fromSimple<&UserInputService::GamepadDisconnected>(true, false)},
-
-				 {"InputBegan", Property::fromSimple<&UserInputService::InputBegan>(true, false)},
-				 {"InputChanged", Property::fromSimple<&UserInputService::InputChanged>(true, false)},
-				 {"InputEnded", Property::fromSimple<&UserInputService::InputEnded>(true, false)},
-
-				 {"JumpRequest", Property::fromSimple<&UserInputService::JumpRequest>(true, false)},
-
-				 {"LastInputTypeChanged", Property::fromSimple<&UserInputService::LastInputTypeChanged>(true, false)},
-				 {"PointerAction", Property::fromSimple<&UserInputService::PointerAction>(true, false)},
-
-				 {"TouchStarted", Property::fromSimple<&UserInputService::TouchStarted>(true, false)},
-				 {"TouchEnded", Property::fromSimple<&UserInputService::TouchEnded>(true, false)},
-				 {"TouchDrag", Property::fromSimple<&UserInputService::TouchDrag>(true, false)},
-				 {"TouchLongPress", Property::fromSimple<&UserInputService::TouchLongPress>(true, false)},
-				 {"TouchMoved", Property::fromSimple<&UserInputService::TouchMoved>(true, false)},
-				 {"TouchPan", Property::fromSimple<&UserInputService::TouchPan>(true, false)},
-				 {"TouchPinch", Property::fromSimple<&UserInputService::TouchPinch>(true, false)},
-				 {"TouchRotate", Property::fromSimple<&UserInputService::TouchRotate>(true, false)},
-				 {"TouchTap", Property::fromSimple<&UserInputService::TouchTap>(true, false)},
-				 {"TouchTapInWorld", Property::fromSimple<&UserInputService::TouchTapInWorld>(true, false)},
-
-				 {"WindowFocused", Property::fromSimple<&UserInputService::WindowFocused>(true, false)},
-				 {"WindowFocusReleased", Property::fromSimple<&UserInputService::WindowFocusReleased>(true, false)},
-			 },
-		 .Methods = {
-			 // G_UD_METHOD(UserInputService, GamepadSupports),
-			 // G_UD_METHOD(UserInputService, GetConnectedGamepads),
-			 // G_UD_METHOD(UserInputService, GetDeviceAcceleration),
-			 // G_UD_METHOD(UserInputService, GetDeviceGravity),
-			 // G_UD_METHOD(UserInputService, GetDeviceRotation),
-			 // G_UD_METHOD(UserInputService, GetGamepadConnected),
-			 // G_UD_METHOD(UserInputService, GetGamepadState),
-			 // G_UD_METHOD(UserInputService, GetImageForKeyCode),
-			 G_UD_METHOD(UserInputService, GetKeysPressed),
-			 G_UD_METHOD(UserInputService, GetLastInputType),
-			 G_UD_METHOD(UserInputService, GetMouseButtonsPressed),
-			 G_UD_METHOD(UserInputService, GetMouseDelta),
-			 G_UD_METHOD(UserInputService, GetMouseLocation),
-			 // G_UD_METHOD(UserInputService, GetNavigationGamepads),
-			 // G_UD_METHOD(UserInputService, GetStringForKeyCode),
-			 // G_UD_METHOD(UserInputService, GetSupportedGamepadKeyCodes),
-			 // G_UD_METHOD(UserInputService, IsGamepadButtonDown),
-			 G_UD_METHOD(UserInputService, IsKeyDown),
-			 G_UD_METHOD(UserInputService, IsMouseButtonPressed),
-			 // G_UD_METHOD(UserInputService, IsNavigationGamepad),
-			 // G_UD_METHOD(UserInputService, SetNavigationGamepad),
-		 }};
 
 	std::vector<std::shared_ptr<InputObject>> UserInputService::GetKeysPressed() {
 		std::vector<std::shared_ptr<InputObject>> result;

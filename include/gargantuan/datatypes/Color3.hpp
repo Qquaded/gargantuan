@@ -6,9 +6,8 @@
 #include <lua.h>
 
 namespace gargantuan {
-	struct Color3 : public Userdata<Color3> {
-	  public:
-		G_UD_DECL_PRELUDE(Color3)
+	G_USERDATA_DECL(
+		Color3,
 
 		float R = 0.0f;
 		float G = 0.0f;
@@ -21,10 +20,6 @@ namespace gargantuan {
 		static Color3 fromHSV(float h, float s, float v);
 		static Color3 fromHex(std::string_view hex);
 
-		operator glm::vec3() const {
-			return {R, G, B};
-		}
-	};
-
-	G_UD_STACKVALUE(Color3);
+		operator glm::vec3() const { return {R, G, B}; }
+	);
 } // namespace gargantuan

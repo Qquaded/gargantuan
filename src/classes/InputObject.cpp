@@ -1,12 +1,28 @@
 #include "gargantuan/classes/InputObject.hpp"
 #include "gargantuan/datatypes/Vector3.hpp"
-#include "gargantuan/scripting/Userdata.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
+
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keycode.h>
 #include <memory>
 #include <unordered_map>
 
 namespace gargantuan {
+	G_INSTANCE_IMPL(
+		InputObject,
+		.Properties =
+			{
+				{"Delta", Property::fromMember<&InputObject::Delta>(true, false)},
+				{"Position", Property::fromMember<&InputObject::Position>(true, false)},
+				{"KeyCode", Property::fromMember<&InputObject::KeyCode>(true, false)},
+				{"UserInputState", Property::fromMember<&InputObject::UserInputState>(true, false)},
+				{"UserInputType", Property::fromMember<&InputObject::UserInputType>(true, false)},
+			},
+		.Methods = {
+			{"IsModifierKeyDown", Method::fromMember<&InputObject::IsModifierKeyDown>()},
+		},
+	);
+
 	const std::unordered_map<SDL_Keycode, Enums::KeyCode> SDL_TO_KEYCODE = {
 		{SDLK_BACKSPACE, Enums::KeyCode::Backspace},
 		{SDLK_TAB, Enums::KeyCode::Tab},
@@ -176,22 +192,6 @@ namespace gargantuan {
 		{SDL_BUTTON_LEFT, Enums::UserInputType::MouseButton1},
 		{SDL_BUTTON_RIGHT, Enums::UserInputType::MouseButton2},
 		{SDL_BUTTON_MIDDLE, Enums::UserInputType::MouseButton3},
-	};
-
-	const InputObject::ClassDefinition InputObject::DEFINITION = {
-		.Name = "InputObject",
-		.Superclass = "Instance",
-		.Properties =
-			{
-				{"Delta", Property::fromSimple<&InputObject::Delta>(true, false)},
-				{"Position", Property::fromSimple<&InputObject::Position>(true, false)},
-				{"KeyCode", Property::fromSimple<&InputObject::KeyCode>(true, false)},
-				{"UserInputState", Property::fromSimple<&InputObject::UserInputState>(true, false)},
-				{"UserInputType", Property::fromSimple<&InputObject::UserInputType>(true, false)},
-			},
-		.Methods = {
-			G_UD_METHOD(InputObject, IsModifierKeyDown),
-		},
 	};
 
 	bool InputObject::IsModifierKeyDown(Enums::ModifierKey modifierKey) {

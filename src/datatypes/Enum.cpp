@@ -1,6 +1,7 @@
 #include "gargantuan/datatypes/Enum.hpp"
 #include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
+#include "gargantuan/scripting/UserdataTag.hpp"
 
 #include <cstring>
 #include <lua.h>
@@ -11,15 +12,20 @@
 #include <string_view>
 
 namespace gargantuan {
-	G_UD_IMPL_PRELUDE(EnumItem);
-	G_UD_IMPL_PROPS(
+	G_USERDATA_IMPL(
 		EnumItem,
-
-		{"Name", Property::fromSimple<&EnumItem::Name>(true, false)},
-		{"Value", Property::fromSimple<&EnumItem::Value>(true, false)},
-		{"EnumType", Property::fromSimple<&EnumItem::EnumType>(true, false)}
+		.Tag = UserdataTag::EnumItem,
+		.Type = "EnumItem",
+		.Properties =
+			{
+				{"Name", Property::fromMember<&EnumItem::Name>(true, false)},
+				{"Value", Property::fromMember<&EnumItem::Value>(true, false)},
+				{"EnumType", Property::fromMember<&EnumItem::EnumType>(true, false)},
+			},
+		.Methods = {
+			{"__tostring", Method{&EnumItem::LTostring}},
+		}
 	);
-	G_UD_IMPL_METHODS(EnumItem, {"__tostring", {&EnumItem::LTostring}});
 
 	int EnumItem::LTostring(lua_State *L, EnumItem *self) {
 		std::ostringstream ss;
@@ -29,16 +35,17 @@ namespace gargantuan {
 		return 1;
 	};
 
-	G_UD_IMPL_PRELUDE(Enum);
-	G_UD_IMPL_PROPS(Enum);
-	G_UD_IMPL_METHODS(
+	G_USERDATA_IMPL(
 		Enum,
-
-		G_UD_METHOD(Enum, GetEnumItems),
-		G_UD_METHOD(Enum, FromName),
-		G_UD_METHOD(Enum, FromValue),
-		{"__index", {&Enum::LIndex}},
-		{"__tostring", {&Enum::LTostring}}
+		.Tag = UserdataTag::Enum,
+		.Type = "Enum",
+		.Methods = {
+			{"GetEnumItems", Method::fromMember<&Enum::GetEnumItems>()},
+			{"FromName", Method::fromMember<&Enum::FromName>()},
+			{"FromValue", Method::fromMember<&Enum::FromValue>()},
+			{"__index", Method{&Enum::LIndex}},
+			{"__tostring", Method{&Enum::LTostring}},
+		}
 	);
 
 	std::vector<EnumItem> &Enum::GetEnumItems() {

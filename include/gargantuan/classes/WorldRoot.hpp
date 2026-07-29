@@ -9,7 +9,8 @@
 namespace gargantuan {
 	class WorldRoot : public Instance {
 	  public:
-		static const ClassDefinition DEFINITION;
+		G_INSTANCE_DECL(WorldRoot);
+
 		std::vector<std::shared_ptr<BasePart>> Parts;
 
 		WorldRoot();

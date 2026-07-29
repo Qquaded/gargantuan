@@ -83,7 +83,10 @@ namespace gargantuan {
 		{nullptr, nullptr},
 	};
 
+	static lua_State *temp;
+
 	static int LuauAssertHandler(const char *expression, const char *file, int line, const char *function) {
+		DumpLuaStack(temp);
 		SDL_Log("Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function);
 		assert(false);
 	}
@@ -92,6 +95,8 @@ namespace gargantuan {
 		if (L == nullptr) {
 			throw std::runtime_error("Failed to instantiate Luau VM");
 		}
+
+		temp = L;
 
 		Luau::assertHandler() = LuauAssertHandler;
 

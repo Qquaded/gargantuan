@@ -8,7 +8,7 @@ namespace gargantuan {
 
 	class Workspace : public WorldRoot {
 	  public:
-		static const ClassDefinition DEFINITION;
+		G_INSTANCE_DECL(Workspace);
 
 		std::shared_ptr<Camera> CurrentCamera = std::make_shared<Camera>();
 	};

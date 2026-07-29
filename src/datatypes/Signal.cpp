@@ -9,28 +9,26 @@
 #include <memory>
 
 namespace gargantuan {
-	G_UD_IMPL_PRELUDE(SignalConnection);
-	G_UD_IMPL_PROPS(
+	G_USERDATA_IMPL(
 		SignalConnection,
-
-		{"Connected", Property::fromSimple<&SignalConnection::Connected>(true, false)}
-	);
-	G_UD_IMPL_METHODS(
-		SignalConnection,
-
-		G_UD_METHOD(SignalConnection, Disconnect),
-		{"__gc", {&SignalConnection::LGarbageCollect}}
+		.Tag = UserdataTag::SignalConnection,
+		.Type = "SignalConnection",
+		.Properties = {{"Connected", Property::fromReadonlyMember<&SignalConnection::Connected>()}},
+		.Methods = {
+			{"Disconnect", Method::fromMember<&SignalConnection::Disconnect>()},
+			{"__gc", {&SignalConnection::LGarbageCollect}}
+		}
 	);
 
 	SignalConnection::SignalConnection(CallbackType callback, lua_State *L, int callbackReference)
-		: Callback(std::move(callback)), L(L), CallbackReference(callbackReference), Connected(true) {}
+		: Callback(std::move(callback)), L(L ? lua_mainthread(L) : nullptr), CallbackReference(callbackReference),
+		  Connected(true) {}
 
 	void SignalConnection::Disconnect() {
 		if (Connected) {
 			Connected = false;
 			if (L && CallbackReference != LUA_NOREF && CallbackReference != LUA_REFNIL) {
-				lua_State *mainState = lua_mainthread(L);
-				lua_unref(mainState, CallbackReference);
+				lua_unref(L, CallbackReference);
 				CallbackReference = LUA_NOREF;
 				L = nullptr;
 			}
@@ -44,27 +42,18 @@ namespace gargantuan {
 		return 0;
 	}
 
-	std::string_view BaseSignal::GetUserdataType() {
-		return "Signal";
-	};
-
-	UserdataTag BaseSignal::GetUserdataTag() {
-		return UserdataTag::Signal;
-	};
-
-	G_UD_IMPL_PROPS(
+	G_USERDATA_IMPL(
 		BaseSignal,
-
-		{"Type", Property::fromRead([](BaseSignal *self) { return self->GetSignalType(); })}
+		.Tag = UserdataTag::Signal,
+		.Type = "Signal",
+		.Properties = {{"Type", Property::fromRead([](BaseSignal *self) { return self->GetSignalType(); })}},
+		.Methods = {
+			{"Connect", Method{BaseSignal::LConnect}},
+			{"Once", Method{BaseSignal::LOnce}},
+			{"Wait", Method{BaseSignal::LWait}},
+			{"Fire", Method{BaseSignal::LFire}},
+		}
 	);
-	G_UD_IMPL_METHODS(
-		BaseSignal,
-
-		{"Connect", {BaseSignal::LConnect}},
-		{"Once", {BaseSignal::LOnce}},
-		{"Wait", {BaseSignal::LWait}},
-		{"Fire", {BaseSignal::LFire}},
-	)
 
 	SignalConnection::Pointer
 	BaseSignal::Connect(std::function<void(std::any)> callback, lua_State *L, int callbackReference) {
@@ -106,13 +95,15 @@ namespace gargantuan {
 
 	int BaseSignal::LConnect(lua_State *L, BaseSignal *signal) {
 		int callbackReference = LReferenceCallback(L, 2);
+		lua_State *mainState = lua_mainthread(L);
+
 		return StackValue<SignalConnection::Pointer>::Push(
 			L,
 			signal->Connect(
-				[L, callbackReference, signal](CallbackArgument value) {
-					LRunCallback(L, signal, callbackReference, value);
+				[mainState, callbackReference, signal](CallbackArgument value) {
+					LRunCallback(mainState, signal, callbackReference, value);
 				},
-				L,
+				mainState,
 				callbackReference
 			)
 		);
@@ -120,13 +111,15 @@ namespace gargantuan {
 
 	int BaseSignal::LOnce(lua_State *L, BaseSignal *signal) {
 		int callbackReference = LReferenceCallback(L, 2);
+		lua_State *mainState = lua_mainthread(L);
+
 		return StackValue<SignalConnection::Pointer>::Push(
 			L,
 			signal->Once(
-				[L, callbackReference, signal](CallbackArgument value) {
-					LRunCallback(L, signal, callbackReference, value);
+				[mainState, callbackReference, signal](CallbackArgument value) {
+					LRunCallback(mainState, signal, callbackReference, value);
 				},
-				L,
+				mainState,
 				callbackReference
 			)
 		);
@@ -149,13 +142,12 @@ namespace gargantuan {
 	}
 
 	int BaseSignal::LFire(lua_State *L, BaseSignal *signal) {
-		// TODO: This should be on a per-signal basis, ie. you might wanna fire
-		// RunService.PreRender on the server or smshit
 		if (signal->GetSignalType() != Enums::SignalType::User) {
 			luaL_error(L, "Cannot fire Signals created by the engine");
 			return 0;
 		}
 
+		lua_State *mainState = lua_mainthread(L);
 		auto stackCount = lua_gettop(L);
 		auto argumentCount = std::max(stackCount - 1, 0);
 		auto argumentVector = std::make_shared<std::vector<int>>();
@@ -163,7 +155,7 @@ namespace gargantuan {
 
 		for (int i = 2; i <= stackCount; ++i) {
 			lua_pushvalue(L, i);
-			int ref = lua_ref(L, -1);
+			int ref = lua_ref(mainState, -1);
 			lua_pop(L, 1);
 			argumentVector->push_back(ref);
 		}
@@ -203,30 +195,41 @@ namespace gargantuan {
 			luaL_typeerror(L, idx, "function");
 		}
 
+		lua_State *mainState = lua_mainthread(L);
 		lua_pushvalue(L, idx);
-		int ref = lua_ref(L, -1);
-		lua_pop(L, 1);
+		if (L != mainState) {
+			lua_xmove(L, mainState, 1);
+		}
+
+		int ref = lua_ref(mainState, -1);
+		lua_pop(mainState, 1);
 
 		return ref;
 	}
 
-	void BaseSignal::LRunCallback(lua_State *L, BaseSignal *signal, int callbackReference, std::any value) {
+	void BaseSignal::LRunCallback(lua_State *mainState, BaseSignal *signal, int callbackReference, std::any value) {
 		if (callbackReference == LUA_NOREF || callbackReference == LUA_REFNIL) {
 			return;
 		}
 
-		lua_State *mainState = lua_mainthread(L);
-		lua_getref(mainState, callbackReference);
+		lua_State *thread = lua_newthread(mainState);
 
+		lua_getref(mainState, callbackReference);
 		if (!lua_isfunction(mainState, -1)) {
 			lua_pop(mainState, 1);
+			lua_pop(mainState, 1); // pop thread
 			return;
 		}
 
-		int arguments = signal->LPushArgument(mainState, value);
-		if (lua_pcall(mainState, arguments, 0, 0) != LUA_OK) {
-			SDL_Log("Signal error: %s", lua_tostring(mainState, -1));
-			lua_pop(mainState, 1);
+		lua_xmove(mainState, thread, 1);
+
+		int arguments = signal->LPushArgument(thread, value);
+		int status = lua_resume(thread, mainState, arguments);
+
+		if (status != LUA_OK && status != LUA_YIELD) {
+			SDL_Log("Signal error: %s", lua_tostring(thread, -1));
 		}
+
+		lua_pop(mainState, 1);
 	}
 } // namespace gargantuan

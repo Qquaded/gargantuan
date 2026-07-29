@@ -1,7 +1,7 @@
 #include "gargantuan/datatypes/Instance.hpp"
-#include "gargantuan/ClassRegistry.hpp"
-#include "gargantuan/scripting/StackValue.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
+#include "gargantuan/scripting/UserdataTag.hpp"
 
 #include <SDL3/SDL_log.h>
 #include <algorithm>
@@ -9,24 +9,32 @@
 #include <lua.h>
 #include <lualib.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace gargantuan {
-	G_UD_IMPL_PRELUDE(Instance);
-	G_UD_IMPL_PROPS(Instance);
-	G_UD_IMPL_METHODS(Instance);
-
-	const Instance::ClassDefinition Instance::DEFINITION = {
-		.Name = "Instance",
+	G_USERDATA_IMPL(
+		Instance,
+		.Tag = UserdataTag::Instance,
+		.Type = "Instance",
+		.Methods = {
+			{"__index", Method{&Instance::LIndex}},
+			{"__newindex", Method{&Instance::LNewIndex}},
+			{"__namecall", Method{&Instance::LNamecall}},
+		}
+	);
+	G_INSTANCE_IMPL(
+		Instance,
+		.Superclass = std::nullopt,
 		.Properties =
 			{
-				{"Name", Property::fromSimple<&Instance::Name>(true, true)},
+				{"Name", Property::fromMember<&Instance::Name>(true, true)},
 				{
 					"ClassName",
 					Property::fromRead([](Instance *instance) -> std::string_view {
-						return ClassRegistry::GetDefinition(instance)->Name;
+						return InstanceClassRegistry::GetDefinition(instance)->ClassName;
 					}),
 				},
 				{
@@ -40,14 +48,14 @@ namespace gargantuan {
 				},
 			},
 		.Methods = {
-			{"IsA", Method::Wrap<&Instance::IsA>()},
-			{"GetFullName", Method::Wrap<&Instance::GetFullName>()},
-			{"GetChildren", Method::Wrap<&Instance::GetChildren>()},
-			{"GetDescendants", Method::Wrap<&Instance::GetDescendants>()},
-			{"FindFirstChild", Method::Wrap<&Instance::FindFirstChild>()},
-			{"FindFirstChildOfClass", Method::Wrap<&Instance::FindFirstChildOfClass>()},
+			{"IsA", Method::fromMember<&Instance::IsA>()},
+			{"GetFullName", Method::fromMember<&Instance::GetFullName>()},
+			{"GetChildren", Method::fromMember<&Instance::GetChildren>()},
+			{"GetDescendants", Method::fromMember<&Instance::GetDescendants>()},
+			{"FindFirstChild", Method::fromMember<&Instance::FindFirstChild>()},
+			{"FindFirstChildOfClass", Method::fromMember<&Instance::FindFirstChildOfClass>()},
 		}
-	};
+	);
 
 	// TODO: fire DescendantAdded/Removed signals
 	void Instance::SetParent(std::shared_ptr<Instance> newParent) {
@@ -70,7 +78,7 @@ namespace gargantuan {
 	}
 
 	std::optional<Instance::Userdata::Property> Instance::FindProperty(std::string_view name) {
-		auto currentDefinition = ClassRegistry::GetDefinition(this);
+		auto currentDefinition = InstanceClassRegistry::GetDefinition(this);
 		while (currentDefinition) {
 			if (auto it = currentDefinition->Properties.find(name); it != currentDefinition->Properties.end()) {
 				return it->second;
@@ -78,7 +86,7 @@ namespace gargantuan {
 
 			auto superclass = currentDefinition->Superclass;
 			if (superclass.has_value()) {
-				currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+				currentDefinition = InstanceClassRegistry::GetDefinitionByName(superclass.value());
 				continue;
 			} else {
 				return {};
@@ -88,7 +96,7 @@ namespace gargantuan {
 	}
 
 	std::optional<Instance::Userdata::Method> Instance::FindMethod(std::string_view name) {
-		auto currentDefinition = ClassRegistry::GetDefinition(this);
+		auto currentDefinition = InstanceClassRegistry::GetDefinition(this);
 		while (currentDefinition) {
 			if (auto it = currentDefinition->Methods.find(name); it != currentDefinition->Methods.end()) {
 				return it->second;
@@ -96,7 +104,7 @@ namespace gargantuan {
 
 			auto superclass = currentDefinition->Superclass;
 			if (superclass.has_value()) {
-				currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+				currentDefinition = InstanceClassRegistry::GetDefinitionByName(superclass.value());
 				continue;
 			} else {
 				return {};
@@ -105,22 +113,21 @@ namespace gargantuan {
 		return {};
 	}
 
-	int Instance::UserdataIndex(lua_State *L) {
-		Instance::Pointer instance = CheckStackValue<Instance::Pointer>(L, 1);
+	int Instance::LIndex(lua_State *L, Instance *self) {
 		const char *key = luaL_checkstring(L, 2);
 
-		if (key && instance) {
-			auto property = instance->FindProperty(key);
+		if (key && self) {
+			auto property = self->FindProperty(key);
 			if (property.has_value()) {
 				if (property->Read) {
-					lua_remove(L, 1);
-					lua_remove(L, 1);
-					return property->PushStack(L, property->Read(instance.get()));
+					// lua_remove(L, 1);
+					// lua_remove(L, 1);
+					return property->PushStack(L, property->Read(self));
 				} else {
 					luaL_error(L, "Property %s is write-only", key);
 				}
-			} else if (auto child = instance->FindFirstChild(key)) {
-				lua_settop(L, 0);
+			} else if (auto child = self->FindFirstChild(key)) {
+				// lua_settop(L, 0);
 				StackValue<Instance::Pointer>::Push(L, child);
 				return 1;
 			}
@@ -129,16 +136,15 @@ namespace gargantuan {
 		return 0;
 	};
 
-	int Instance::UserdataNewIndex(lua_State *L) {
-		Instance::Pointer instance = CheckStackValue<Instance::Pointer>(L, 1);
+	int Instance::LNewIndex(lua_State *L, Instance *self) {
 		const char *key = luaL_checkstring(L, 2);
 
-		if (key && instance) {
-			auto property = instance->FindProperty(key);
+		if (key && self) {
+			auto property = self->FindProperty(key);
 			if (property.has_value()) {
 				if (property->Write) {
 					auto value = property->CheckStack(L, 3);
-					property->Write(instance.get(), value);
+					property->Write(self, value);
 					return 0;
 				} else {
 					luaL_error(L, "Property %s is read-only", key);
@@ -151,18 +157,17 @@ namespace gargantuan {
 		return 0;
 	};
 
-	int Instance::UserdataNamecall(lua_State *L) {
-		Instance::Pointer instance = CheckStackValue<Instance::Pointer>(L, 1);
+	int Instance::LNamecall(lua_State *L, Instance *self) {
 		const char *key = lua_namecallatom(L, nullptr);
 
-		if (key && instance) {
-			auto method = instance->FindMethod(key);
+		if (key && self) {
+			auto method = self->FindMethod(key);
 			if (method.has_value()) {
-				return method->Call(L, instance.get());
+				return method->Call(L, self);
 			}
 		}
 
-		luaL_error(L, "%s is not a valid method of %s", key, instance->Name.data());
+		luaL_error(L, "%s is not a valid method of %s", key, self->Name.data());
 		return 0;
 	};
 
@@ -202,15 +207,15 @@ namespace gargantuan {
 	};
 
 	bool Instance::IsA(std::string_view className) {
-		auto currentDefinition = ClassRegistry::GetDefinition(this);
+		auto currentDefinition = InstanceClassRegistry::GetDefinition(this);
 		while (true) {
-			if (currentDefinition->Name == className) {
+			if (currentDefinition->ClassName == className) {
 				return true;
 			}
 
 			auto superclass = currentDefinition->Superclass;
 			if (superclass.has_value()) {
-				currentDefinition = ClassRegistry::GetDefinitionByName(superclass.value());
+				currentDefinition = InstanceClassRegistry::GetDefinitionByName(superclass.value());
 			} else {
 				return false;
 			}
@@ -245,10 +250,10 @@ namespace gargantuan {
 
 	std::shared_ptr<Instance> Instance::FindFirstChildOfClass(std::string_view className) {
 		for (const auto &child : Children) {
-			if (ClassRegistry::GetDefinition(child.get())->Name == className) {
+			if (InstanceClassRegistry::GetDefinition(child.get())->ClassName == className) {
 				return child;
 			}
 		};
 		return nullptr;
 	}
-} // namespace gargantuan
+}

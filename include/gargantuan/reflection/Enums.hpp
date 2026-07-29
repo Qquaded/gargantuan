@@ -11,7 +11,7 @@
 #define G_ENUM(name, ...)                                                                                              \
 	namespace Enums {                                                                                                  \
 		enum class name : int { __VA_ARGS__ };                                                                         \
-		namespace Wtf {                                                                                                \
+		namespace __IGNORE__ {                                                                                         \
 			inline static const bool name = []() {                                                                     \
 				Enums::Register(Enum::fromType<Enums::name>());                                                        \
 				return true;                                                                                           \

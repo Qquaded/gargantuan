@@ -256,7 +256,7 @@ namespace gargantuan {
 
 	class InputObject : public Instance {
 	  public:
-		static const InputObject::ClassDefinition DEFINITION;
+		G_INSTANCE_DECL(InputObject);
 
 		glm::vec3 Delta = {0.0f, 0.0f, 0.0f};
 		glm::vec3 Position = {0.0f, 0.0f, 0.0f};

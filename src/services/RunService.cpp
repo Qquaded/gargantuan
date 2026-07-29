@@ -1,13 +1,11 @@
 #include "gargantuan/services/RunService.hpp"
-#include "gargantuan/scripting/Userdata.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 namespace gargantuan {
-	const RunService::ClassDefinition RunService::DEFINITION = {
-		.Name = "RunService",
-		.Superclass = "Instance",
-		.Constructor = ClassDefinition::WrapConstructor<RunService>(),
+	G_INSTANCE_IMPL(
+		RunService,
 		.Properties = {
-			{"PreRender", Property::fromSimple<&RunService::PreRender>(true, false)},
+			{"PreRender", Property::fromMember<&RunService::PreRender>(true, false)},
 		}
-	};
+	);
 }

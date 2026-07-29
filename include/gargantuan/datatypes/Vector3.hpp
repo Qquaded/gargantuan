@@ -1,6 +1,3 @@
-// this file is so sad now
-// 24th july 2026
-
 #include "gargantuan/scripting/StackValue.hpp"
 
 #include <glm/glm.hpp>
@@ -23,4 +20,4 @@ namespace gargantuan {
 			return 1;
 		};
 	};
-} // namespace gargantuan
+}

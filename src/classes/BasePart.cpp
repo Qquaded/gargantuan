@@ -1,20 +1,19 @@
 #include "gargantuan/classes/BasePart.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 
 namespace gargantuan {
-	const BasePart::ClassDefinition BasePart::DEFINITION = {
-		.Name = "BasePart",
-		.Superclass = "Instance",
+	G_INSTANCE_ABSTRACT_IMPL(
+		BasePart,
 		.Properties = {
-			{"Anchored", Property::fromSimple<&BasePart::Anchored>(true, true)},
-			{"CanCollide", Property::fromSimple<&BasePart::CanCollide>(true, true)},
-			{"CastShadow", Property::fromSimple<&BasePart::CastShadow>(true, true)},
-			{"CFrame", Property::fromSimple<&BasePart::CFrame>(true, true)},
-			{"Color", Property::fromSimple<&BasePart::Color>(true, true)},
-			{"Size", Property::fromSimple<&BasePart::Size>(true, true)},
-			{"Transparency", Property::fromSimple<&BasePart::Transparency>(true, true)},
+			{"Anchored", Property::fromMember<&BasePart::Anchored>(true, true)},
+			{"CanCollide", Property::fromMember<&BasePart::CanCollide>(true, true)},
+			{"CastShadow", Property::fromMember<&BasePart::CastShadow>(true, true)},
+			{"CFrame", Property::fromMember<&BasePart::CFrame>(true, true)},
+			{"Color", Property::fromMember<&BasePart::Color>(true, true)},
+			{"Size", Property::fromMember<&BasePart::Size>(true, true)},
+			{"Transparency", Property::fromMember<&BasePart::Transparency>(true, true)},
 			{
 				"Position",
 				Property::fromReadWrite<glm::vec3>(
@@ -26,7 +25,7 @@ namespace gargantuan {
 				),
 			}
 		}
-	};
+	);
 
 	glm::mat4 BasePart::GetModelMatrix() {
 		glm::mat4 translation = glm::translate(glm::mat4(1.0f), CFrame.Position);

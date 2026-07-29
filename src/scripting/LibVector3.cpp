@@ -151,7 +151,7 @@ namespace gargantuan {
 		lua_pushcfunction(L, Vector3_namecall, "__namecall");
 		lua_setfield(L, -2, "__namecall");
 
-		lua_setreadonly(L, -1, true);
+		// lua_setreadonly(L, -1, true);
 
 		// push a dummy vector to get it's metatable
 		lua_pushvector(L, 0.0f, 0.0f, 0.0f);
@@ -189,7 +189,7 @@ namespace gargantuan {
 		lua_pushcfunction(L, LibVector3_new, "Vector3.new");
 		lua_setfield(L, -2, "new");
 
-		lua_setreadonly(L, -1, true);
+		// lua_setreadonly(L, -1, true);
 		lua_setglobal(L, "Vector3");
 	}
 
