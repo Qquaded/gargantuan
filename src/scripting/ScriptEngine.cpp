@@ -3,6 +3,7 @@
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Enum.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/datatypes/Random.hpp"
 #include "gargantuan/datatypes/Signal.hpp"
 #include "gargantuan/datatypes/UDim.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
@@ -111,6 +112,7 @@ namespace gargantuan {
 		Instance::CreateUserdataMetatable(L);
 		SignalConnection::CreateUserdataMetatable(L);
 		UDim::CreateUserdataMetatable(L);
+		Random::CreateUserdataMetatable(L);
 		Vector2::CreateUserdataMetatable(L);
 
 		const luaL_Reg *lib = SCRIPT_LIBS;
