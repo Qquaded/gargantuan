@@ -10,5 +10,11 @@ namespace gargantuan {
 		int Offset = 0;
 
 		UDim(float scale = 0.0f, int offset = 0);
+
+		UDim Add(const UDim &other) const;
+		UDim Sub(const UDim &other) const;
+		UDim Unm() const;
+		bool Eq(const UDim &other) const;
+		std::string Tostring() const;
 	)
 }
