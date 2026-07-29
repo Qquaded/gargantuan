@@ -161,6 +161,18 @@ namespace gargantuan {
 		}
 
 		signal->Fire(argumentVector);
+
+		// Each argument was pinned in the registry to survive the trip out
+		// through std::any and back onto whichever thread the handler runs on.
+		// By the time Fire returns every handler has been resumed at least
+		// once and LPushArgument has moved the values onto its stack, which
+		// roots them, so the pins come off here. Left on, they are a GC root
+		// per argument per firing, which a signal fired every frame never
+		// stops growing.
+		for (int ref : *argumentVector) {
+			lua_unref(mainState, ref);
+		}
+
 		return 0;
 	}
 
