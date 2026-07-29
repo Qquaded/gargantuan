@@ -8,7 +8,6 @@
 #include <lualib.h>
 
 namespace gargantuan {
-	void DumpLuaStack(lua_State *L);
 
 	int OpenLibBase(lua_State *L);
 	int OpenLibTask(lua_State *L, ThreadEngine *threadEngine);
@@ -45,6 +44,7 @@ namespace gargantuan {
 		ThreadEngine ThreadEngine;
 
 		void Step();
+		static void DumpStack(lua_State *L);
 
 	  private:
 		lua_State *testbedThread;

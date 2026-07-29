@@ -169,9 +169,9 @@ namespace gargantuan {
 				};
 			}
 
-			// lua_pushvalue(L, -1);
-			// lua_setreadonly(L, -1, true);
+			lua_setreadonly(L, -1, true);
 			lua_setuserdatametatable(L, (int)definition.Tag);
+			// lua_pop(L, 1);
 		};
 
 	  private:
