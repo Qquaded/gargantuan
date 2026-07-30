@@ -34,26 +34,130 @@ And finally,
 
 Sparked your interest? [Read the documentation.](./docs/index.md)
 
-## Status
+## Development
 
-Gargantuan is in its infancy! Development has just began near the start of July 2026.
+Gargantuan is maintained by [godmothersfire](https://github.com/godmothersfire)
+who representes [Team Fireworks](https://github.com/teamfireworks).
 
-As of July 26th 2026, the foundation has been laid out. Datatypes such as
-Instances, Vectors, and Signals all implemented, alongside basic instance
-classes like parts and the data model rendered using SDL3's GPU API. Gargantuan
-is just missing more instance classes.
+Gargantuan is a project by and for the collective Roblox community. Gargantuan
+welcomes your contribution and support, even if it's just messing around with
+the engine. [We have a contributing guide for those interested!](./CONTRIBUTING.md)
 
-A major milestone is to run
-[Welcome To Hell](https://github.com/welcomestohell/roblox-archive), our
-flagship tower-obby game. We hope to have a usable Gargantuan Studio before
-2027, and a feature-rich 1.0 release by March 2028.
+Below is the current status of Gargantuan's development:
 
-Please understand Gargantuan is mostly developed by
-[godmothersfire](https://godmothersfire.github.io/), the lead developer of
-Team Fireworks. Gargantuan welcomes your contribution and support, even if it's
-just messing around with the engine :)
+### Gargantuan 0.1
 
-For more development updates, [join our Discord server!](https://discord.gg/wTudGB7cJA)
+### Basics
+
+- [x] Luau runtime layer
+- [x] Parts
+- [x] Shadows
+- [x] RunService
+- [x] Workspace
+- [x] UserInputService
+- [x] Lighting
+- [x] TweenInfo
+
+#### Studio
+
+Projects will initially have:
+
+- a `.gargantuan/project.instance.json`
+- a `.gargantuan/project.settings.json`
+
+Studio progress:
+
+- [x] `.instance.json` format
+- [ ] `.instance.bin` format
+- [ ] Load projects by CLI
+- [ ] New project flow
+- [ ] Opens existing projects
+- [ ] Implement UI primitives
+- [ ] Widgets
+- [ ] Docking
+- [ ] Plugins system
+- [ ] Ribbon bar
+- [ ] Settings plugin
+- [ ] Explorer plugin
+- [ ] Filelinking (see: devlogs)
+- [ ] Properties plugin
+- [ ] Console plugin
+- [ ] Building tool plugin
+- [ ] Run Rojo inside Gargantuan :)
+
+#### Scripting
+
+- [ ] Implement the remaining data types to API parity
+- [ ] ScriptSecurity enum, tentatively: None, Plugin, Studio, Internal
+- [ ] `require()` implementation with user-provided require aliases
+- [ ] `@game/...` maps to requiring `DataModel...`
+- [ ] Implement `@std/test` from Lute
+- [ ] Implement the assortment of Lute stdlibs
+- [ ] Implement code modifications with `@std/syntax`
+- [ ] Implement Roblox-compatibility code modifications (for RBXScriptConnection)
+
+#### UI
+
+- [ ] Render GuiObjects
+- [ ] Render Frames
+- [ ] Render TextLabels
+- [ ] Render ImageLabels
+- [ ] UIListLayout and UIFlexItem
+- [ ] UICorners, UIGradients, UIPaddings, UIStroke, etc
+- [ ] UISizeConstraint, UIGridLayouts, UIPageLayouts etc
+- [ ] Render EditableImages
+- [ ] TextButtons and ImageButtons receive input
+- [ ] TextBoxes are stateful
+- [ ] Render ScrollingFrames
+- [ ] Drag and drop
+- [ ] EditableImages
+- [ ] ViewportFrames
+- [ ] Stylesheets?
+
+#### World
+
+- [ ] Basic physics colliders
+- [ ] Mesh colliders
+- [ ] Visual Materials
+- [ ] Physical Materials
+- [ ] MaterialService
+- [ ] PBR
+- [ ] LightingService
+- [ ] LightingEffects
+- [ ] Textures and decals
+- [ ] GlslSourceContainer, VertexShader, FragmentShader, ComputeShader classes
+- [ ] Competent lighting
+- [ ] MVP player controller preset (Exact obbying can be done later)
+
+### Gargantuan 0.2
+
+#### Repository
+
+- [ ] Monorepository layout (Can be done in 0.1 if deemed feasible)
+- [ ] Migrate to flecs with an ECS layout (Spook has a reference implementation)
+
+#### Studio
+
+- [ ] Compile projects into executables
+- [ ] Implement client-server boundaries (run two Gargantuans at once for now)
+- [ ] Datastores
+- [ ] Monetization $$$$$$ (by the developer, not Gargantuan)
+
+#### Worlds
+
+- [ ] Constraints
+- [ ] ParticleEmitters
+- [ ] Trails
+- [ ] Beams
+
+### Gargantuan 0.3/1.0
+
+#### Studio
+
+- [ ] Self-hosting game servers
+- [ ] Self-hosting CDN servers
+- [ ] API rich enough to get large games onto Gargantuan (ie. Welcome To Hell)
+- [ ] Visual scripting (block & node based)
 
 ## Prior Art
 
