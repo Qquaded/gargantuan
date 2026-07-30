@@ -37,6 +37,7 @@ submitted to Gargantuan.
   logic.
 - AI must not be used in an undirected capacity for coding ('vibecoding'). All
   architectural and implementation design must be done by hand.
+- It is okay to use AI for catching and patching trivial bugs.
 
 ## Quality over quantity
 
