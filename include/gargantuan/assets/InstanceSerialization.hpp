@@ -34,6 +34,6 @@ namespace gargantuan::InstanceSerialization {
 		}
 	};
 
-	std::string Serialize(InstanceFormat format, Instance::Pointer);
-	DeserializationState Deserialize(InstanceFormat format, std::ifstream input);
+	std::string Serialize(InstanceFormat format, Instance::Pointer &instance);
+	DeserializationState Deserialize(InstanceFormat format, std::ifstream &input);
 }

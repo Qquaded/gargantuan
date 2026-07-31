@@ -131,7 +131,7 @@ namespace gargantuan::InstanceSerialization {
 		}
 	}
 
-	std::string Serialize(InstanceFormat format, Instance::Pointer instance) {
+	std::string Serialize(InstanceFormat format, Instance::Pointer &instance) {
 		switch (format) {
 		case InstanceFormat::Json: {
 			Json::SerializationState state;
@@ -415,7 +415,7 @@ namespace gargantuan::InstanceSerialization {
 		return instance;
 	}
 
-	DeserializationState Deserialize(InstanceFormat format, std::ifstream input) {
+	DeserializationState Deserialize(InstanceFormat format, std::ifstream &input) {
 		DeserializationState state;
 
 		switch (format) {

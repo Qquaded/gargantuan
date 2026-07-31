@@ -1,5 +1,6 @@
 #include "gargantuan/Engine.hpp"
 #include "gargantuan/Log.hpp"
+#include "gargantuan/Project.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
 
@@ -46,14 +47,23 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Constructing the engine
-
 	gargantuan::Engine *engine = nullptr;
 
 	if (program.is_used("--project")) {
+		// Projects
 		auto path = program.get<std::string>("--project");
-		G_LOG_CRITICAL("Projects are not yet implemented");
-		return 1;
+		try {
+			auto project = gargantuan::Project::fromExisting(path);
+			auto game = project.DeserializeGame();
+			engine = new gargantuan::Engine(game, renderer);
+		} catch (std::exception &e) {
+			G_LOG_CRITICAL("Failed to deserialize project %s: %s", path.c_str(), e.what());
+			return 1;
+		}
 	} else if (program.is_used("--script")) {
+		// Scripts
+		// TODO: Wrap scripts into a LuaSourceContainer, then provide a script
+		// global like Roblox
 		auto path = program.get<std::string>("--script");
 
 		SDL_PathInfo pathInfo;
@@ -85,6 +95,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	G_LOG_INFO("Starting engine loop");
 	try {
 		while (engine->IsRunning) {
 			engine->Step();

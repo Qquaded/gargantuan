@@ -63,15 +63,15 @@ Below is the current status of Gargantuan's development:
 Projects will initially have:
 
 - a `.gargantuan/project.instance.json`
-- a `.gargantuan/project.settings.json`
+- a `.gargantuan/project.config.json`
 
 Studio progress:
 
 - [x] `.instance.json` format
 - [ ] `.instance.bin` format
-- [ ] Load projects by CLI
+- [x] Load projects by CLI
 - [ ] New project flow
-- [ ] Opens existing projects
+- [x] Opens existing projects
 - [ ] Implement UI primitives
 - [ ] Widgets
 - [ ] Docking

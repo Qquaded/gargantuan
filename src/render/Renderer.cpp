@@ -18,7 +18,7 @@
 #include <cstdlib>
 #include <cstring>
 
-static constexpr auto WINDOW_FLAGS = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
+static constexpr auto WINDOW_FLAGS = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 static constexpr auto SHADER_FORMATS = SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_METALLIB |
 									   SDL_GPU_SHADERFORMAT_MSL;
 
@@ -27,8 +27,7 @@ namespace gargantuan {
 		Gpu = SDL_CreateGPUDevice(SHADER_FORMATS, true, nullptr);
 		if (!Gpu) throw std::runtime_error(std::format("Failed to create GPU device: {}", SDL_GetError()));
 
-		int width = glm::round(viewportSize.GetX()), height = glm::round(viewportSize.GetY());
-		Window = SDL_CreateWindow("Gargantuan", width, height, WINDOW_FLAGS);
+		Window = SDL_CreateWindow("Gargantuan", viewportSize.GetX(), viewportSize.GetY(), WINDOW_FLAGS);
 		if (!Window) throw std::runtime_error(std::format("Failed to create window: {}", SDL_GetError()));
 
 		if (!SDL_ClaimWindowForGPUDevice(Gpu, Window)) {
@@ -60,6 +59,8 @@ namespace gargantuan {
 		};
 		ShadowSampler = SDL_CreateGPUSampler(Gpu, &samplerInfo);
 
+		int width, height;
+		SDL_GetWindowSizeInPixels(Window, &width, &height);
 		Resize(width, height);
 
 		ShadowPass = CreateShadowPass(Gpu, SwapchainFormat);

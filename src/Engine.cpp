@@ -42,15 +42,25 @@ namespace gargantuan {
 				SDL_Event event;
 				while (SDL_PollEvent(&event)) {
 					switch (event.type) {
-					case SDL_EVENT_WINDOW_RESIZED:
-						Renderer->Resize(event.window.data1, event.window.data2);
-						break;
+					case SDL_EVENT_WINDOW_RESIZED: {
+						auto window = SDL_GetWindowFromEvent(&event);
+						if (!window) break;
+
+						int width, height;
+						SDL_GetWindowSizeInPixels(window, &width, &height);
+						Renderer->Resize(width, height);
+
+						Workspace->CurrentCamera->ViewportSize = Vector2(width, height);
+
+						continue;
+					}
 
 					case SDL_EVENT_QUIT:
 						G_LOG_INFO("Stopping engine");
 						IsRunning = false;
 						return;
 					}
+
 					UserInputService->ProcessEvent(event);
 					Workspace->CurrentCamera->OnEvent(event);
 				}
