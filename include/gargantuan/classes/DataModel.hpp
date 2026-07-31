@@ -7,6 +7,6 @@ namespace gargantuan {
 	  public:
 		G_INSTANCE_DECL(DataModel);
 
-		const ServiceConstructors &GetServiceConstructors() const override;
+		const ServiceDefinitions &GetServiceDefinitions() const override;
 	};
 } // namespace gargantuan

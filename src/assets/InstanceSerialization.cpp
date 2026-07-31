@@ -316,6 +316,12 @@ namespace gargantuan::InstanceSerialization {
 	};
 
 	std::optional<Instance::Pointer> TryDeserializeInstance(json contents, DeserializationState &state) {
+		auto name = contents["Name"];
+		if (!name.is_string()) {
+			state.PushError("Instance {} has an invalid Name field", state.FormatCurrentPath());
+			return std::nullopt;
+		}
+
 		auto properties = contents["Properties"];
 		if (!properties.is_object()) {
 			state.PushError("Instance {} has an invalid Properties field", state.FormatCurrentPath());
@@ -345,9 +351,10 @@ namespace gargantuan::InstanceSerialization {
 		}
 
 		auto instance = definition->Constructor();
+		instance->Name = name.get<std::string_view>();
 		while (true) {
 			for (auto &[key, property] : definition->Properties) {
-				if (key == "Parent" || !property.Serializable || !property.Write || !properties.contains(key)) continue;
+				if (key == "Parent" || !properties.contains(key) || !property.Serializable || !property.Write) continue;
 
 				auto value = properties[key];
 				if (!value.is_object()) {
@@ -372,9 +379,10 @@ namespace gargantuan::InstanceSerialization {
 				} catch (const std::bad_any_cast &e) {
 					instance->Destroy();
 					return state.ReturnError(
-						"Type mismatch on property '{}' in {}, got approximately {}",
+						"Type mismatch on property '{}' in {}, expected {}, got approximately {}",
 						key,
 						state.FormatCurrentPath(),
+						property.GetWriteTypedef(),
 						typeid(deserialized).name()
 					);
 				} catch (const std::exception &e) {
@@ -417,6 +425,11 @@ namespace gargantuan::InstanceSerialization {
 
 	DeserializationState Deserialize(InstanceFormat format, std::ifstream &input) {
 		DeserializationState state;
+
+		if (!input.is_open() || !input.good()) {
+			state.PushError("Failed to open or read instance file stream");
+			return state;
+		}
 
 		switch (format) {
 		case InstanceFormat::Json: {

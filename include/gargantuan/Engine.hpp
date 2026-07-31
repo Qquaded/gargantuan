@@ -22,14 +22,15 @@ namespace gargantuan {
 		BaseRenderer *Renderer;
 		ScriptEngine *Script;
 
-		Engine(std::shared_ptr<gargantuan::DataModel> game, BaseRenderer *renderer);
-		~Engine() = delete;
+		std::shared_ptr<Workspace> Workspace;
+		std::shared_ptr<WorldRoot> WorldRoot;
+		std::shared_ptr<RunService> RunService;
+		std::shared_ptr<UserInputService> UserInputService;
 
 		bool IsRunning = true;
-		std::shared_ptr<Workspace> Workspace = GetService<gargantuan::Workspace>();
-		std::shared_ptr<RunService> RunService = GetService<gargantuan::RunService>();
-		std::shared_ptr<UserInputService> UserInputService = GetService<gargantuan::UserInputService>();
-		std::shared_ptr<WorldRoot> WorldRoot = std::static_pointer_cast<gargantuan::WorldRoot>(Workspace);
+
+		Engine(std::shared_ptr<gargantuan::DataModel> game, BaseRenderer *renderer);
+		~Engine() = delete;
 
 		void Step();
 		float GetDeltaTime();

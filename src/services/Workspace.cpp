@@ -7,7 +7,7 @@ namespace gargantuan {
 		Workspace,
 		.Superclass = "WorldRoot",
 		.Properties = {
-			{"CurrentCamera", Property::fromMember<&Workspace::CurrentCamera>(true, false)},
+			{"CurrentCamera", Property::fromMember<&Workspace::CurrentCamera>(true, true)},
 		}
 	);
 }

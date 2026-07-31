@@ -9,13 +9,13 @@
 namespace gargantuan {
 	G_INSTANCE_IMPL(DataModel, .Superclass = "ServiceProvider");
 
-	const DataModel::ServiceConstructors &DataModel::GetServiceConstructors() const {
-		static const DataModel::ServiceConstructors CONSTRUCTORS = {
-			{"Workspace", Workspace::CLASS_DEFINITION.Constructor},
-			{"UserInputService", UserInputService::CLASS_DEFINITION.Constructor},
-			{"RunService", RunService::CLASS_DEFINITION.Constructor},
-			{"TweenService", TweenService::CLASS_DEFINITION.Constructor},
+	const DataModel::ServiceDefinitions &DataModel::GetServiceDefinitions() const {
+		static const DataModel::ServiceDefinitions CONSTRUCTORS = {
+			{"Workspace", Workspace::CLASS_DEFINITION},
+			{"UserInputService", UserInputService::CLASS_DEFINITION},
+			{"RunService", RunService::CLASS_DEFINITION},
+			{"TweenService", TweenService::CLASS_DEFINITION},
 		};
 		return CONSTRUCTORS;
 	};
-} // namespace gargantuan
+}

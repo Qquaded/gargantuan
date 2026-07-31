@@ -4,6 +4,8 @@
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/services/UserInputService.hpp"
+#include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
@@ -13,7 +15,11 @@
 
 namespace gargantuan {
 	Engine::Engine(std::shared_ptr<gargantuan::DataModel> game, BaseRenderer *renderer)
-		: DataModel(game), Renderer(renderer), Script(new class ScriptEngine(game)) {
+		: DataModel(game), Renderer(renderer), Script(new class ScriptEngine(game)),
+		  Workspace(GetService<gargantuan::Workspace>()),
+		  WorldRoot(std::static_pointer_cast<gargantuan::WorldRoot>(Workspace)),
+		  RunService(GetService<gargantuan::RunService>()),
+		  UserInputService(GetService<gargantuan::UserInputService>()) {
 		G_LOG_INFO("Constructed engine");
 	}
 

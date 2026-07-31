@@ -27,12 +27,16 @@ namespace gargantuan {
 		auto name = std::string(nameView);
 		auto it = Services.find(name);
 		if (it == Services.end()) {
-			const ServiceConstructors &constructors = GetServiceConstructors();
-			if (auto constructor = constructors.find(name); constructor != constructors.end()) {
-				if (!constructor->second) {
-					throw std::runtime_error("Missing constructor for service " + std::string(name));
+			const ServiceDefinitions &constructors = GetServiceDefinitions();
+			if (auto it = constructors.find(name); it != constructors.end()) {
+				auto &definition = it->second;
+
+				if (auto existing = FindFirstChildOfClass(definition.ClassName)) {
+					Services.emplace(name, existing);
+					return existing;
 				}
-				auto service = constructor->second();
+
+				auto service = definition.Constructor();
 				service->SetParent(this->shared_from_this());
 				Services.emplace(name, service);
 				return service;

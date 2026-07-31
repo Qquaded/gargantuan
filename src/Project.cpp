@@ -46,12 +46,12 @@ namespace gargantuan {
 
 		std::string instanceFileContents;
 		self.InstanceFilePath = self.RootConfiguration / GetProjectInstanceFilename(format);
-		self.InstanceFileFormat = self.InstanceFileFormat;
+		self.InstanceFileFormat = format;
 		if (instance) {
 			instanceFileContents = InstanceSerialization::Serialize(format, instance);
 		} else if (format == InstanceFormat::Json) {
 			std::ostringstream placeholder;
-			placeholder << R"({"Name":")";
+			placeholder << R"({"Version":0,"Name":")";
 			// TODO: escape double quotes here
 			placeholder << projectName;
 			placeholder << R"(","ClassName":"DataModel","Properties":{},"Children":[]})";
@@ -93,7 +93,11 @@ namespace gargantuan {
 	}
 
 	std::shared_ptr<DataModel> Project::DeserializeGame() {
-		std::ifstream input(InstanceFilePath);
+		std::ifstream input(InstanceFilePath.string());
+		if (!input.is_open()) {
+			throw std::runtime_error(std::format("Failed to open instance file at {}", InstanceFilePath.string()));
+		}
+
 		auto deserialized = InstanceSerialization::Deserialize(InstanceFileFormat, input);
 		if (!deserialized.Ok) {
 			std::ostringstream err;
