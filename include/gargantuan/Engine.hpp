@@ -1,10 +1,10 @@
 #pragma once
 
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/render/RenderProvider.hpp"
+#include "gargantuan/classes/WorldRoot.hpp"
+#include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/RunService.hpp"
-#include "gargantuan/services/TweenService.hpp"
 #include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
@@ -13,35 +13,38 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <lua.h>
 #include <memory>
-
-#include "gargantuan/math/LerpValue.hpp"
+#include <type_traits>
 
 namespace gargantuan {
-	class Engine {
+	struct Engine {
 	  public:
+		std::shared_ptr<DataModel> DataModel;
+		BaseRenderer *Renderer;
+		ScriptEngine *Script;
+
+		Engine(std::shared_ptr<gargantuan::DataModel> game, BaseRenderer *renderer);
+		~Engine() = delete;
+
 		bool IsRunning = true;
-		glm::vec2 ViewportSize = glm::vec2(720, 540);
-		std::shared_ptr<DataModel> DataModel = nullptr;
-		std::shared_ptr<Workspace> Workspace = nullptr;
-		std::shared_ptr<RunService> RunService = nullptr;
-		std::shared_ptr<UserInputService> UserInputService = nullptr;
+		std::shared_ptr<Workspace> Workspace = GetService<gargantuan::Workspace>();
+		std::shared_ptr<RunService> RunService = GetService<gargantuan::RunService>();
+		std::shared_ptr<UserInputService> UserInputService = GetService<gargantuan::UserInputService>();
+		std::shared_ptr<WorldRoot> WorldRoot = std::static_pointer_cast<gargantuan::WorldRoot>(Workspace);
 
-		SDL_Window *Window;
-		SDL_GPUDevice *Gpu;
-		RenderProvider *RenderProvider;
-		ScriptEngine *ScriptEngine;
-
-		Engine();
-		~Engine();
-
-		float GetDeltaTime() {
-			return (CurrentTick - LastTick) / 1000.0f;
-		};
-		void ProcessEvent(SDL_Event event);
 		void Step();
+		float GetDeltaTime();
+		void ProcessEvent(SDL_Event event);
+		void Destroy();
 
 	  private:
 		uint64_t CurrentTick = 0;
 		uint64_t LastTick = 0;
+
+		template <typename T>
+			requires std::is_base_of_v<Instance, T>
+		std::shared_ptr<T> GetService() {
+			return std::dynamic_pointer_cast<T>(this->DataModel->GetService(T::CLASS_DEFINITION.ClassName));
+		}
 	};
+
 } // namespace gargantuan

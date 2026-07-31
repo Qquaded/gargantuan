@@ -10,4 +10,4 @@ namespace gargantuan::Paths {
 		};
 		return baseDirectory;
 	}
-} // namespace gargantuan::Paths
+}

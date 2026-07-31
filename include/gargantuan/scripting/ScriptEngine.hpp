@@ -1,14 +1,16 @@
 #pragma once
 
+#include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Compiler.h>
 #include <lua.h>
 #include <luacode.h>
 #include <lualib.h>
+#include <memory>
+#include <tuple>
 
 namespace gargantuan {
-
 	int OpenLibBase(lua_State *L);
 	int OpenLibTask(lua_State *L, ThreadEngine *threadEngine);
 
@@ -37,18 +39,18 @@ namespace gargantuan {
 
 	class ScriptEngine {
 	  public:
-		ScriptEngine();
+		ScriptEngine(std::shared_ptr<DataModel> game);
 		~ScriptEngine();
 
 		lua_State *L = nullptr;
-		ThreadEngine ThreadEngine;
+		ThreadEngine Threads;
+
+		std::tuple<char *, size_t> CompileBytecode(std::string contents);
+		std::tuple<char *, size_t> CompileBytecodeFromFile(const char *filepath);
+		lua_State *ThreadFromBytecode(char *bytecode, size_t bytecodeSize, const char *chunkName);
+		lua_State *ThreadFromBytecode(std::tuple<char *, size_t> &bytecodeResult, const char *chunkName);
 
 		void Step();
 		static void DumpStack(lua_State *L);
-
-	  private:
-		lua_State *testbedThread;
-		bool testbedFinished = false;
-		void CreateTestbedThread();
 	};
 } // namespace gargantuan

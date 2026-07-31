@@ -1,0 +1,15 @@
+[
+	{
+		"label": "Fresh run",
+		"command": "cmake --build build && ./build/gargantuan",
+		"use_new_terminal": false,
+		"allow_concurrent_runs": true,
+		"reveal": "always",
+		"reveal_target": "center",
+		"hide": "on_success",
+		"shell": "system",
+		"show_summary": true,
+		"show_command": false,
+		"save": "all",
+	},
+]

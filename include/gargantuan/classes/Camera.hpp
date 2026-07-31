@@ -36,7 +36,7 @@ namespace gargantuan {
 
 		Enums::CameraType CameraType = Enums::CameraType::Freecam;
 		CFrame CFrame;
-		float Pitch = 0.0f, Yaw = -90.0f, Roll;
+		float Pitch = 0.0f, Yaw = -90.0f, Roll = 0.0f;
 		// Vertical field of view in degrees.
 		float FieldOfView = 70.0f;
 		Vector2 ViewportSize = gargantuan::Vector2(0.0f, 0.0f);
@@ -54,7 +54,7 @@ namespace gargantuan {
 		glm::mat4 GetProjectionMatrix();
 		glm::mat4 GetViewMatrix();
 
-		void OnEvent(SDL_Window *window, SDL_Event &event);
+		void OnEvent(SDL_Event &event);
 		void Step(float deltaTime);
 	};
 } // namespace gargantuan

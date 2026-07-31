@@ -22,3 +22,12 @@
 [submodule "vendor/tracy"]
 	path = vendor/tracy
 	url = https://github.com/wolfpld/tracy.git
+[submodule "vendor/argparse"]
+	path = vendor/argparse
+	url = https://github.com/p-ranav/argparse.git
+[submodule "vendor/sdl_ttf"]
+	path = vendor/sdl_ttf
+	url = https://github.com/libsdl-org/SDL_ttf.git
+[submodule "vendor/sdl_image"]
+	path = vendor/sdl_image
+	url = https://github.com/libsdl-org/SDL_image.git

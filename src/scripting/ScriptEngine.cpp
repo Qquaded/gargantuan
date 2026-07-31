@@ -1,4 +1,5 @@
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/datatypes/Axes.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
@@ -16,13 +17,10 @@
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
-#include <cassert>
-#include <cstdlib>
-#include <functional>
 #include <lua.h>
-#include <luacode.h>
 #include <lualib.h>
 #include <magic_enum/magic_enum.hpp>
+#include <memory>
 #include <stdexcept>
 
 namespace gargantuan {
@@ -63,20 +61,27 @@ namespace gargantuan {
 
 	static thread_local lua_State *CurrentState = nullptr;
 
-	ScriptEngine::ScriptEngine() : L(luaL_newstate()), ThreadEngine(L) {
+	ScriptEngine::ScriptEngine(std::shared_ptr<DataModel> game) : L(luaL_newstate()), Threads(L) {
 		if (L == nullptr) {
 			throw std::runtime_error("Failed to instantiate Luau VM");
 		}
 
 		CurrentState = L;
 		Luau::assertHandler() = [](const char *expression, const char *file, int line, const char *function) -> int {
+			SDL_LogError(
+				SDL_LOG_CATEGORY_APPLICATION,
+				"Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s",
+				expression,
+				file,
+				line,
+				function
+			);
 			if (CurrentState) ScriptEngine::DumpStack(CurrentState);
-			SDL_Log("Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function);
 			assert(false);
 		};
 
 		luaL_openlibs(L);
-		OpenLibTask(L, &ThreadEngine);
+		OpenLibTask(L, &Threads);
 		for (const auto &[name, open, metatable] : SCRIPT_LIBS) {
 			SDL_Log("Opening library %s", name.c_str());
 			if (metatable) metatable(L);
@@ -84,30 +89,39 @@ namespace gargantuan {
 		}
 		SDL_Log("ScriptEngine finished opening libraries");
 
-		CreateTestbedThread();
+		StackValue<Instance::Pointer>::Push(L, game);
+		lua_setglobal(L, "game");
 	}
 
-	void ScriptEngine::CreateTestbedThread() {
-		testbedThread = lua_newthread(L);
-		size_t fileSize;
-		void *code = SDL_LoadFile("Testbed.luau", &fileSize);
+	std::tuple<char *, size_t> ScriptEngine::CompileBytecode(std::string contents) {
+		size_t bytecodeSize;
+		char *bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
+		return {bytecode, bytecodeSize};
+	};
 
-		if (code == nullptr) {
-			SDL_Log("Failed to load Testbed.luau");
-			return;
-		}
+	std::tuple<char *, size_t> ScriptEngine::CompileBytecodeFromFile(const char *filepath) {
+		size_t fileSize;
+		void *code = SDL_LoadFile(filepath, &fileSize);
+
+		if (code == nullptr) throw std::runtime_error(std::format("Failed to load {}", filepath));
 
 		std::string contents((char *)code, fileSize);
 		SDL_free(code);
 
-		size_t bytecodeSize;
-		char *bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
+		return CompileBytecode(contents);
+	};
 
-		luau_load(testbedThread, "Testbed", bytecode, bytecodeSize, 0);
-		std::free(bytecode);
+	lua_State *ScriptEngine::ThreadFromBytecode(char *bytecode, size_t bytecodeSize, const char *chunkName) {
+		auto thread = lua_newthread(L);
+		luau_load(thread, chunkName, bytecode, bytecodeSize, 0);
+		luaL_sandbox(thread);
+		return thread;
+	};
 
-		ThreadEngine.QueueDeferredTask(testbedThread, 0);
-	}
+	lua_State *ScriptEngine::ThreadFromBytecode(std::tuple<char *, size_t> &bytecodeResult, const char *chunkName) {
+		auto [bytecode, bytecodeSize] = bytecodeResult;
+		return ThreadFromBytecode(bytecode, bytecodeSize, chunkName);
+	};
 
 	void ScriptEngine::DumpStack(lua_State *L) {
 		int stackSize = lua_gettop(L);
@@ -168,6 +182,6 @@ namespace gargantuan {
 	}
 
 	void ScriptEngine::Step() {
-		ThreadEngine.Step();
+		Threads.Step();
 	}
 } // namespace gargantuan

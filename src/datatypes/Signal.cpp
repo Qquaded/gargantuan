@@ -2,6 +2,7 @@
 // AI claude slop
 
 #include "gargantuan/datatypes/Signal.hpp"
+#include "gargantuan/scripting/StackGuard.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
 
@@ -11,7 +12,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <memory>
-#include <string>
 
 namespace gargantuan {
 	G_USERDATA_IMPL(
@@ -30,13 +30,11 @@ namespace gargantuan {
 		  Connected(true) {}
 
 	void SignalConnection::Disconnect() {
-		if (Connected) {
-			Connected = false;
-			if (L && CallbackReference != LUA_NOREF && CallbackReference != LUA_REFNIL) {
-				lua_unref(L, CallbackReference);
-				CallbackReference = LUA_NOREF;
-				L = nullptr;
-			}
+		Connected = false;
+		if (L && CallbackReference != LUA_NOREF && CallbackReference != LUA_REFNIL) {
+			lua_unref(L, CallbackReference);
+			CallbackReference = LUA_NOREF;
+			L = nullptr;
 		}
 	}
 
@@ -95,8 +93,11 @@ namespace gargantuan {
 
 	void BaseSignal::Fire(CallbackArgument value) {
 		// A handler may connect, disconnect or fire this signal again, so run
-		// over a snapshot rather than the live list
+		// over a snapshot rather than the live list. The snapshot holds owning
+		// pointers, so a handler that clears Connections outright -- which
+		// Instance::Destroy does -- cannot pull entries out from under the loop.
 		auto connections = Connections;
+		FiringDepth++;
 
 		for (auto &connection : connections) {
 			if (connection && connection->Connected && connection->Callback) {
@@ -104,20 +105,25 @@ namespace gargantuan {
 			}
 		}
 
-		std::erase_if(Connections, [](const SignalConnection::Pointer &connection) {
-			return !connection || !connection->Connected;
-		});
+		FiringDepth--;
+		if (FiringDepth == 0) {
+			std::erase_if(Connections, [](const SignalConnection::Pointer &connection) {
+				return !connection || !connection->Connected;
+			});
+		}
 	}
 
 	int BaseSignal::LConnect(lua_State *L, BaseSignal *signal) {
 		int callbackReference = LReferenceCallback(L, 2);
+		lua_State *mainState = lua_mainthread(L);
+
 		return StackValue<SignalConnection::Pointer>::Push(
 			L,
 			signal->Connect(
-				[L, callbackReference, signal](CallbackArgument value) {
-					LRunCallback(L, signal, callbackReference, value);
+				[mainState, callbackReference, signal](CallbackArgument value) {
+					LRunCallback(mainState, signal, callbackReference, value);
 				},
-				L,
+				mainState,
 				callbackReference
 			)
 		);
@@ -125,27 +131,41 @@ namespace gargantuan {
 
 	int BaseSignal::LOnce(lua_State *L, BaseSignal *signal) {
 		int callbackReference = LReferenceCallback(L, 2);
+		lua_State *mainState = lua_mainthread(L);
+
 		return StackValue<SignalConnection::Pointer>::Push(
 			L,
 			signal->Once(
-				[L, callbackReference, signal](CallbackArgument value) {
-					LRunCallback(L, signal, callbackReference, value);
+				[mainState, callbackReference, signal](CallbackArgument value) {
+					LRunCallback(mainState, signal, callbackReference, value);
 				},
-				L,
+				mainState,
 				callbackReference
 			)
 		);
 	}
 
 	int BaseSignal::LWait(lua_State *L, BaseSignal *signal) {
+		lua_State *mainState = lua_mainthread(L);
+		if (L == mainState) {
+			luaL_error(L, "Cannot Wait outside of a thread");
+			return 0;
+		}
+
+		lua_pushthread(L);
+		int threadReference = lua_ref(L, -1);
+		lua_pop(L, 1);
+
 		signal->Once(
-			[L, signal](CallbackArgument value) {
+			[L, mainState, threadReference, signal](CallbackArgument value) {
 				int argumentCount = signal->LPushArgument(L, value);
-				int status = lua_resume(L, nullptr, argumentCount);
+				int status = lua_resume(L, mainState, argumentCount);
 				if (status != LUA_OK && status != LUA_YIELD) {
 					SDL_Log("Failed to resume thread after signal: %s", lua_tostring(L, -1));
 					lua_pop(L, 1);
 				};
+
+				lua_unref(mainState, threadReference);
 			},
 			L,
 			LUA_NOREF
@@ -163,20 +183,21 @@ namespace gargantuan {
 
 		auto stackCount = lua_gettop(L);
 		auto argumentCount = std::max(stackCount - 1, 0);
-		// Every argument gets pushed again to be referenced
-		// EnsureStackSpace(L, 1);
+		EnsureStackSpace(L, 1);
 
 		auto argumentVector = std::make_shared<std::vector<int>>();
 		argumentVector->reserve(argumentCount);
 
 		for (int i = 2; i <= stackCount; ++i) {
-			lua_pushvalue(L, i);
-			int ref = lua_ref(L, -1);
-			lua_pop(L, 1);
-			argumentVector->push_back(ref);
+			argumentVector->push_back(lua_ref(L, i));
 		}
 
 		signal->Fire(argumentVector);
+
+		for (int ref : *argumentVector) {
+			lua_unref(L, ref);
+		}
+
 		return 0;
 	}
 
@@ -190,26 +211,16 @@ namespace gargantuan {
 			return 0;
 		}
 
-		lua_State *mainState = lua_mainthread(L);
 		auto &arguments = **argumentsPointer;
-
-		// The argument count comes from the script, so make room for it up
-		// front; a signal fired with thousands of values must not run off the
-		// end of the stack
 		int slots = (int)arguments.size();
-		// if (!TryEnsureStackSpace(mainState, slots + 1) || (L != mainState && !TryEnsureStackSpace(L, slots + 1))) {
-		// 	SDL_Log("Dropping a signal firing with %d arguments: the Luau stack cannot grow that far", slots);
-		// 	return 0;
-		// }
+		if (!TryEnsureStackSpace(L, slots + 1)) {
+			SDL_Log("Dropping a signal firing with %d arguments: the Luau stack cannot grow that far", slots);
+			return 0;
+		}
 
 		int pushedCount = 0;
 		for (int ref : arguments) {
-			lua_getref(mainState, ref);
-
-			if (L != mainState) {
-				lua_xmove(mainState, L, 1);
-			}
-
+			lua_getref(L, ref);
 			pushedCount++;
 		}
 
@@ -221,35 +232,34 @@ namespace gargantuan {
 			luaL_typeerror(L, idx, "function");
 		}
 
-		lua_pushvalue(L, idx);
-		int ref = lua_ref(L, -1);
-		lua_pop(L, 1);
-
-		return ref;
+		return lua_ref(L, idx);
 	}
 
-	void BaseSignal::LRunCallback(lua_State *L, BaseSignal *signal, int callbackReference, std::any value) {
+	void BaseSignal::LRunCallback(lua_State *mainState, BaseSignal *signal, int callbackReference, std::any value) {
 		if (callbackReference == LUA_NOREF || callbackReference == LUA_REFNIL) {
 			return;
 		}
 
-		lua_State *mainState = lua_mainthread(L);
-		lua_getref(mainState, callbackReference);
+		int stackTop = lua_gettop(mainState);
+		lua_State *thread = lua_newthread(mainState);
 
+		int threadReference = lua_ref(mainState, -1);
+		lua_pop(mainState, 1);
+
+		lua_getref(mainState, callbackReference);
 		if (!lua_isfunction(mainState, -1)) {
 			lua_pop(mainState, 1);
+			lua_unref(mainState, threadReference);
 			return;
 		}
 
-		// Labelled with whichever script the handler was written in, taken off
-		// the function itself rather than asked for. A place with several
-		// scripts connected to PreRender otherwise reports one lump of time
-		// with nothing to say about which of them is spending it, and the
-		// answer is already sitting in the function's debug info.
-		std::string label;
-		// if (G_PROFILE_ACTIVE()) {
+		lua_xmove(mainState, thread, 1);
+
+		// from spook
+		// std::string label;
+		// if (G_PROFILING) {
 		// 	lua_Debug info;
-		// 	if (lua_getinfo(mainState, -1, "s", &info) && info.short_src) {
+		// 	if (lua_getinfo(thread, -1, "s", &info) && info.short_src) {
 		// 		label = info.short_src;
 
 		// 		// Luau reports a chunk loaded from a buffer as [string "Name"],
@@ -263,14 +273,16 @@ namespace gargantuan {
 		// 		label = "?";
 		// 	}
 		// }
-		// Outside the branch so the scope closes on every path out, and empty
-		// when the profiler is off, which Begin skips
-		// ProfileScope scriptScope(label.empty() ? "Script" : label);
+		// G_PROFILE_NAMED("Script", label.data(), label.size());
 
-		int arguments = signal->LPushArgument(mainState, value);
-		if (lua_pcall(mainState, arguments, 0, 0) != LUA_OK) {
-			SDL_Log("Signal error: %s", lua_tostring(mainState, -1));
-			lua_pop(mainState, 1);
+		int arguments = signal->LPushArgument(thread, value);
+		int status = lua_resume(thread, mainState, arguments);
+
+		if (status != LUA_OK && status != LUA_YIELD) {
+			SDL_Log("Signal error: %s", lua_tostring(thread, -1));
 		}
+
+		lua_unref(mainState, threadReference);
+		lua_settop(mainState, stackTop);
 	}
 }

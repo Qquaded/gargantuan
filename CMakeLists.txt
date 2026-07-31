@@ -1,3 +1,6 @@
+# CMakeLists.txt for Gargantuan Engine:
+# https://github.com/teamfireworks/gargantuan/
+
 cmake_minimum_required(VERSION 3.20)
 project(gargantuan CXX)
 
@@ -5,7 +8,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+################################################################################
 # Shaders
+################################################################################
 
 find_program(GLSL_COMPILER glslc REQUIRED)
 if(APPLE)
@@ -43,71 +48,62 @@ foreach(SHADER IN LISTS SHADER_SOURCES)
 
 		# SPIR-V -> MSL
 		add_custom_command(
-				OUTPUT ${METAL_SRC}
-				COMMAND ${SPIRV_CROSS} ${SPIRV_OUTPUT} --msl --output ${METAL_SRC}
-				DEPENDS ${SPIRV_OUTPUT}
-				COMMENT "Cross-compiling SPIR-V to MSL: ${SHADER_NAME}"
-			)
+			OUTPUT ${METAL_SRC}
+			COMMAND ${SPIRV_CROSS} ${SPIRV_OUTPUT} --msl --output ${METAL_SRC}
+			DEPENDS ${SPIRV_OUTPUT}
+			COMMENT "Cross-compiling SPIR-V to MSL: ${SHADER_NAME}"
+		)
 
 		# MSL -> AIR (.air) -> Metal Library
 		add_custom_command(
-				OUTPUT ${METALLIB_OUTPUT}
-				COMMAND ${XCRUN} -sdk macosx metal -c ${METAL_SRC} -o ${METAL_AIR}
-				COMMAND ${XCRUN} -sdk macosx metallib ${METAL_AIR} -o ${METALLIB_OUTPUT}
-				DEPENDS ${METAL_SRC}
-				COMMENT "Building Metal Library: ${SHADER_NAME}.metallib"
-			)
+			OUTPUT ${METALLIB_OUTPUT}
+			COMMAND ${XCRUN} -sdk macosx metal -c ${METAL_SRC} -o ${METAL_AIR}
+			COMMAND ${XCRUN} -sdk macosx metallib ${METAL_AIR} -o ${METALLIB_OUTPUT}
+			DEPENDS ${METAL_SRC}
+			COMMENT "Building Metal Library: ${SHADER_NAME}.metallib"
+		)
 
 		list(APPEND SHADER_OUTPUTS ${METALLIB_OUTPUT})
 	endif()
 endforeach()
 
+################################################################################
+# Vendors
+################################################################################
+
+set(GLM_ENABLE_CXX_20 ON CACHE BOOL "" FORCE)
 set(LUAU_BUILD_CLI OFF CACHE BOOL "" FORCE)
 set(LUAU_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(SDL_TEST OFF CACHE BOOL "" FORCE)
-set(SDL_SHARED ON CACHE BOOL "" FORCE)
-set(SDL_RENDER ON CACHE BOOL "" FORCE)
 set(SDL_DISABLE_PCH ON CACHE BOOL "" FORCE)
-set(GLM_ENABLE_CXX_20 ON CACHE BOOL "" FORCE)
+set(SDL_RENDER ON CACHE BOOL "" FORCE)
+set(SDL_SHARED ON CACHE BOOL "" FORCE)
+set(SDL_TEST OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+add_subdirectory(vendor/argparse)
 add_subdirectory(vendor/box3d)
 add_subdirectory(vendor/glm)
 add_subdirectory(vendor/json)
 add_subdirectory(vendor/luau)
 add_subdirectory(vendor/sdl)
+add_subdirectory(vendor/sdl_image)
+add_subdirectory(vendor/sdl_ttf)
 add_subdirectory(vendor/spdlog)
 
-# Tracing.
-#
-# The client is always compiled in. It collects nothing until Tracy's profiler
-# connects, which is what TRACY_ON_DEMAND buys: a build nobody is watching pays
-# an atomic read per zone and holds no buffers. Turn GARGANTUAN_TRACY off and
-# every G_PROFILE compiles to nothing at all.
-option(GARGANTUAN_TRACY "Compile in the Tracy client" ON)
+################################################################################
+# Tracy
+################################################################################
+
+option(GARGANTUAN_TRACY "Compile in the Tracy client" OFF)
 set(TRACY_ENABLE ${GARGANTUAN_TRACY} CACHE BOOL "" FORCE)
 set(TRACY_ON_DEMAND ON CACHE BOOL "" FORCE)
-# Traces leave the process over a socket. Refusing anything off this machine is
-# the right default for a profiler that is on in ordinary builds.
 set(TRACY_ONLY_LOCALHOST ON CACHE BOOL "" FORCE)
 add_subdirectory(vendor/tracy)
 
-# The viewer, the headless capture tool, and the one that turns a capture into
-# per-zone totals. Off by default because they are their own programs with
-# their own dependencies, and configuring them reaches the network for whatever
-# the system does not already have.
-#
-# ExternalProject rather than add_subdirectory: each is its own CMake project
-# and they declare targets of the same names (TracyServer, TracyCapstone,
-# libzstd), so they cannot share a build tree with us or with each other.
-#
-# They land in build/bin, which is where their own install rules put them.
 option(GARGANTUAN_TRACY_TOOLS "Build tracy-profiler, tracy-capture and tracy-csvexport" OFF)
 if(GARGANTUAN_TRACY_TOOLS)
 	include(ExternalProject)
 
-	# The viewer picks its window backend at build time and defaults to
-	# Wayland. Nothing detects this at runtime, so an X11 session gets a binary
-	# that cannot open a window unless it is told now.
 	if(NOT WIN32 AND NOT APPLE AND NOT DEFINED ENV{WAYLAND_DISPLAY})
 		set(GARGANTUAN_TRACY_LEGACY ON)
 	else()
@@ -126,6 +122,10 @@ if(GARGANTUAN_TRACY_TOOLS)
 	endforeach()
 endif()
 
+################################################################################
+# Linking
+################################################################################
+
 file(GLOB_RECURSE GARGANTUAN_SOURCES CONFIGURE_DEPENDS
 	"src/*.cpp"
 	"src/*.hpp"
@@ -133,9 +133,8 @@ file(GLOB_RECURSE GARGANTUAN_SOURCES CONFIGURE_DEPENDS
 
 add_executable(gargantuan ${GARGANTUAN_SOURCES} ${SHADER_OUTPUTS})
 
-# Members named after their own type (ScriptEngine::ThreadEngine ThreadEngine)
-# keep the Luau-facing API familiar, but GCC 13+ rejects them by default. Clang
-# does not implement this diagnostic, which is why it only bites on GCC.
+# GCC 13+ rejects members named after their own type (ie. ScrptEngine's
+# ThreadEngine)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	target_compile_options(gargantuan PRIVATE -Wno-changes-meaning)
 endif()
@@ -146,23 +145,29 @@ target_include_directories(gargantuan PRIVATE
 )
 
 target_include_directories(gargantuan SYSTEM PRIVATE
+	"vendor/argparse/include"
 	"vendor/box3d/include"
 	"vendor/glm/glm"
+	"vendor/luau/Ast/include"
+	"vendor/luau/CodeGen/include"
 	"vendor/luau/Common/include"
 	"vendor/luau/Compiler/include"
-	"vendor/luau/Ast/include"
-	"vendor/luau/VM/include"
-	"vendor/luau/Require/include"
 	"vendor/luau/Config/include"
-	"vendor/luau/CodeGen/include"
+	"vendor/luau/Require/include"
+	"vendor/luau/VM/include"
 	"vendor/magicenum/include"
 	"vendor/sdl/include"
+	"vendor/sdl_image/include"
+	"vendor/sdl_ttf/include"
 	"vendor/spdlog/include"
 )
 
 target_link_libraries(gargantuan
 	PRIVATE
+		argparse::argparse
 		SDL3::SDL3
+		SDL3_ttf-static
+		SDL3_image-static
 		box3d
 		glm
 		nlohmann_json

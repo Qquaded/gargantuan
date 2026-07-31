@@ -5,6 +5,7 @@
 #include <any>
 #include <functional>
 #include <lualib.h>
+#include <string>
 #include <string_view>
 
 namespace gargantuan {
@@ -33,7 +34,10 @@ namespace gargantuan {
 			UserdataProperty self{nullptr, nullptr};
 
 			if (enableRead) {
-				self.GetReadTypedef = []() -> std::string_view { return StackValue<Value>::ReflectedTypedef(); };
+				self.GetReadTypedef = []() -> std::string_view {
+					static const auto typeName = StackValue<Value>::ReflectedTypedef();
+					return typeName;
+				};
 				self.PushStack = [](lua_State *L, std::any value) -> int {
 					return StackValue<Value>::Push(L, std::any_cast<Value>(value));
 				};
@@ -43,7 +47,10 @@ namespace gargantuan {
 			}
 
 			if (enableWrite) {
-				self.GetWriteTypedef = []() -> std::string_view { return StackValue<Value>::ReflectedTypedef(); };
+				self.GetWriteTypedef = []() -> std::string_view {
+					static const auto typeName = StackValue<Value>::ReflectedTypedef();
+					return typeName;
+				};
 				self.CheckStack = [](lua_State *L, int idx) -> std::any { return CheckStackValue<Value>(L, idx); };
 				self.Write = [](Self *instance, std::any value) {
 					static_cast<MemberClass *>(instance)->*MemberPointer = std::any_cast<Value>(value);
@@ -69,7 +76,10 @@ namespace gargantuan {
 			using ReadType = std::invoke_result_t<Reader, Self *>;
 			UserdataProperty self;
 
-			self.GetReadTypedef = []() -> std::string_view { return StackValue<ReadType>::ReflectedTypedef(); };
+			self.GetReadTypedef = []() -> std::string_view {
+				static const auto typeName = StackValue<ReadType>::ReflectedTypedef();
+				return typeName;
+			};
 			self.PushStack = [](lua_State *L, std::any value) -> int {
 				return StackValue<ReadType>::Push(L, std::any_cast<ReadType>(value));
 			};
@@ -83,13 +93,19 @@ namespace gargantuan {
 			UserdataProperty self;
 
 			using ReadType = std::invoke_result_t<Reader, Self *>;
-			self.GetReadTypedef = []() -> std::string_view { return StackValue<ReadType>::ReflectedTypedef(); };
+			self.GetReadTypedef = []() -> std::string_view {
+				static const auto typeName = StackValue<ReadType>::ReflectedTypedef();
+				return typeName;
+			};
 			self.PushStack = [](lua_State *L, std::any value) -> int {
 				return StackValue<ReadType>::Push(L, std::any_cast<ReadType>(value));
 			};
 			self.Read = [reader = std::forward<Reader>(read)](Self *instance) -> std::any { return reader(instance); };
 
-			self.GetWriteTypedef = []() -> std::string_view { return StackValue<WriteType>::ReflectedTypedef(); };
+			self.GetWriteTypedef = []() -> std::string_view {
+				static const auto typeName = StackValue<WriteType>::ReflectedTypedef();
+				return typeName;
+			};
 			self.CheckStack = [](lua_State *L, int idx) -> std::any { return CheckStackValue<WriteType>(L, idx); };
 			self.Write = [writer = std::forward<Writer>(write)](Self *instance, std::any value) {
 				writer(instance, std::any_cast<WriteType>(value));

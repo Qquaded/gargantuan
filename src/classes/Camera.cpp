@@ -67,20 +67,24 @@ namespace gargantuan {
 		return glm::lookAt(position, position + CFrame.GetLookVector(), CFrame.GetUpVector());
 	}
 
-	void Camera::OnEvent(SDL_Window *window, SDL_Event &event) {
+	void Camera::OnEvent(SDL_Event &event) {
 		if (CameraType != Enums::CameraType::Freecam) {
 			return;
 		}
 
 		if (event.type == SDL_EVENT_WINDOW_RESIZED) {
 			int width, height;
+			auto window = SDL_GetWindowFromEvent(&event);
 			SDL_GetWindowSizeInPixels(window, &width, &height);
 			ViewportSize = Vector2(width, height);
 		} else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_RIGHT) {
+			auto window = SDL_GetWindowFromEvent(&event);
 			SDL_SetWindowRelativeMouseMode(window, true);
 		} else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_RIGHT) {
+			auto window = SDL_GetWindowFromEvent(&event);
 			SDL_SetWindowRelativeMouseMode(window, false);
-		} else if (event.type == SDL_EVENT_MOUSE_MOTION && SDL_GetWindowRelativeMouseMode(window)) {
+		} else if (event.type == SDL_EVENT_MOUSE_MOTION &&
+				   SDL_GetWindowRelativeMouseMode(SDL_GetWindowFromEvent(&event))) {
 			AccumulatedDeltaX += event.motion.xrel;
 			AccumulatedDeltaY += event.motion.yrel;
 		}

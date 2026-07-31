@@ -48,13 +48,16 @@ namespace gargantuan {
 		typedef std::function<void(CallbackArgument)> CallbackType;
 
 		std::vector<SignalConnection::Pointer> Connections;
+		int FiringDepth = 0;
 
 		virtual SignalConnection::Pointer Connect(
 			CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF
 		);
+
 		virtual SignalConnection::Pointer Once(
 			CallbackType callback, lua_State *L = nullptr, int callbackReference = LUA_NOREF
 		);
+
 		void Fire(CallbackArgument argument);
 
 		virtual int LPushArgument(lua_State *L, CallbackArgument value) = 0;

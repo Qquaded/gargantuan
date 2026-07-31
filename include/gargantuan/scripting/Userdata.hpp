@@ -170,8 +170,11 @@ namespace gargantuan {
 			}
 
 			lua_setreadonly(L, -1, true);
+			lua_ref(L, -1);
 			lua_setuserdatametatable(L, (int)definition.Tag);
-			// lua_pop(L, 1);
+			lua_setuserdatadtor(L, (int)definition.Tag, [](lua_State *, void *userdata) {
+				static_cast<StoredAs *>(userdata)->~StoredAs();
+			});
 		};
 
 	  private:
