@@ -35,9 +35,6 @@
 namespace gargantuan::InstanceClassRegistry {
 	std::unordered_map<std::type_index, InstanceClassDefinition> &GetDefinitionsMap();
 
-	// Drops the name index and every flattened member table. Registering a
-	// class changes what a superclass name resolves to and what a subclass
-	// inherits, so both have to be worked out again.
 	void InvalidateCaches();
 
 	template <typename T> void Register(InstanceClassDefinition definition) {
@@ -46,9 +43,6 @@ namespace gargantuan::InstanceClassRegistry {
 		InvalidateCaches();
 	}
 
-	// Every way in goes through this one, so whatever it hands back has its
-	// flattened member tables filled in. Null for a type that was never
-	// registered.
 	InstanceClassDefinition *GetDefinitionByType(std::type_index type);
 
 	template <typename T> InstanceClassDefinition *GetDefinition() {

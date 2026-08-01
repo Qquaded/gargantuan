@@ -51,7 +51,6 @@ namespace gargantuan::InstanceClassRegistry {
 					break;
 				}
 
-				// A class whose superclass names itself would spin here
 				InstanceClassDefinition *next = GetDefinitionByName(current->Superclass.value());
 				if (next == current) {
 					break;
@@ -84,6 +83,7 @@ namespace gargantuan::InstanceClassRegistry {
 		if (!definition->Flattened) {
 			Flatten(definition);
 		}
+
 		return definition;
 	}
 
@@ -105,7 +105,12 @@ namespace gargantuan::InstanceClassRegistry {
 		EnsureNameIndex();
 		auto &index = GetNameIndex();
 		auto it = index.find(name);
-		return it != index.end() ? it->second : nullptr;
+		if (it == index.end()) return nullptr;
+
+		InstanceClassDefinition *definition = it->second;
+		if (!definition->Flattened) Flatten(definition);
+
+		return definition;
 	}
 
 	std::vector<std::string_view> GetClassNames() {

@@ -1,4 +1,5 @@
 #include "gargantuan/assets/InstanceSerialization.hpp"
+#include "gargantuan/Log.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Enum.hpp"
@@ -170,72 +171,70 @@ namespace gargantuan::InstanceSerialization {
 			return value.get<bool>();
 		} else if (unknown.contains("CFrame")) {
 			auto value = unknown["CFrame"];
-			if (!value.is_array()) return state.ReturnError("Expected CFrame to be an array");
+			if (!value.is_array() || value.size() < 12) {
+				return state.ReturnError("Expected CFrame to be an array of 12 components");
+			};
 
 			auto x = value[0];
-			if (!x.is_number_float()) return state.ReturnError("Expected X component to be a float");
+			if (!x.is_number()) return state.ReturnError("Expected X component to be a float");
 
 			auto y = value[1];
-			if (!y.is_number_float()) return state.ReturnError("Expected Y component to be a float");
+			if (!y.is_number()) return state.ReturnError("Expected Y component to be a float");
 
 			auto z = value[2];
-			if (!z.is_number_float()) return state.ReturnError("Expected Z component to be a float");
+			if (!z.is_number()) return state.ReturnError("Expected Z component to be a float");
 
 			auto r00 = value[3];
-			if (!r00.is_number_float()) return state.ReturnError("Expected R00 component to be a float");
+			if (!r00.is_number()) return state.ReturnError("Expected R00 component to be a float");
 
 			auto r01 = value[4];
-			if (!r01.is_number_float()) return state.ReturnError("Expected R01 component to be a float");
+			if (!r01.is_number()) return state.ReturnError("Expected R01 component to be a float");
 
 			auto r02 = value[5];
-			if (!r02.is_number_float()) return state.ReturnError("Expected R02 component to be a float");
+			if (!r02.is_number()) return state.ReturnError("Expected R02 component to be a float");
 
 			auto r10 = value[6];
-			if (!r10.is_number_float()) return state.ReturnError("Expected R10 component to be a float");
+			if (!r10.is_number()) return state.ReturnError("Expected R10 component to be a float");
 
 			auto r11 = value[7];
-			if (!r11.is_number_float()) return state.ReturnError("Expected R11 component to be a float");
+			if (!r11.is_number()) return state.ReturnError("Expected R11 component to be a float");
 
 			auto r12 = value[8];
-			if (!r12.is_number_float()) return state.ReturnError("Expected R12 component to be a float");
+			if (!r12.is_number()) return state.ReturnError("Expected R12 component to be a float");
 
 			auto r20 = value[9];
-			if (!r20.is_number_float()) return state.ReturnError("Expected R20 component to be a float");
+			if (!r20.is_number()) return state.ReturnError("Expected R20 component to be a float");
 
 			auto r21 = value[10];
-			if (!r21.is_number_float()) return state.ReturnError("Expected R21 component to be a float");
+			if (!r21.is_number()) return state.ReturnError("Expected R21 component to be a float");
 
 			auto r22 = value[11];
-			if (!r22.is_number_float()) return state.ReturnError("Expected R22 component to be a float");
+			if (!r22.is_number()) return state.ReturnError("Expected R22 component to be a float");
 
 			return CFrame(
-				x.get<float>(),
-				y.get<float>(),
-				z.get<float>(),
-				r00.get<float>(),
-				r01.get<float>(),
-				r02.get<float>(),
-				r10.get<float>(),
-				r11.get<float>(),
-				r12.get<float>(),
-				r20.get<float>(),
-				r21.get<float>(),
-				r22.get<float>()
+				glm::vec3(x.get<float>(), y.get<float>(), z.get<float>()),
+				glm::mat3(
+					glm::vec3(r00.get<float>(), r10.get<float>(), r20.get<float>()),
+					glm::vec3(r01.get<float>(), r11.get<float>(), r21.get<float>()),
+					glm::vec3(r02.get<float>(), r12.get<float>(), r22.get<float>())
+				)
 			);
 		} else if (unknown.contains("Color3")) {
 			auto value = unknown["Color3"];
-			if (!value.is_array()) return state.ReturnError("Expected Color3 to be an array");
+			if (!value.is_array() || value.size() < 3) {
+				return state.ReturnError("Expected Color3 to be an array of RGB components");
+			};
 
 			auto r = value[0];
-			if (!r.is_number_float()) return state.ReturnError("Expected red component to be a float");
+			if (!r.is_number()) return state.ReturnError("Expected red component to be a float");
 
 			auto g = value[1];
-			if (!g.is_number_float()) return state.ReturnError("Expected green component to be a float");
+			if (!g.is_number()) return state.ReturnError("Expected green component to be a float");
 
 			auto b = value[2];
-			if (!b.is_number_float()) return state.ReturnError("Expected blue component to be a float");
+			if (!b.is_number()) return state.ReturnError("Expected blue component to be a float");
 
-			return Color3(r, g, b);
+			return Color3(r.get<float>(), g.get<float>(), b.get<float>());
 		} else if (unknown.contains("Double")) {
 			auto value = unknown["Double"];
 			if (!value.is_number()) return state.ReturnError("Expected double");
@@ -264,20 +263,20 @@ namespace gargantuan::InstanceSerialization {
 			return state.ReturnError("Unknown EnumItem named {} of Enum {}", enumNameString, enumTypeString);
 		} else if (unknown.contains("Float")) {
 			auto value = unknown["Float"];
-			if (!value.is_number_float()) return state.ReturnError("Expected float");
+			if (!value.is_number()) return state.ReturnError("Expected float");
 			return value.get<float>();
 		} else if (unknown.contains("Vector3")) {
 			auto value = unknown["Vector3"];
 			if (!value.is_array()) return state.ReturnError("Expected Vector3 to be an array");
 
 			auto x = value[0];
-			if (!x.is_number_float()) return state.ReturnError("Expected X component to be a float");
+			if (!x.is_number()) return state.ReturnError("Expected X component to be a float");
 
 			auto y = value[1];
-			if (!y.is_number_float()) return state.ReturnError("Expected Y component to be a float");
+			if (!y.is_number()) return state.ReturnError("Expected Y component to be a float");
 
 			auto z = value[2];
-			if (!z.is_number_float()) return state.ReturnError("Expected Z component to be a float");
+			if (!z.is_number()) return state.ReturnError("Expected Z component to be a float");
 
 			return glm::vec3(x.get<float>(), y.get<float>(), z.get<float>());
 		} else if (unknown.contains("Int")) {
@@ -293,7 +292,7 @@ namespace gargantuan::InstanceSerialization {
 			if (!value.is_array()) return state.ReturnError("Expected UDim to be an array");
 
 			auto scale = value[0];
-			if (!scale.is_number_float()) return state.ReturnError("Expected Scale component to be a float");
+			if (!scale.is_number()) return state.ReturnError("Expected Scale component to be a float");
 
 			auto offset = value[1];
 			if (!offset.is_number_integer()) return state.ReturnError("Expected Offset component to be an integer");
@@ -304,10 +303,10 @@ namespace gargantuan::InstanceSerialization {
 			if (!value.is_array()) return state.ReturnError("Expected Vector2 to be an array");
 
 			auto x = value[0];
-			if (!x.is_number_float()) return state.ReturnError("Expected X component to be a float");
+			if (!x.is_number()) return state.ReturnError("Expected X component to be a float");
 
 			auto y = value[1];
-			if (!y.is_number_float()) return state.ReturnError("Expected Y component to be a float");
+			if (!y.is_number()) return state.ReturnError("Expected Y component to be a float");
 
 			return Vector2(x.get<float>(), y.get<float>());
 		}
@@ -350,58 +349,53 @@ namespace gargantuan::InstanceSerialization {
 			return std::nullopt;
 		}
 
+		G_LOG_INFO("Registered property count for %s: %zu", className.c_str(), definition->AllProperties.size());
 		auto instance = definition->Constructor();
-		instance->Name = name.get<std::string_view>();
-		while (true) {
-			for (auto &[key, property] : definition->Properties) {
-				if (key == "Parent" || !properties.contains(key) || !property.Serializable || !property.Write) continue;
+		instance->Name = name.get<std::string>();
+		for (auto &[key, property] : definition->AllProperties) {
+			G_LOG_INFO("Trying to deserialize %s of %s", key.data(), state.FormatCurrentPath().data());
+			if (key == "Parent") G_LOG_INFO("Is parent");
+			if (!properties.contains(key)) G_LOG_INFO("Not included");
+			if (!property->Serializable) G_LOG_INFO("Not serializable");
+			if (!property->Write) G_LOG_INFO("Not writable");
+			if (key == "Parent" || !properties.contains(key) || !property->Serializable || !property->Write) continue;
+			G_LOG_INFO("Deserializing %s of %s", key.data(), state.FormatCurrentPath().data());
 
-				auto value = properties[key];
-				if (!value.is_object()) {
-					state.PushError("Invalid value of property '{}' in {}", key, state.FormatCurrentPath());
-					instance->Destroy();
-					return std::nullopt;
-				}
-
-				auto maybeDeserialized = TryDeserializeProperty(value, state);
-				if (!maybeDeserialized.has_value()) {
-					state.PushError(
-						"Failed to deserialize value of property '{}' in {}", key, state.FormatCurrentPath()
-					);
-					instance->Destroy();
-					return std::nullopt;
-				}
-
-				auto deserialized = maybeDeserialized.value();
-
-				try {
-					property.Write(instance.get(), deserialized);
-				} catch (const std::bad_any_cast &e) {
-					instance->Destroy();
-					return state.ReturnError(
-						"Type mismatch on property '{}' in {}, expected {}, got approximately {}",
-						key,
-						state.FormatCurrentPath(),
-						property.GetWriteTypedef(),
-						typeid(deserialized).name()
-					);
-				} catch (const std::exception &e) {
-					instance->Destroy();
-					return state.ReturnError(
-						"Failed to set value of property '{}' in {}: {}", key, state.FormatCurrentPath(), e.what()
-					);
-				} catch (...) {
-					instance->Destroy();
-					return state.ReturnError(
-						"Unknown error setting property '{}' in {}", key, state.FormatCurrentPath()
-					);
-				}
+			auto value = properties[key];
+			if (!value.is_object()) {
+				state.PushError("Invalid value of property '{}' in {}", key, state.FormatCurrentPath());
+				instance->Destroy();
+				return std::nullopt;
 			}
 
-			if (definition->Superclass.has_value()) {
-				definition = InstanceClassRegistry::GetDefinitionByName(definition->Superclass.value());
-			} else {
-				break;
+			auto maybeDeserialized = TryDeserializeProperty(value, state);
+			if (!maybeDeserialized.has_value()) {
+				state.PushError("Failed to deserialize value of property '{}' in {}", key, state.FormatCurrentPath());
+				instance->Destroy();
+				return std::nullopt;
+			}
+
+			auto deserialized = maybeDeserialized.value();
+
+			try {
+				property->Write(instance.get(), deserialized);
+			} catch (const std::bad_any_cast &e) {
+				instance->Destroy();
+				return state.ReturnError(
+					"Type mismatch on property '{}' in {}, expected {}, got approximately {}",
+					key,
+					state.FormatCurrentPath(),
+					property->GetWriteTypedef(),
+					typeid(deserialized).name()
+				);
+			} catch (const std::exception &e) {
+				instance->Destroy();
+				return state.ReturnError(
+					"Failed to set value of property '{}' in {}: {}", key, state.FormatCurrentPath(), e.what()
+				);
+			} catch (...) {
+				instance->Destroy();
+				return state.ReturnError("Unknown error setting property '{}' in {}", key, state.FormatCurrentPath());
 			}
 		}
 

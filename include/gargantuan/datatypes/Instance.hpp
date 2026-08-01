@@ -37,7 +37,7 @@ namespace gargantuan {
 		void Destroy() {}
 
 		bool Archivable = true;
-		std::string_view Name = CLASS_DEFINITION.ClassName;
+		std::string Name{CLASS_DEFINITION.ClassName};
 
 		InstanceClassDefinition *CachedDefinition = nullptr;
 		std::vector<std::shared_ptr<Instance>> Children;

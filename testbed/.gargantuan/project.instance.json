@@ -5,7 +5,7 @@
 				{
 					"Children": [],
 					"ClassName": "Part",
-					"Name": "Part",
+					"Name": "Test",
 					"Properties": {
 						"Anchored": { "Bool": true },
 						"CFrame": {
