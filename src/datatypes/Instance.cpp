@@ -57,15 +57,27 @@ namespace gargantuan {
 		}
 	);
 
-	// TODO: fire DescendantAdded/Removed signals
 	void Instance::SetParent(std::shared_ptr<Instance> newParent) {
+		if (Destroyed || Parent == newParent.get()) return;
+
 		std::shared_ptr<Instance> self = shared_from_this();
+
+		// This whole subtree leaves the old ancestry and joins the new one, so
+		// collect it once up front and reuse it for both sets of signals
+		std::vector<std::shared_ptr<Instance>> subtree = {self};
+		CollectDescendants(subtree);
 
 		if (Parent != nullptr) {
 			auto &oldChildren = Parent->Children;
 			if (auto it = std::find(oldChildren.begin(), oldChildren.end(), self); it != oldChildren.end()) {
 				oldChildren.erase(it);
 				Parent->ChildRemoved->Fire(self);
+			}
+
+			for (Instance *ancestor = Parent; ancestor != nullptr; ancestor = ancestor->Parent) {
+				for (auto &node : subtree) {
+					ancestor->DescendantRemoved->Fire(node);
+				}
 			}
 		}
 
@@ -74,7 +86,45 @@ namespace gargantuan {
 		if (newParent != nullptr) {
 			newParent->Children.push_back(self);
 			newParent->ChildAdded->Fire(self);
+
+			for (Instance *ancestor = newParent.get(); ancestor != nullptr; ancestor = ancestor->Parent) {
+				for (auto &node : subtree) {
+					ancestor->DescendantAdded->Fire(node);
+				}
+			}
 		}
+
+		FireAncestryChanged(self, newParent);
+	}
+
+	void Instance::FireAncestryChanged(std::shared_ptr<Instance> child, std::shared_ptr<Instance> parent) {
+		AncestryChanged->Fire({child, parent});
+		for (auto &descendant : Children) {
+			descendant->FireAncestryChanged(child, parent);
+		}
+	}
+
+	void Instance::ClearAllChildren() {
+		auto children = Children;
+		for (auto &child : children) {
+			child->Destroy();
+		}
+	}
+
+	void Instance::Destroy() {
+		if (Destroyed) {
+			return;
+		}
+
+		Destroying->Fire({});
+
+		auto children = Children;
+		for (auto &child : children) {
+			child->Destroy();
+		}
+
+		SetParent(nullptr);
+		Destroyed = true;
 	}
 
 	const Instance::Self::Property *Instance::FindProperty(std::string_view name) {

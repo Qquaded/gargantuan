@@ -34,20 +34,24 @@ namespace gargantuan {
 		static const gargantuan::InstanceClassDefinition CLASS_DEFINITION;
 
 		virtual ~Instance() = default;
-		void Destroy() {}
 
 		bool Archivable = true;
 		std::string Name{CLASS_DEFINITION.ClassName};
-
 		InstanceClassDefinition *CachedDefinition = nullptr;
+
 		std::vector<std::shared_ptr<Instance>> Children;
 		Instance *Parent = nullptr;
 		void SetParent(std::shared_ptr<Instance> newParent);
+		void FireAncestryChanged(std::shared_ptr<Instance> newParent);
+		void ClearAllChildren();
 
+		typedef std::tuple<Instance::Pointer, Instance::Pointer> AncestryChangedArguments;
 		G_SIGNAL(ChildAdded, Instance::Pointer);
 		G_SIGNAL(ChildRemoved, Instance::Pointer);
 		G_SIGNAL(DescendantAdded, Instance::Pointer);
 		G_SIGNAL(DescendantRemoved, Instance::Pointer);
+		G_SIGNAL(AncestryChanged, AncestryChangedArguments);
+		G_SIGNAL(Destroying, std::monostate);
 
 		const Self::Property *FindProperty(std::string_view name);
 		const Self::Method *FindMethod(std::string_view name);
@@ -66,9 +70,9 @@ namespace gargantuan {
 		std::shared_ptr<Instance> FindFirstDescendant(std::string_view name);
 		std::shared_ptr<Instance> FindFirstDescendantOfClass(std::string_view className);
 		std::shared_ptr<Instance> FindFirstDescendantWhichIsA(std::string_view className);
+		void Destroy();
 
-		template <typename T>
-		bool IsClass() const { return dynamic_cast<const T *>(this) != nullptr; }
+		template <typename T> bool IsClass() const { return dynamic_cast<const T *>(this) != nullptr; }
 
 		template <typename T>
 		T *Cast() const { return dynamic_cast<const T *>(this); }
@@ -79,19 +83,9 @@ namespace gargantuan {
 		template <typename T>
 		const T *Cast() const { return dynamic_cast<const T *>(this); }
 
-		// template <typename T>
-		// requires std::is_base_of_v<Instance, T> &&
-		// (!std::is_same_v<Instance, T>)std::shared_ptr<T> GetOrCreateClass() {
-		// 	if (Instance::Pointer child = FindFirstChildOfClass(T::CLASS_DEFINITION.ClassName)) {
-		// 		return std::static_pointer_cast<T>(child);
-		// 	} else {
-		// 		auto constructed = std::make_shared<T>();
-		// 		constructed->SetParent(this->shared_from_this());
-		// 		return constructed;
-		// 	}
-		// }
-
-		private : void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
+		private : bool Destroyed = false;
+		void CollectDescendants(std::vector<std::shared_ptr<Instance>> &descendants);
+		void FireAncestryChanged(std::shared_ptr<Instance> child, std::shared_ptr<Instance> parent);
 
 	);
 
