@@ -168,7 +168,7 @@ target_link_libraries(gargantuan
 		SDL3::SDL3
 		SDL3_ttf-static
 		SDL3_image-static
-		box3d
+		box3d::box3d
 		glm
 		nlohmann_json
 		spdlog::spdlog

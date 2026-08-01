@@ -57,15 +57,23 @@ namespace gargantuan {
 		}
 	);
 
-	// TODO: fire DescendantAdded/Removed signals
 	void Instance::SetParent(std::shared_ptr<Instance> newParent) {
 		std::shared_ptr<Instance> self = shared_from_this();
+
+		std::vectory<Instance::Pointer> subtree;
+		subtree.push_back(self);
+		CollectDescendants(subtree);
 
 		if (Parent != nullptr) {
 			auto &oldChildren = Parent->Children;
 			if (auto it = std::find(oldChildren.begin(), oldChildren.end(), self); it != oldChildren.end()) {
 				oldChildren.erase(it);
 				Parent->ChildRemoved->Fire(self);
+				for (Instance *ancestor = Parent; ancestor != ancestor->Parent) {
+				    for (const auto &instance : subtree) {
+						ancestor->DescendentRemoved->Fire(instance);
+					}
+				}
 			}
 		}
 
@@ -74,6 +82,12 @@ namespace gargantuan {
 		if (newParent != nullptr) {
 			newParent->Children.push_back(self);
 			newParent->ChildAdded->Fire(self);
+
+			for (Instance *ancestor = newParent.get(); ancestor != nullptr; ancestor = ancestor->Parent) {
+			    for (const auto &instance : subtree) {
+					ancestor->DescendantAdded->Fire(instance);
+				}
+			}
 		}
 	}
 

@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <lua.h>
 #include <memory>
+#include <box3d/box3d.h>
 
 namespace gargantuan {
 	Engine::Engine(std::shared_ptr<gargantuan::DataModel> game, BaseRenderer *renderer)
