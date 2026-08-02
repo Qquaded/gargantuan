@@ -1,9 +1,9 @@
 #include "gargantuan/Engine.hpp"
 #include "gargantuan/Log.hpp"
-#include "gargantuan/Project.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
+#include "gargantuan/filesystem/Project.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>

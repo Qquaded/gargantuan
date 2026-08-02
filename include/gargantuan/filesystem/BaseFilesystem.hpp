@@ -1,0 +1,78 @@
+#pragma once
+
+#include <filesystem>
+#include <sstream>
+#include <string>
+#include <vector>
+
+namespace gargantuan {
+	typedef enum : int {
+		File,
+		Directory,
+		Unknown,
+	} FileType;
+
+	typedef enum : int {
+		// Open for reading, fails if missing.
+		// Analogous to "r"
+		Read,
+		// Open for writing, creates if missing, overrides if it existed.
+		// Analogous to "w"
+		Write,
+		// Open for writing, fails if it exists
+		// Analogous to "x"
+		Exclusive,
+		// Open for appending, creates if missing
+		// Analogous to "a"
+		Append,
+		// Open for reading and writing, fails if missing
+		// Analogous to "r+"
+		ReadWrite,
+		// Open for reading and writing, creates if missing, overrides if it
+		// existed. Analogous to "w+"
+		Update,
+		// Open for reading and appending, creates if missing.
+		// Analogous to "a+"
+		AppendRead
+	} FileOpen;
+
+	struct FileMetadata {
+		FileType type;
+	};
+
+	struct FileHandle {
+		virtual size_t Read(void *buffer, std::size_t bytesToRead);
+		virtual size_t Write(const void *buffer, std::size_t bytesToWrite);
+		virtual size_t Size();
+		virtual void Close();
+	};
+
+	struct DirectoryEntry {
+		std::string Name;
+		std::filesystem::path Path;
+		FileType Type;
+	};
+
+	class BaseFilesystem {
+	  public:
+		virtual ~BaseFilesystem() = default;
+
+		[[nodiscard]] virtual std::filesystem::path Root() const;
+		[[nodiscard]] virtual FileMetadata Metadata(const std::filesystem::path &path) const;
+		[[nodiscard]] virtual FileHandle Open(const std::filesystem::path &path, const FileOpen &mode = FileOpen::Read);
+		virtual void CreateDirectory(const std::filesystem::path &path);
+		virtual void Remove(const std::filesystem::path &path);
+
+		[[nodiscard]] virtual std::vector<DirectoryEntry> GetChildren(const std::filesystem::path &path);
+		[[nodiscard]] virtual std::vector<DirectoryEntry> GetDescendants(const std::filesystem::path &path);
+
+		[[nodiscard]] virtual bool Exists(const std::filesystem::path &path) const;
+		[[nodiscard]] virtual FileType Type(const std::filesystem::path &path) const;
+		virtual void Copy(const std::filesystem::path &source, const std::filesystem::path &destination);
+		virtual void Move(const std::filesystem::path &source, const std::filesystem::path &destination);
+		virtual std::string ReadFileToString(const std::filesystem::path &path);
+		virtual void WriteStringToFile(const std::filesystem::path &path, std::string);
+		virtual std::istringstream ReadFileToStringStream(const std::filesystem::path &path);
+		virtual void WriteStringStreamToFile(const std::filesystem::path &path, std::ostringstream output);
+	};
+}

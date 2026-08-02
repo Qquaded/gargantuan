@@ -1,4 +1,4 @@
-#include "gargantuan/Paths.hpp"
+#include "gargantuan/filesystem/Paths.hpp"
 #include <SDL3/SDL.h>
 #include <filesystem>
 

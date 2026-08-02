@@ -114,7 +114,7 @@ namespace gargantuan::InstanceSerialization {
 			std::vector<json> children;
 			children.reserve(instance->Children.size());
 			for (auto &child : instance->Children) {
-				children.emplace_back(SerializeInstance(child, state));
+				if (instance->Archivable) children.emplace_back(SerializeInstance(child, state));
 			}
 
 			auto *definition = InstanceClassRegistry::GetDefinition(instance.get());

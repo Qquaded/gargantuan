@@ -1,4 +1,4 @@
-#include "gargantuan/Project.hpp"
+#include "gargantuan/filesystem/Project.hpp"
 #include "gargantuan/assets/InstanceSerialization.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 
