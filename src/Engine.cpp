@@ -11,10 +11,8 @@
 #include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_events.h>
 #include <glm/glm.hpp>
 #include <lua.h>
-#include <luacode.h>
 #include <memory>
 
 namespace gargantuan {
@@ -25,32 +23,38 @@ namespace gargantuan {
 		  RunService(GetService<gargantuan::RunService>()),
 		  UserInputService(GetService<gargantuan::UserInputService>()) {
 
-		lua_CompileOptions compileOptions{
-			.vectorLib = "Vector3.new",
-			.vectorType = "Vector3",
-		};
-
-		auto descendantAdded = [this, &compileOptions](Instance::Pointer inst) {
+		auto descendantAdded = [this](Instance::Pointer inst) {
 			if (inst->IsClass<gargantuan::Script>()) {
-				auto script = inst->Cast<gargantuan::Script>();
-
-				if (!script->BytecodeCompiled) {
-					auto compileError = script->CompileBytecode(&compileOptions);
-					if (compileError.has_value()) {
-						script->Status = ScriptStatus::Error;
-						script->ErrorMessage = compileError.value();
-					}
-				}
-
-				this->Script->ScriptQueue.insert(std::static_pointer_cast<gargantuan::Script>(inst));
-			};
+				auto script = std::static_pointer_cast<gargantuan::Script>(inst);
+				this->Script->ScriptQueue.insert(script);
+				inst->Destroying->Once([ScriptEngine = this->Script, script](std::monostate _) {
+					if (ScriptEngine->ScriptQueue.contains(script)) ScriptEngine->ScriptQueue.erase(script);
+				});
+			}
 
 			if (inst->IsClass<gargantuan::ModuleScript>()) {
-				this->Script->ModuleQueue.insert(std::static_pointer_cast<gargantuan::ModuleScript>(inst));
+				auto module = std::static_pointer_cast<gargantuan::ModuleScript>(inst);
+				this->Script->ModuleQueue.insert(module);
+				inst->Destroying->Once([ScriptEngine = this->Script, module](std::monostate _) {
+					if (ScriptEngine->ModuleQueue.contains(module)) ScriptEngine->ModuleQueue.erase(module);
+				});
+			};
+		};
+
+		auto descendantRemoved = [this](Instance::Pointer inst) {
+			if (inst->IsClass<gargantuan::Script>()) {
+				auto script = std::static_pointer_cast<gargantuan::Script>(inst);
+				if (Script->ScriptQueue.contains(script)) Script->ScriptQueue.erase(script);
+			}
+
+			if (inst->IsClass<gargantuan::ModuleScript>()) {
+				auto module = std::static_pointer_cast<gargantuan::ModuleScript>(inst);
+				if (Script->ModuleQueue.contains(module)) Script->ModuleQueue.erase(module);
 			};
 		};
 
 		DataModel->DescendantAdded->Connect(descendantAdded);
+		DataModel->DescendantRemoved->Connect(descendantRemoved);
 		for (auto &descendant : DataModel->GetDescendants()) {
 			descendantAdded(descendant);
 		}

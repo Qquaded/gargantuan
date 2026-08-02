@@ -1,8 +1,6 @@
 #pragma once
 
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/classes/ModuleScript.hpp"
-#include "gargantuan/classes/Script.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Compiler.h>
@@ -13,6 +11,9 @@
 #include <unordered_set>
 
 namespace gargantuan {
+	class Script;
+	class ModuleScript;
+
 	int OpenLibBase(lua_State *L);
 	int OpenLibTask(lua_State *L, ThreadEngine *threadEngine);
 
@@ -46,6 +47,7 @@ namespace gargantuan {
 
 		lua_State *L = nullptr;
 		ThreadEngine Threads;
+		lua_CompileOptions CompileOptions;
 		std::unordered_set<std::shared_ptr<Script>> ScriptQueue;
 		std::unordered_set<std::shared_ptr<ModuleScript>> ModuleQueue;
 

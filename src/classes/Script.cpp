@@ -1,5 +1,6 @@
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/reflection/InstanceClassRegistry.hpp"
+#include "gargantuan/scripting/ScriptEngine.hpp"
 #include <lua.h>
 
 namespace gargantuan {
@@ -55,6 +56,16 @@ namespace gargantuan {
 	ScriptStatus Script::Step(lua_State *L) {
 		if (!ShouldStep()) return Status;
 		Status = ScriptStatus::Running;
+
+		if (!BytecodeCompiled) {
+			auto scriptEngine = ScriptEngine::Get(L);
+			auto compileError = CompileBytecode(&scriptEngine->CompileOptions);
+			if (compileError.has_value()) {
+				Status = ScriptStatus::Error;
+				ErrorMessage = compileError.value();
+				return Status;
+			}
+		}
 
 		if (!Thread) {
 			Thread = lua_newthread(L);

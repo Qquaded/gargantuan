@@ -27,6 +27,7 @@
 #include <stdexcept>
 
 namespace gargantuan {
+
 	struct Lib {
 		std::string Label;
 		std::function<void(lua_State *L)> Open = nullptr;
@@ -99,7 +100,10 @@ namespace gargantuan {
 		StackValue<Instance::Pointer>::Push(L, game);
 		lua_setglobal(L, "game");
 
-		// luaL_sandbox(L);
+		CompileOptions = lua_CompileOptions{
+			.vectorLib = "Vector3.new",
+			.vectorType = "Vector3",
+		};
 	}
 
 	void ScriptEngine::DumpStack(lua_State *L) {
@@ -192,10 +196,6 @@ namespace gargantuan {
 				++it;
 				break;
 			}
-		}
-
-		for (auto &module : ModuleQueue) {
-			module->Step(L);
 		}
 	}
 } // namespace gargantuan
