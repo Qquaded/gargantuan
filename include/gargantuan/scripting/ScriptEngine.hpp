@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Compiler.h>
@@ -8,11 +9,17 @@
 #include <luacode.h>
 #include <lualib.h>
 #include <memory>
-#include <tuple>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace gargantuan {
+	class Script;
+	class ModuleScript;
+
 	int OpenLibBase(lua_State *L);
-	int OpenLibTask(lua_State *L, ThreadEngine *threadEngine);
+	int OpenLibRequire(lua_State *L);
+	int OpenLibTask(lua_State *L);
 
 	int OpenLibAxes(lua_State *L);
 	int OpenLibCFrame(lua_State *L);
@@ -44,13 +51,17 @@ namespace gargantuan {
 
 		lua_State *L = nullptr;
 		ThreadEngine Threads;
+		lua_CompileOptions CompileOptions;
+		std::unordered_set<std::shared_ptr<Script>> ScriptQueue;
 
-		std::tuple<char *, size_t> CompileBytecode(std::string contents);
-		std::tuple<char *, size_t> CompileBytecodeFromFile(const char *filepath);
-		lua_State *ThreadFromBytecode(char *bytecode, size_t bytecodeSize, const char *chunkName);
-		lua_State *ThreadFromBytecode(std::tuple<char *, size_t> &bytecodeResult, const char *chunkName);
+		std::shared_ptr<gargantuan::DataModel> DataModel;
+		Instance::Pointer RequireCurrentInstance = nullptr;
+		std::unordered_map<std::string, Instance::Pointer> RequirePathCache;
+		Instance::Pointer FindRequiredInstanceByPath(const char *path);
 
 		void Step();
+
+		static ScriptEngine *Get(lua_State *L);
 		static void DumpStack(lua_State *L);
 	};
-} // namespace gargantuan
+}

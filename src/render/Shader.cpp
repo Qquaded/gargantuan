@@ -1,5 +1,5 @@
 #include "gargantuan/render/Shader.hpp"
-#include "gargantuan/Paths.hpp"
+#include "gargantuan/filesystem/Paths.hpp"
 
 #include <SDL3/SDL.h>
 

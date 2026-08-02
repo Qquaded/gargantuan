@@ -16,6 +16,7 @@
 #include <type_traits>
 
 namespace gargantuan {
+	// TODO: Move much of this into DataModel
 	struct Engine {
 	  public:
 		std::shared_ptr<DataModel> DataModel;

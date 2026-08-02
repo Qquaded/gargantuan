@@ -2,13 +2,17 @@
 #include "gargantuan/Log.hpp"
 #include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/FileLink.hpp"
+#include "gargantuan/classes/ModuleScript.hpp"
+#include "gargantuan/classes/Script.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_events.h>
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <lua.h>
 #include <memory>
@@ -21,6 +25,40 @@ namespace gargantuan {
 		  WorldRoot(std::static_pointer_cast<gargantuan::WorldRoot>(Workspace)),
 		  RunService(GetService<gargantuan::RunService>()),
 		  UserInputService(GetService<gargantuan::UserInputService>()) {
+
+		auto descendantAdded = [this](Instance::Pointer inst) {
+			if (inst->IsClass<gargantuan::Script>()) {
+				auto script = std::static_pointer_cast<gargantuan::Script>(inst);
+				this->Script->ScriptQueue.insert(script);
+				inst->Destroying->Once([ScriptEngine = this->Script, script](std::monostate _) {
+					if (ScriptEngine->ScriptQueue.contains(script)) ScriptEngine->ScriptQueue.erase(script);
+				});
+			}
+
+			if (inst->IsClass<gargantuan::FileLink>()) {
+				auto link = std::static_pointer_cast<gargantuan::FileLink>(inst);
+				auto relativePath = link->Path;
+				auto absolutePath = std::filesystem::absolute(this->DataModel->Root / relativePath);
+				G_LOG_INFO(
+					"Got file link: %s %s %s", inst->GetFullName().c_str(), absolutePath.c_str(), relativePath.c_str()
+				);
+				link->Synchronize(absolutePath);
+			}
+		};
+
+		auto descendantRemoved = [this](Instance::Pointer inst) {
+			if (inst->IsClass<gargantuan::Script>()) {
+				auto script = std::static_pointer_cast<gargantuan::Script>(inst);
+				if (Script->ScriptQueue.contains(script)) Script->ScriptQueue.erase(script);
+			}
+		};
+
+		DataModel->DescendantAdded->Connect(descendantAdded);
+		DataModel->DescendantRemoved->Connect(descendantRemoved);
+		for (auto &descendant : DataModel->GetDescendants()) {
+			descendantAdded(descendant);
+		}
+
 		G_LOG_INFO("Constructed engine");
 	}
 

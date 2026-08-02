@@ -68,10 +68,10 @@ Projects will initially have:
 Studio progress:
 
 - [x] `.instance.json` format
-- [ ] `.instance.bin` format
 - [x] Load projects by CLI
-- [ ] New project flow
 - [x] Opens existing projects
+- [ ] Filelinking (see: devlogs, prerequisite for Fluid library & etc)
+- [ ] New project flow
 - [ ] Implement UI primitives
 - [ ] Widgets
 - [ ] Docking
@@ -79,7 +79,6 @@ Studio progress:
 - [ ] Ribbon bar
 - [ ] Settings plugin
 - [ ] Explorer plugin
-- [ ] Filelinking (see: devlogs)
 - [ ] Properties plugin
 - [ ] Console plugin
 - [ ] Building tool plugin
@@ -87,10 +86,11 @@ Studio progress:
 
 #### Scripting
 
+- [ ] ProcessService (great for Lest and friends!)
 - [ ] Implement the remaining data types to API parity
 - [ ] ScriptSecurity enum, tentatively: None, Plugin, Studio, Internal
-- [ ] `require()` implementation with user-provided require aliases
-- [ ] `@game/...` maps to requiring `DataModel...`
+- [x] `require()` implementation with user-provided require aliases
+- [x] `@game/...` maps to requiring `DataModel...`
 - [ ] Implement `@std/test` from Lute
 - [ ] Implement the assortment of Lute stdlibs
 - [ ] Implement code modifications with `@std/syntax`
@@ -138,6 +138,7 @@ Studio progress:
 
 #### Studio
 
+- [ ] `.instance.bin` format
 - [ ] Compile projects into executables
 - [ ] Implement client-server boundaries (run two Gargantuans at once for now)
 - [ ] Datastores

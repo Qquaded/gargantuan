@@ -6,14 +6,15 @@
 namespace gargantuan {
 	G_INSTANCE_ABSTRACT_IMPL(
 		BasePart,
+		.Description = "Abstract class for workspace objects that physically interact.",
 		.Properties = {
-			{"Anchored", Property::fromMember<&BasePart::Anchored>(true, true)},
-			{"CanCollide", Property::fromMember<&BasePart::CanCollide>(true, true)},
-			{"CastShadow", Property::fromMember<&BasePart::CastShadow>(true, true)},
-			{"CFrame", Property::fromMember<&BasePart::CFrame>(true, true)},
-			{"Color", Property::fromMember<&BasePart::Color>(true, true)},
-			{"Size", Property::fromMember<&BasePart::Size>(true, true)},
-			{"Transparency", Property::fromMember<&BasePart::Transparency>(true, true)},
+			{"Anchored", Property::fromMember<&BasePart::Anchored>(true, true).SetSerializable()},
+			{"CanCollide", Property::fromMember<&BasePart::CanCollide>(true, true).SetSerializable()},
+			{"CastShadow", Property::fromMember<&BasePart::CastShadow>(true, true).SetSerializable()},
+			{"CFrame", Property::fromMember<&BasePart::CFrame>(true, true).SetSerializable()},
+			{"Color", Property::fromMember<&BasePart::Color>(true, true).SetSerializable()},
+			{"Size", Property::fromMember<&BasePart::Size>(true, true).SetSerializable()},
+			{"Transparency", Property::fromMember<&BasePart::Transparency>(true, true).SetSerializable()},
 			{
 				"Position",
 				Property::fromReadWrite<glm::vec3>(

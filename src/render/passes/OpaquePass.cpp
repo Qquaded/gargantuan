@@ -1,3 +1,5 @@
+#include "gargantuan/Log.hpp"
+#include <string>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include "gargantuan/render/PipelineBuilder.hpp"

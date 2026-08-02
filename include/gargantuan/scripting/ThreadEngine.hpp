@@ -36,8 +36,6 @@ namespace gargantuan {
 		void QueueScheduledTask(lua_State *thread, ScheduledTask::Type type, double delaySeconds, int argumentCount);
 		void QueueDeferredTask(lua_State *thread, int argumentCount);
 
-		static ThreadEngine *Get(lua_State *L);
-
 	  private:
 		lua_State *L;
 

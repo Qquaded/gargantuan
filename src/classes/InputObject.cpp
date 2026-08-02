@@ -10,6 +10,7 @@
 namespace gargantuan {
 	G_INSTANCE_IMPL(
 		InputObject,
+		.Description = "Describes a user input occuring at an instant.",
 		.Properties =
 			{
 				{"Delta", Property::fromMember<&InputObject::Delta>(true, false)},

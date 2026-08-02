@@ -1,8 +1,15 @@
 #include "gargantuan/scripting/ScriptEngine.hpp"
+
+#include <Luau/Require.h>
 #include <lua.h>
 
 namespace gargantuan {
 	int OpenLibBase(lua_State *L) {
+		auto scriptEngine = ScriptEngine::Get(L);
+
+		StackValue<Instance::Pointer>::Push(L, scriptEngine->DataModel);
+		lua_setglobal(L, "game");
+
 		lua_createtable(L, 0, 0);
 		{
 			lua_pushliteral(L, "gargantuan");

@@ -1,5 +1,7 @@
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/Log.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Axes.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
@@ -17,13 +19,17 @@
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
+#include <cstring>
 #include <lua.h>
+#include <luacode.h>
 #include <lualib.h>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 namespace gargantuan {
+
 	struct Lib {
 		std::string Label;
 		std::function<void(lua_State *L)> Open = nullptr;
@@ -31,8 +37,6 @@ namespace gargantuan {
 	};
 
 	static const Lib SCRIPT_LIBS[] = {
-		{"Base", OpenLibBase},
-
 		{"Axes", OpenLibAxes, Axes::CreateUserdataMetatable},
 		{"CFrame", OpenLibCFrame, CFrame::CreateUserdataMetatable},
 		{"Color3", OpenLibColor3, Color3::CreateUserdataMetatable},
@@ -57,31 +61,34 @@ namespace gargantuan {
 		{"TweenInfo", OpenLibTweenInfo, TweenInfo::CreateUserdataMetatable},
 		{"Vector2", OpenLibVector2, Vector2::CreateUserdataMetatable},
 		{"Vector3", OpenLibVector3},
+
+		{"Base", OpenLibBase},
+		{"Require", OpenLibRequire},
+		{"Task", OpenLibTask},
 	};
 
 	static thread_local lua_State *CurrentState = nullptr;
 
-	ScriptEngine::ScriptEngine(std::shared_ptr<DataModel> game) : L(luaL_newstate()), Threads(L) {
+	ScriptEngine::ScriptEngine(std::shared_ptr<gargantuan::DataModel> game)
+		: L(luaL_newstate()), Threads(L), DataModel(game) {
 		if (L == nullptr) {
 			throw std::runtime_error("Failed to instantiate Luau VM");
 		}
 
 		CurrentState = L;
 		Luau::assertHandler() = [](const char *expression, const char *file, int line, const char *function) -> int {
-			SDL_LogError(
-				SDL_LOG_CATEGORY_APPLICATION,
-				"Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s",
-				expression,
-				file,
-				line,
-				function
+			G_LOG_CRITICAL(
+				"Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function
 			);
 			if (CurrentState) ScriptEngine::DumpStack(CurrentState);
 			assert(false);
 		};
 
+		lua_pushstring(L, "gargantuan::ScriptEngine");
+		lua_pushlightuserdata(L, this);
+		lua_settable(L, LUA_REGISTRYINDEX);
+
 		luaL_openlibs(L);
-		OpenLibTask(L, &Threads);
 		for (const auto &[name, open, metatable] : SCRIPT_LIBS) {
 			SDL_Log("Opening library %s", name.c_str());
 			if (metatable) metatable(L);
@@ -89,39 +96,12 @@ namespace gargantuan {
 		}
 		SDL_Log("ScriptEngine finished opening libraries");
 
-		StackValue<Instance::Pointer>::Push(L, game);
-		lua_setglobal(L, "game");
+		CompileOptions = lua_CompileOptions{
+			.vectorLib = "Vector3",
+			.vectorCtor = "new",
+			.vectorType = "Vector3",
+		};
 	}
-
-	std::tuple<char *, size_t> ScriptEngine::CompileBytecode(std::string contents) {
-		size_t bytecodeSize;
-		char *bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
-		return {bytecode, bytecodeSize};
-	};
-
-	std::tuple<char *, size_t> ScriptEngine::CompileBytecodeFromFile(const char *filepath) {
-		size_t fileSize;
-		void *code = SDL_LoadFile(filepath, &fileSize);
-
-		if (code == nullptr) throw std::runtime_error(std::format("Failed to load {}", filepath));
-
-		std::string contents((char *)code, fileSize);
-		SDL_free(code);
-
-		return CompileBytecode(contents);
-	};
-
-	lua_State *ScriptEngine::ThreadFromBytecode(char *bytecode, size_t bytecodeSize, const char *chunkName) {
-		auto thread = lua_newthread(L);
-		luau_load(thread, chunkName, bytecode, bytecodeSize, 0);
-		luaL_sandbox(thread);
-		return thread;
-	};
-
-	lua_State *ScriptEngine::ThreadFromBytecode(std::tuple<char *, size_t> &bytecodeResult, const char *chunkName) {
-		auto [bytecode, bytecodeSize] = bytecodeResult;
-		return ThreadFromBytecode(bytecode, bytecodeSize, chunkName);
-	};
 
 	void ScriptEngine::DumpStack(lua_State *L) {
 		int stackSize = lua_gettop(L);
@@ -181,7 +161,59 @@ namespace gargantuan {
 		}
 	}
 
+	ScriptEngine *ScriptEngine::Get(lua_State *L) {
+		lua_pushstring(L, "gargantuan::ScriptEngine");
+		lua_gettable(L, LUA_REGISTRYINDEX);
+
+		auto *engine = static_cast<ScriptEngine *>(lua_tolightuserdata(L, -1));
+		lua_pop(L, 1);
+
+		if (!engine) luaL_error(L, "Missing gargantuan::ScriptEngine (Internal error)");
+		return engine;
+	}
+
+	Instance::Pointer ScriptEngine::FindRequiredInstanceByPath(const char *rawPath) {
+		G_LOG_INFO("Attempting to find required instance %s", rawPath);
+
+		if (!rawPath || !DataModel || std::strcmp(rawPath, "\0") == 0) return nullptr;
+
+		std::string path(rawPath);
+		std::vector<const char *> segments;
+		std::string currentSegment;
+		for (char &currentCharacter : path) {
+			if (currentCharacter == '/' || currentCharacter == '\\') {
+				segments.emplace_back(currentSegment.c_str());
+				currentSegment.clear();
+			} else {
+				currentSegment += currentCharacter;
+			}
+		}
+
+		Instance::Pointer currentInstance;
+		return nullptr;
+	}
+
 	void ScriptEngine::Step() {
 		Threads.Step();
+
+		for (auto it = ScriptQueue.begin(); it != ScriptQueue.end();) {
+			auto script = *it;
+			auto status = script->Step(L);
+
+			switch (status) {
+			case ScriptStatus::Error:
+				G_LOG_CRITICAL("%s", script->ErrorMessage.c_str());
+				[[fallthrough]];
+
+			case ScriptStatus::Finished:
+			case ScriptStatus::Disabled:
+				it = ScriptQueue.erase(it);
+				break;
+
+			default:
+				++it;
+				break;
+			}
+		}
 	}
 } // namespace gargantuan

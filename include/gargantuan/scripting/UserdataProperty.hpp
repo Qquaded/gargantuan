@@ -5,7 +5,6 @@
 #include <any>
 #include <functional>
 #include <lualib.h>
-#include <string>
 #include <string_view>
 
 namespace gargantuan {

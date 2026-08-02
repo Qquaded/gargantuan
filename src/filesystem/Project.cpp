@@ -1,4 +1,4 @@
-#include "gargantuan/Project.hpp"
+#include "gargantuan/filesystem/Project.hpp"
 #include "gargantuan/assets/InstanceSerialization.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 
@@ -114,7 +114,9 @@ namespace gargantuan {
 				)
 			);
 		} else {
-			return std::static_pointer_cast<DataModel>(deserialized.Instance);
+			auto game = std::static_pointer_cast<DataModel>(deserialized.Instance);
+			game->Root = Root;
+			return game;
 		}
 	};
 }
