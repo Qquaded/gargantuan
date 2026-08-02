@@ -31,14 +31,6 @@ namespace gargantuan {
 					if (ScriptEngine->ScriptQueue.contains(script)) ScriptEngine->ScriptQueue.erase(script);
 				});
 			}
-
-			if (inst->IsClass<gargantuan::ModuleScript>()) {
-				auto module = std::static_pointer_cast<gargantuan::ModuleScript>(inst);
-				this->Script->ModuleQueue.insert(module);
-				inst->Destroying->Once([ScriptEngine = this->Script, module](std::monostate _) {
-					if (ScriptEngine->ModuleQueue.contains(module)) ScriptEngine->ModuleQueue.erase(module);
-				});
-			};
 		};
 
 		auto descendantRemoved = [this](Instance::Pointer inst) {
@@ -46,11 +38,6 @@ namespace gargantuan {
 				auto script = std::static_pointer_cast<gargantuan::Script>(inst);
 				if (Script->ScriptQueue.contains(script)) Script->ScriptQueue.erase(script);
 			}
-
-			if (inst->IsClass<gargantuan::ModuleScript>()) {
-				auto module = std::static_pointer_cast<gargantuan::ModuleScript>(inst);
-				if (Script->ModuleQueue.contains(module)) Script->ModuleQueue.erase(module);
-			};
 		};
 
 		DataModel->DescendantAdded->Connect(descendantAdded);

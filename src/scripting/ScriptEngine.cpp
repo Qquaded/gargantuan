@@ -19,12 +19,14 @@
 #include <Luau/Compiler.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
+#include <cstring>
 #include <lua.h>
 #include <luacode.h>
 #include <lualib.h>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 namespace gargantuan {
 
@@ -35,10 +37,6 @@ namespace gargantuan {
 	};
 
 	static const Lib SCRIPT_LIBS[] = {
-		{"Base", OpenLibBase},
-		{"Require", OpenLibRequire},
-		{"Task", OpenLibTask},
-
 		{"Axes", OpenLibAxes, Axes::CreateUserdataMetatable},
 		{"CFrame", OpenLibCFrame, CFrame::CreateUserdataMetatable},
 		{"Color3", OpenLibColor3, Color3::CreateUserdataMetatable},
@@ -63,6 +61,10 @@ namespace gargantuan {
 		{"TweenInfo", OpenLibTweenInfo, TweenInfo::CreateUserdataMetatable},
 		{"Vector2", OpenLibVector2, Vector2::CreateUserdataMetatable},
 		{"Vector3", OpenLibVector3},
+
+		{"Base", OpenLibBase},
+		{"Require", OpenLibRequire},
+		{"Task", OpenLibTask},
 	};
 
 	static thread_local lua_State *CurrentState = nullptr;
@@ -168,6 +170,27 @@ namespace gargantuan {
 
 		if (!engine) luaL_error(L, "Missing gargantuan::ScriptEngine (Internal error)");
 		return engine;
+	}
+
+	Instance::Pointer ScriptEngine::FindRequiredInstanceByPath(const char *rawPath) {
+		G_LOG_INFO("Attempting to find required instance %s", rawPath);
+
+		if (!rawPath || !DataModel || std::strcmp(rawPath, "\0") == 0) return nullptr;
+
+		std::string path(rawPath);
+		std::vector<const char *> segments;
+		std::string currentSegment;
+		for (char &currentCharacter : path) {
+			if (currentCharacter == '/' || currentCharacter == '\\') {
+				segments.emplace_back(currentSegment.c_str());
+				currentSegment.clear();
+			} else {
+				currentSegment += currentCharacter;
+			}
+		}
+
+		Instance::Pointer currentInstance;
+		return nullptr;
 	}
 
 	void ScriptEngine::Step() {

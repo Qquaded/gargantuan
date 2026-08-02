@@ -10,22 +10,33 @@
 #include <string>
 
 namespace gargantuan {
-	G_INSTANCE_ABSTRACT_IMPL(LuaSourceContainer);
+	G_INSTANCE_ABSTRACT_IMPL(
+		LuaSourceContainer,
+		.Properties = {
+			{"Source", Property::fromMember<&LuaSourceContainer::Source>(true, true).SetSerializable()},
+		}
+	);
 
-	std::optional<std::string> LuaSourceContainer::CompileBytecode(lua_CompileOptions *options) {
-		if (BytecodeCompiled) return std::nullopt;
+	void LuaSourceContainer::CompileBytecode(lua_CompileOptions *options) {
+		if (BytecodeCompileStatus != BytecodeCompileStatus::Uncompiled) return;
 
-		auto rawBytecode = luau_compile(Source.c_str(), Source.length(), options, &BytecodeSize);
-		if (rawBytecode == nullptr) return std::format("Failed to compile script chunk %s", ChunkName.c_str());
+		char *rawBytecode = luau_compile(Source.c_str(), Source.length(), options, &BytecodeSize);
 
-		BytecodeCompiled = true;
+		if (!rawBytecode && BytecodeSize == 0) {
+			BytecodeCompileStatus = BytecodeCompileStatus::Error;
+			BytecodeCompileError = std::format("Failed to compile: {}", std::string(rawBytecode, BytecodeSize));
+			return;
+		}
+
+		BytecodeCompileStatus = BytecodeCompileStatus::Success;
 		Bytecode.assign(rawBytecode, rawBytecode + BytecodeSize);
 		std::free(rawBytecode);
-		return std::nullopt;
 	};
 
 	std::optional<std::string> LuaSourceContainer::LoadIntoState(lua_State *L) {
-		if (!BytecodeCompiled) return "Bytecode must be compiled prior to LuaSourceContainer::LoadIntoState";
+		if (BytecodeCompileStatus != BytecodeCompileStatus::Success) {
+			return "Bytecode must be successfully compiled prior to LuaSourceContainer::LoadIntoState";
+		};
 
 		StackValue<Instance::Pointer>::Push(L, shared_from_this());
 		lua_setglobal(L, "script");
@@ -33,7 +44,7 @@ namespace gargantuan {
 		luaL_sandboxthread(L);
 
 		if (luau_load(L, ChunkName.c_str(), Bytecode.data(), BytecodeSize, 0) != LUA_OK) {
-			return std::format("Failed to load %s: %s", ChunkName.c_str(), lua_tostring(Thread, -1));
+			return std::format("Failed to load %s: %s", ChunkName.c_str(), lua_tostring(L, -1));
 		};
 
 		return std::nullopt;

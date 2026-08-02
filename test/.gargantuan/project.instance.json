@@ -20,6 +20,26 @@
 						"Size": { "Vector3": [512.0, 20.0, 512.0] },
 						"Transparency": { "Float": 0.0 }
 					}
+				},
+				{
+					"Children": [],
+					"ClassName": "Script",
+					"Name": "TestScript",
+					"Properties": {
+						"Source": {
+							"String": "local test = require('@game/Workspace/Module'); print('got:', test)"
+						}
+					}
+				},
+				{
+					"Children": [],
+					"ClassName": "ModuleScript",
+					"Name": "Module",
+					"Properties": {
+						"Source": {
+							"String": "return 'foo'"
+						}
+					}
 				}
 			],
 			"ClassName": "Workspace",

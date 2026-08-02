@@ -1,11 +1,11 @@
-#pragma once
-
+#include "gargantuan/classes/LuaSourceContainer.hpp"
 #include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 
 #include <Luau/Require.h>
 #include <cstring>
 #include <format>
+#include <lua.h>
 #include <lualib.h>
 #include <memory>
 #include <string>
@@ -21,7 +21,7 @@ namespace gargantuan {
 		return WRITE_SUCCESS;
 	}
 
-	static void InitRequireConfiguration(luarequire_Configuration *config) {
+	static void LibRequire_InitConfiguration(luarequire_Configuration *config) {
 		config->is_require_allowed = [](lua_State *L, void *ctx, const char *requirer_chunkname) { return true; };
 
 		config->reset = [](lua_State *L, void *ctx, const char *requirer_chunkname) -> luarequire_NavigateResult {
@@ -43,7 +43,7 @@ namespace gargantuan {
 		config->to_alias_override = [](lua_State *L, void *ctx, const char *alias) -> luarequire_NavigateResult {
 			auto scriptEngine = static_cast<ScriptEngine *>(ctx);
 
-			if (std::strcmp(alias, "game")) {
+			if (std::strcmp(alias, "game") == 0) {
 				scriptEngine->RequireCurrentInstance = scriptEngine->DataModel;
 				return NAVIGATE_SUCCESS;
 			}
@@ -106,27 +106,50 @@ namespace gargantuan {
 			return CONFIG_ABSENT;
 		};
 
+		config->get_config =
+			[](lua_State *L, void *ctx, char *buffer, size_t buffer_size, size_t *size_out) -> luarequire_WriteResult {
+			// do absolutely fucking nothing
+			return WRITE_FAILURE;
+		};
+
 		config->load =
 			[](lua_State *L, void *ctx, const char *path, const char *chunkname, const char *loadname) -> int {
 			auto scriptEngine = static_cast<ScriptEngine *>(ctx);
-			if (!scriptEngine->RequireCurrentInstance) luaL_error(L, "No instance to import");
+
+			if (!scriptEngine->RequireCurrentInstance) luaL_error(L, "Cannot require nil instance");
 			if (!scriptEngine->RequireCurrentInstance->IsClass<ModuleScript>()) {
 				luaL_error(
 					L,
-					"Cannot require %s because itis not a ModuleScript",
+					"Cannot require %s because it is not a ModuleScript",
 					scriptEngine->RequireCurrentInstance->GetFullName().c_str()
 				);
 			};
 
 			auto module = static_pointer_cast<gargantuan::ModuleScript>(scriptEngine->RequireCurrentInstance);
 
-			return 0;
+			module->CompileBytecode(&scriptEngine->CompileOptions);
+			if (module->BytecodeCompileStatus != BytecodeCompileStatus::Success) {
+				lua_pushstring(L, module->BytecodeCompileError.value().c_str());
+				lua_error(L);
+			}
+
+			if (luau_load(L, chunkname, module->Bytecode.data(), module->BytecodeSize, 0) != LUA_OK) {
+				lua_error(L);
+				return 0;
+			}
+
+			if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
+				lua_error(L);
+				return 0;
+			}
+
+			return 1;
 		};
 	}
 
 	int OpenLibRequire(lua_State *L) {
 		void *scriptEngine = ScriptEngine::Get(L);
-		luaopen_require(L, InitRequireConfiguration, scriptEngine);
+		luaopen_require(L, LibRequire_InitConfiguration, scriptEngine);
 		return 0;
 	}
 }

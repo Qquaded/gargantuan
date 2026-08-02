@@ -53,7 +53,6 @@ namespace gargantuan {
 		ThreadEngine Threads;
 		lua_CompileOptions CompileOptions;
 		std::unordered_set<std::shared_ptr<Script>> ScriptQueue;
-		std::unordered_set<std::shared_ptr<ModuleScript>> ModuleQueue;
 
 		std::shared_ptr<gargantuan::DataModel> DataModel;
 		Instance::Pointer RequireCurrentInstance = nullptr;

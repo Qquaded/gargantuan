@@ -6,11 +6,14 @@
 #include <lua.h>
 #include <luacode.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <vector>
 
 namespace gargantuan {
+	enum class BytecodeCompileStatus : int { Uncompiled, Success, Error };
+
 	class LuaSourceContainer : public Instance {
 	  public:
 		G_INSTANCE_DECL(LuaSourceContainer);
@@ -18,12 +21,12 @@ namespace gargantuan {
 		std::string ChunkName = GetFullName();
 		std::string Source = "";
 
-		bool BytecodeCompiled = false;
 		std::vector<char> Bytecode;
 		size_t BytecodeSize;
-		lua_State *Thread;
+		BytecodeCompileStatus BytecodeCompileStatus = BytecodeCompileStatus::Uncompiled;
+		std::optional<std::string> BytecodeCompileError;
 
-		[[nodiscard]] std::optional<std::string> CompileBytecode(lua_CompileOptions *options = {});
+		void CompileBytecode(lua_CompileOptions *options = {});
 		[[nodiscard]] std::optional<std::string> LoadIntoState(lua_State *L);
 	};
 

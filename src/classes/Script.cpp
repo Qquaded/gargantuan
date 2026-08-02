@@ -33,8 +33,8 @@ namespace gargantuan {
 	}
 
 	void Script::Cleanup() {
-		auto L = lua_mainthread(Thread);
-		if (L && Thread && ThreadReference) {
+		if (Thread && ThreadReference) {
+			auto L = lua_mainthread(Thread);
 			lua_unref(L, ThreadReference);
 			ThreadReference = LUA_NOREF;
 			Thread = nullptr;
@@ -57,14 +57,12 @@ namespace gargantuan {
 		if (!ShouldStep()) return Status;
 		Status = ScriptStatus::Running;
 
-		if (!BytecodeCompiled) {
-			auto scriptEngine = ScriptEngine::Get(L);
-			auto compileError = CompileBytecode(&scriptEngine->CompileOptions);
-			if (compileError.has_value()) {
-				Status = ScriptStatus::Error;
-				ErrorMessage = compileError.value();
-				return Status;
-			}
+		auto scriptEngine = ScriptEngine::Get(L);
+		CompileBytecode(&scriptEngine->CompileOptions);
+		if (BytecodeCompileStatus != BytecodeCompileStatus::Success) {
+			Status = ScriptStatus::Error;
+			ErrorMessage = BytecodeCompileError.value();
+			return Status;
 		}
 
 		if (!Thread) {
@@ -96,7 +94,7 @@ namespace gargantuan {
 
 		default:
 			Status = ScriptStatus::Error;
-			ErrorMessage = lua_tostring(L, -1);
+			ErrorMessage = lua_tostring(Thread, -1);
 			break;
 		}
 
