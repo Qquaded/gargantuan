@@ -105,7 +105,7 @@ namespace gargantuan {
 		{nullptr, nullptr}
 	};
 
-	int OpenLibTask(lua_State *L, ThreadEngine *threadEngine) {
+	int OpenLibTask(lua_State *L) {
 		luaL_register(L, "task", LibTask);
 		return 0;
 	}

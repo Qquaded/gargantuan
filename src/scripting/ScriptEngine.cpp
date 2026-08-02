@@ -36,6 +36,8 @@ namespace gargantuan {
 
 	static const Lib SCRIPT_LIBS[] = {
 		{"Base", OpenLibBase},
+		{"Require", OpenLibRequire},
+		{"Task", OpenLibTask},
 
 		{"Axes", OpenLibAxes, Axes::CreateUserdataMetatable},
 		{"CFrame", OpenLibCFrame, CFrame::CreateUserdataMetatable},
@@ -65,20 +67,16 @@ namespace gargantuan {
 
 	static thread_local lua_State *CurrentState = nullptr;
 
-	ScriptEngine::ScriptEngine(std::shared_ptr<DataModel> game) : L(luaL_newstate()), Threads(L) {
+	ScriptEngine::ScriptEngine(std::shared_ptr<gargantuan::DataModel> game)
+		: L(luaL_newstate()), Threads(L), DataModel(game) {
 		if (L == nullptr) {
 			throw std::runtime_error("Failed to instantiate Luau VM");
 		}
 
 		CurrentState = L;
 		Luau::assertHandler() = [](const char *expression, const char *file, int line, const char *function) -> int {
-			SDL_LogError(
-				SDL_LOG_CATEGORY_APPLICATION,
-				"Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s",
-				expression,
-				file,
-				line,
-				function
+			G_LOG_CRITICAL(
+				"Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function
 			);
 			if (CurrentState) ScriptEngine::DumpStack(CurrentState);
 			assert(false);
@@ -89,7 +87,6 @@ namespace gargantuan {
 		lua_settable(L, LUA_REGISTRYINDEX);
 
 		luaL_openlibs(L);
-		OpenLibTask(L, &Threads);
 		for (const auto &[name, open, metatable] : SCRIPT_LIBS) {
 			SDL_Log("Opening library %s", name.c_str());
 			if (metatable) metatable(L);
@@ -97,11 +94,9 @@ namespace gargantuan {
 		}
 		SDL_Log("ScriptEngine finished opening libraries");
 
-		StackValue<Instance::Pointer>::Push(L, game);
-		lua_setglobal(L, "game");
-
 		CompileOptions = lua_CompileOptions{
-			.vectorLib = "Vector3.new",
+			.vectorLib = "Vector3",
+			.vectorCtor = "new",
 			.vectorType = "Vector3",
 		};
 	}

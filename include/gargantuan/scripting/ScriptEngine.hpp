@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Compiler.h>
@@ -8,6 +9,8 @@
 #include <luacode.h>
 #include <lualib.h>
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace gargantuan {
@@ -15,7 +18,8 @@ namespace gargantuan {
 	class ModuleScript;
 
 	int OpenLibBase(lua_State *L);
-	int OpenLibTask(lua_State *L, ThreadEngine *threadEngine);
+	int OpenLibRequire(lua_State *L);
+	int OpenLibTask(lua_State *L);
 
 	int OpenLibAxes(lua_State *L);
 	int OpenLibCFrame(lua_State *L);
@@ -50,6 +54,11 @@ namespace gargantuan {
 		lua_CompileOptions CompileOptions;
 		std::unordered_set<std::shared_ptr<Script>> ScriptQueue;
 		std::unordered_set<std::shared_ptr<ModuleScript>> ModuleQueue;
+
+		std::shared_ptr<gargantuan::DataModel> DataModel;
+		Instance::Pointer RequireCurrentInstance = nullptr;
+		std::unordered_map<std::string, Instance::Pointer> RequirePathCache;
+		Instance::Pointer FindRequiredInstanceByPath(const char *path);
 
 		void Step();
 
