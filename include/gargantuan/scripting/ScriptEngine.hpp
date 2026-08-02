@@ -51,6 +51,7 @@ namespace gargantuan {
 		lua_State *ThreadFromBytecode(std::tuple<char *, size_t> &bytecodeResult, const char *chunkName);
 
 		void Step();
+		static ScriptEngine *Get(lua_State *L);
 		static void DumpStack(lua_State *L);
 	};
-} // namespace gargantuan
+}

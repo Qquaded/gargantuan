@@ -5,16 +5,29 @@
 #include "gargantuan/reflection/Enums.hpp"
 
 #include <lua.h>
+#include <string>
 
 namespace gargantuan {
 	G_ENUM(RunContext, Client, Server);
+	enum class ScriptStatus : int { Disabled, Idle, Running, Error, Finished };
 
 	class Script : public LuaSourceContainer {
+	  public:
 		G_INSTANCE_DECL(Script);
 
-		bool Enabled = true;
-		static void SetEnabled(Script *self);
+		Script();
 
+		Enums::RunContext RunContext = Enums::RunContext::Client;
+		static bool IsEnabled(Script *self);
+		static void SetEnabled(Script *self, bool enabled);
+
+		ScriptStatus Status = ScriptStatus::Idle;
+		std::string ErrorMessage = "";
+		lua_State *Thread = nullptr;
 		int ThreadReference = LUA_NOREF;
+
+		void Cleanup();
+		bool ShouldStep();
+		ScriptStatus Step(lua_State *L);
 	};
 }

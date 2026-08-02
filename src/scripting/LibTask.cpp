@@ -1,3 +1,4 @@
+#include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <lua.h>
@@ -47,8 +48,8 @@ namespace gargantuan {
 		int argumentsToPass;
 		lua_State *thread = GetThreadFromArgument(L, 1, argumentsToPass);
 
-		auto threadEngine = ThreadEngine::Get(L);
-		threadEngine->ResumeThread(thread, threadEngine->TakeThreadReference(thread), argumentsToPass);
+		auto scriptEngine = ScriptEngine::Get(L);
+		scriptEngine->Threads.ResumeThread(thread, scriptEngine->Threads.TakeThreadReference(thread), argumentsToPass);
 
 		return 1;
 	}
@@ -57,8 +58,8 @@ namespace gargantuan {
 		int argumentsToPass;
 		lua_State *thread = GetThreadFromArgument(L, 1, argumentsToPass);
 
-		auto threadEngine = ThreadEngine::Get(L);
-		threadEngine->QueueDeferredTask(thread, argumentsToPass);
+		auto scriptEngine = ScriptEngine::Get(L);
+		scriptEngine->Threads.QueueDeferredTask(thread, argumentsToPass);
 
 		return 1;
 	}
@@ -69,8 +70,8 @@ namespace gargantuan {
 		int argumentsToPass;
 		lua_State *thread = GetThreadFromArgument(L, 2, argumentsToPass);
 
-		auto threadEngine = ThreadEngine::Get(L);
-		threadEngine->QueueScheduledTask(
+		auto scriptEngine = ScriptEngine::Get(L);
+		scriptEngine->Threads.QueueScheduledTask(
 			thread, ThreadEngine::ScheduledTask::Type::Delay, delaySeconds, argumentsToPass
 		);
 
@@ -86,10 +87,10 @@ namespace gargantuan {
 	}
 
 	int LibTask_wait(lua_State *L) {
-		auto threadEngine = ThreadEngine::Get(L);
+		auto scriptEngine = ScriptEngine::Get(L);
 		double delaySeconds = luaL_optnumber(L, 1, 0.0f);
 		lua_settop(L, 0);
-		threadEngine->QueueScheduledTask(L, ThreadEngine::ScheduledTask::Type::Wait, delaySeconds, 1);
+		scriptEngine->Threads.QueueScheduledTask(L, ThreadEngine::ScheduledTask::Type::Wait, delaySeconds, 1);
 		return lua_yield(L, 0);
 	}
 

@@ -80,6 +80,10 @@ namespace gargantuan {
 			assert(false);
 		};
 
+		lua_pushstring(L, "gargantuan::ScriptEngine");
+		lua_pushlightuserdata(L, this);
+		lua_settable(L, LUA_REGISTRYINDEX);
+
 		luaL_openlibs(L);
 		OpenLibTask(L, &Threads);
 		for (const auto &[name, open, metatable] : SCRIPT_LIBS) {
@@ -179,6 +183,17 @@ namespace gargantuan {
 			L = nullptr;
 			CurrentState = nullptr;
 		}
+	}
+
+	ScriptEngine *ScriptEngine::Get(lua_State *L) {
+		lua_pushstring(L, "gargantuan::ScriptEngine");
+		lua_gettable(L, LUA_REGISTRYINDEX);
+
+		auto *engine = static_cast<ScriptEngine *>(lua_tolightuserdata(L, -1));
+		lua_pop(L, 1);
+
+		if (!engine) luaL_error(L, "Missing gargantuan::ScriptEngine (Internal error)");
+		return engine;
 	}
 
 	void ScriptEngine::Step() {
