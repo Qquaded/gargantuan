@@ -23,7 +23,7 @@ namespace gargantuan {
 		size_t BytecodeSize;
 		lua_State *Thread;
 
-		[[nodiscard]] std::optional<std::string> CompileBytecode(lua_CompileOptions *options);
+		[[nodiscard]] std::optional<std::string> CompileBytecode(lua_CompileOptions *options = {});
 		[[nodiscard]] std::optional<std::string> LoadIntoState(lua_State *L);
 	};
 

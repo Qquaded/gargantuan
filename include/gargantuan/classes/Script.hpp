@@ -18,8 +18,8 @@ namespace gargantuan {
 		Script();
 
 		Enums::RunContext RunContext = Enums::RunContext::Client;
-		static bool IsEnabled(Script *self);
-		static void SetEnabled(Script *self, bool enabled);
+		static bool IsEnabled(Instance *self);
+		static void SetEnabled(Instance *self, bool enabled);
 
 		ScriptStatus Status = ScriptStatus::Idle;
 		std::string ErrorMessage = "";

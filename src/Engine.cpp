@@ -2,6 +2,9 @@
 #include "gargantuan/Log.hpp"
 #include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/ModuleScript.hpp"
+#include "gargantuan/classes/Script.hpp"
+#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/UserInputService.hpp"
@@ -11,6 +14,7 @@
 #include <SDL3/SDL_events.h>
 #include <glm/glm.hpp>
 #include <lua.h>
+#include <luacode.h>
 #include <memory>
 
 namespace gargantuan {
@@ -20,6 +24,37 @@ namespace gargantuan {
 		  WorldRoot(std::static_pointer_cast<gargantuan::WorldRoot>(Workspace)),
 		  RunService(GetService<gargantuan::RunService>()),
 		  UserInputService(GetService<gargantuan::UserInputService>()) {
+
+		lua_CompileOptions compileOptions{
+			.vectorLib = "Vector3.new",
+			.vectorType = "Vector3",
+		};
+
+		auto descendantAdded = [this, &compileOptions](Instance::Pointer inst) {
+			if (inst->IsClass<gargantuan::Script>()) {
+				auto script = inst->Cast<gargantuan::Script>();
+
+				if (!script->BytecodeCompiled) {
+					auto compileError = script->CompileBytecode(&compileOptions);
+					if (compileError.has_value()) {
+						script->Status = ScriptStatus::Error;
+						script->ErrorMessage = compileError.value();
+					}
+				}
+
+				this->Script->ScriptQueue.insert(std::static_pointer_cast<gargantuan::Script>(inst));
+			};
+
+			if (inst->IsClass<gargantuan::ModuleScript>()) {
+				this->Script->ModuleQueue.insert(std::static_pointer_cast<gargantuan::ModuleScript>(inst));
+			};
+		};
+
+		DataModel->DescendantAdded->Connect(descendantAdded);
+		for (auto &descendant : DataModel->GetDescendants()) {
+			descendantAdded(descendant);
+		}
+
 		G_LOG_INFO("Constructed engine");
 	}
 

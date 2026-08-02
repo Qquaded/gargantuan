@@ -18,6 +18,7 @@ namespace gargantuan {
 		auto rawBytecode = luau_compile(Source.c_str(), Source.length(), options, &BytecodeSize);
 		if (rawBytecode == nullptr) return std::format("Failed to compile script chunk %s", ChunkName.c_str());
 
+		BytecodeCompiled = true;
 		Bytecode.assign(rawBytecode, rawBytecode + BytecodeSize);
 		std::free(rawBytecode);
 		return std::nullopt;
@@ -26,11 +27,12 @@ namespace gargantuan {
 	std::optional<std::string> LuaSourceContainer::LoadIntoState(lua_State *L) {
 		if (!BytecodeCompiled) return "Bytecode must be compiled prior to LuaSourceContainer::LoadIntoState";
 
-		StackValue<Instance::Pointer>::Push(Thread, shared_from_this());
-		lua_setglobal(Thread, "script");
+		StackValue<Instance::Pointer>::Push(L, shared_from_this());
+		lua_setglobal(L, "script");
 
-		luaL_sandbox(L);
-		if (luau_load(Thread, ChunkName.c_str(), Bytecode.data(), BytecodeSize, 0) != LUA_OK) {
+		luaL_sandboxthread(L);
+
+		if (luau_load(L, ChunkName.c_str(), Bytecode.data(), BytecodeSize, 0) != LUA_OK) {
 			return std::format("Failed to load %s: %s", ChunkName.c_str(), lua_tostring(Thread, -1));
 		};
 

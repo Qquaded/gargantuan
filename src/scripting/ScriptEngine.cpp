@@ -1,5 +1,7 @@
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/Log.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Axes.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
@@ -18,6 +20,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
 #include <lua.h>
+#include <luacode.h>
 #include <lualib.h>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
@@ -95,37 +98,9 @@ namespace gargantuan {
 
 		StackValue<Instance::Pointer>::Push(L, game);
 		lua_setglobal(L, "game");
+
+		// luaL_sandbox(L);
 	}
-
-	std::tuple<char *, size_t> ScriptEngine::CompileBytecode(std::string contents) {
-		size_t bytecodeSize;
-		char *bytecode = luau_compile(contents.c_str(), contents.length(), nullptr, &bytecodeSize);
-		return {bytecode, bytecodeSize};
-	};
-
-	std::tuple<char *, size_t> ScriptEngine::CompileBytecodeFromFile(const char *filepath) {
-		size_t fileSize;
-		void *code = SDL_LoadFile(filepath, &fileSize);
-
-		if (code == nullptr) throw std::runtime_error(std::format("Failed to load {}", filepath));
-
-		std::string contents((char *)code, fileSize);
-		SDL_free(code);
-
-		return CompileBytecode(contents);
-	};
-
-	lua_State *ScriptEngine::ThreadFromBytecode(char *bytecode, size_t bytecodeSize, const char *chunkName) {
-		auto thread = lua_newthread(L);
-		luau_load(thread, chunkName, bytecode, bytecodeSize, 0);
-		luaL_sandbox(thread);
-		return thread;
-	};
-
-	lua_State *ScriptEngine::ThreadFromBytecode(std::tuple<char *, size_t> &bytecodeResult, const char *chunkName) {
-		auto [bytecode, bytecodeSize] = bytecodeResult;
-		return ThreadFromBytecode(bytecode, bytecodeSize, chunkName);
-	};
 
 	void ScriptEngine::DumpStack(lua_State *L) {
 		int stackSize = lua_gettop(L);
@@ -198,5 +173,29 @@ namespace gargantuan {
 
 	void ScriptEngine::Step() {
 		Threads.Step();
+
+		for (auto it = ScriptQueue.begin(); it != ScriptQueue.end();) {
+			auto script = *it;
+			auto status = script->Step(L);
+
+			switch (status) {
+			case ScriptStatus::Error:
+				G_LOG_CRITICAL("%s", script->ErrorMessage.c_str());
+				[[fallthrough]];
+
+			case ScriptStatus::Finished:
+			case ScriptStatus::Disabled:
+				it = ScriptQueue.erase(it);
+				break;
+
+			default:
+				++it;
+				break;
+			}
+		}
+
+		for (auto &module : ModuleQueue) {
+			module->Step(L);
+		}
 	}
 } // namespace gargantuan

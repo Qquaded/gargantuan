@@ -1,7 +1,6 @@
-#pragma once
-
 #include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/reflection/InstanceClassRegistry.hpp"
+
 #include <lua.h>
 
 namespace gargantuan {

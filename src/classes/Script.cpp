@@ -16,11 +16,13 @@ namespace gargantuan {
 		Destroying->Connect([this](std::monostate _) { this->Cleanup(); });
 	}
 
-	bool Script::IsEnabled(Script *self) {
+	bool Script::IsEnabled(Instance *ptr) {
+		auto self = ptr->Cast<Script>();
 		return self->Status != ScriptStatus::Disabled;
 	}
 
-	void Script::SetEnabled(Script *self, bool enabled) {
+	void Script::SetEnabled(Instance *ptr, bool enabled) {
+		auto self = ptr->Cast<Script>();
 		if (self->Status == ScriptStatus::Disabled && enabled) {
 			self->Status = ScriptStatus::Idle;
 		} else if (self->Status != ScriptStatus::Disabled && !enabled) {
@@ -30,10 +32,10 @@ namespace gargantuan {
 	}
 
 	void Script::Cleanup() {
-		if (Thread) {
-			lua_unref(lua_mainthread(Thread), ThreadReference);
+		auto L = lua_mainthread(Thread);
+		if (L && Thread && ThreadReference) {
+			lua_unref(L, ThreadReference);
 			ThreadReference = LUA_NOREF;
-			lua_close(Thread);
 			Thread = nullptr;
 		}
 	}

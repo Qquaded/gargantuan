@@ -1,6 +1,8 @@
 #pragma once
 
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/ModuleScript.hpp"
+#include "gargantuan/classes/Script.hpp"
 #include "gargantuan/scripting/ThreadEngine.hpp"
 
 #include <Luau/Compiler.h>
@@ -8,7 +10,7 @@
 #include <luacode.h>
 #include <lualib.h>
 #include <memory>
-#include <tuple>
+#include <unordered_set>
 
 namespace gargantuan {
 	int OpenLibBase(lua_State *L);
@@ -44,13 +46,11 @@ namespace gargantuan {
 
 		lua_State *L = nullptr;
 		ThreadEngine Threads;
-
-		std::tuple<char *, size_t> CompileBytecode(std::string contents);
-		std::tuple<char *, size_t> CompileBytecodeFromFile(const char *filepath);
-		lua_State *ThreadFromBytecode(char *bytecode, size_t bytecodeSize, const char *chunkName);
-		lua_State *ThreadFromBytecode(std::tuple<char *, size_t> &bytecodeResult, const char *chunkName);
+		std::unordered_set<std::shared_ptr<Script>> ScriptQueue;
+		std::unordered_set<std::shared_ptr<ModuleScript>> ModuleQueue;
 
 		void Step();
+
 		static ScriptEngine *Get(lua_State *L);
 		static void DumpStack(lua_State *L);
 	};

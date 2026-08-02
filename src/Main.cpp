@@ -2,6 +2,7 @@
 #include "gargantuan/Log.hpp"
 #include "gargantuan/Project.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
 
 #include <SDL3/SDL.h>
@@ -61,31 +62,14 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 	} else if (program.is_used("--script")) {
-		// Scripts
-		// TODO: Wrap scripts into a LuaSourceContainer, then provide a script
-		// global like Roblox
 		auto path = program.get<std::string>("--script");
 
-		SDL_PathInfo pathInfo;
-		if (!SDL_GetPathInfo(path.c_str(), &pathInfo)) {
-			G_LOG_CRITICAL("Failed to read script %s: %s", path.c_str(), SDL_GetError());
-			return 1;
-		}
-
-		if (pathInfo.type != SDL_PATHTYPE_FILE) {
-			G_LOG_CRITICAL(
-				"Expected script %s to be a file, got a %s", path.c_str(), magic_enum::enum_name(pathInfo.type).data()
-			);
-			return 1;
-		}
-
-		auto game = std::make_shared<gargantuan::DataModel>();
-		engine = new gargantuan::Engine(game, renderer);
-
 		try {
-			auto bytecodeResult = engine->Script->CompileBytecodeFromFile(path.c_str());
-			auto scriptThread = engine->Script->ThreadFromBytecode(bytecodeResult, path.c_str());
-			engine->Script->Threads.QueueDeferredTask(scriptThread, 0);
+			auto game = std::make_shared<gargantuan::DataModel>();
+			engine = new gargantuan::Engine(game, renderer);
+
+			auto script = gargantuan::ScriptFromFile<gargantuan::Script>(path.c_str());
+			script->SetParent(engine->Workspace);
 		} catch (std::exception &e) {
 			G_LOG_CRITICAL("Failed to load script %s: %s", path.c_str(), e.what());
 			return 1;
