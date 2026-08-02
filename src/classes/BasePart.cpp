@@ -6,6 +6,7 @@
 namespace gargantuan {
 	G_INSTANCE_ABSTRACT_IMPL(
 		BasePart,
+		.Description = "Abstract class for workspace objects that physically interact.",
 		.Properties = {
 			{"Anchored", Property::fromMember<&BasePart::Anchored>(true, true).SetSerializable()},
 			{"CanCollide", Property::fromMember<&BasePart::CanCollide>(true, true).SetSerializable()},

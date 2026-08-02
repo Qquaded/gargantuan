@@ -17,6 +17,7 @@ namespace gargantuan {
 	struct InstanceClassDefinition {
 		std::string_view ClassName = "Instance";
 		std::shared_ptr<Instance> (*Constructor)();
+		std::string_view Description = "(No description provided.)";
 		std::optional<std::string_view> Superclass = "Instance";
 		std::unordered_map<std::string_view, UserdataProperty<Instance>> Properties = {};
 		std::unordered_map<std::string_view, UserdataMethod<Instance>> Methods = {};

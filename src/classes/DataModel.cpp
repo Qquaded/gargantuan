@@ -7,7 +7,11 @@
 #include "gargantuan/services/Workspace.hpp"
 
 namespace gargantuan {
-	G_INSTANCE_IMPL(DataModel, .Superclass = "ServiceProvider");
+	G_INSTANCE_IMPL(
+		DataModel,
+		.Description = "The root hierachy and service provider for Gargantuan games.",
+		.Superclass = "ServiceProvider"
+	);
 
 	const DataModel::ServiceDefinitions &DataModel::GetServiceDefinitions() const {
 		static const DataModel::ServiceDefinitions CONSTRUCTORS = {

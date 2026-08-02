@@ -2,6 +2,7 @@
 #include "gargantuan/Log.hpp"
 #include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/FileLink.hpp"
 #include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
@@ -11,6 +12,7 @@
 #include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <lua.h>
 #include <memory>
@@ -30,6 +32,16 @@ namespace gargantuan {
 				inst->Destroying->Once([ScriptEngine = this->Script, script](std::monostate _) {
 					if (ScriptEngine->ScriptQueue.contains(script)) ScriptEngine->ScriptQueue.erase(script);
 				});
+			}
+
+			if (inst->IsClass<gargantuan::FileLink>()) {
+				auto link = std::static_pointer_cast<gargantuan::FileLink>(inst);
+				auto relativePath = link->Path;
+				auto absolutePath = std::filesystem::absolute(this->DataModel->Root / relativePath);
+				G_LOG_INFO(
+					"Got file link: %s %s %s", inst->GetFullName().c_str(), absolutePath.c_str(), relativePath.c_str()
+				);
+				link->Synchronize(absolutePath);
 			}
 		};
 

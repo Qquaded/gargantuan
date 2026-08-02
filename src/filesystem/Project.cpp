@@ -114,7 +114,9 @@ namespace gargantuan {
 				)
 			);
 		} else {
-			return std::static_pointer_cast<DataModel>(deserialized.Instance);
+			auto game = std::static_pointer_cast<DataModel>(deserialized.Instance);
+			game->Root = Root;
+			return game;
 		}
 	};
 }

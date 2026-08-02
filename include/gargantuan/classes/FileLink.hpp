@@ -7,15 +7,24 @@
 
 #include "gargantuan/datatypes/Instance.hpp"
 
+#include <filesystem>
 #include <string>
 
 namespace gargantuan {
 	class FileLink : public Instance {
+	  public:
 		G_INSTANCE_DECL(FileLink);
 
 		std::string Path;
+		bool Synchronizing = false;
+		bool IgnoreErrors = false;
 		bool IgnoreUnknownDescendants = false;
 
-		void Synchronize();
+		// TODO: This syncs on engine start up. We should implement file
+		// watching.
+		//
+		// Also, Filesystem classes as a whole so we can support this in a
+		// --script session.
+		void Synchronize(const std::filesystem::path absolutePath);
 	};
 }

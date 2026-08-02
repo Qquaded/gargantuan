@@ -156,7 +156,7 @@ namespace gargantuan::InstanceSerialization {
 		for (int idx = 0; idx < segmentCount; idx++) {
 			auto segment = CurrentPath[idx];
 			stream << segment;
-			if (idx != segmentCount) stream << " -> ";
+			if (idx < segmentCount - 1) stream << " -> ";
 		}
 		return stream.str();
 	}
@@ -317,9 +317,11 @@ namespace gargantuan::InstanceSerialization {
 	std::optional<Instance::Pointer> TryDeserializeInstance(json contents, DeserializationState &state) {
 		auto name = contents["Name"];
 		if (!name.is_string()) {
-			state.PushError("Instance {} has an invalid Name field", state.FormatCurrentPath());
+			state.PushError("Child under {}has an invalid Name field", state.FormatCurrentPath());
 			return std::nullopt;
 		}
+
+		state.CurrentPath.push_back(name.get<std::string_view>());
 
 		auto properties = contents["Properties"];
 		if (!properties.is_object()) {
@@ -354,10 +356,6 @@ namespace gargantuan::InstanceSerialization {
 		instance->Name = name.get<std::string>();
 		for (auto &[key, property] : definition->AllProperties) {
 			G_LOG_INFO("Trying to deserialize %s of %s", key.data(), state.FormatCurrentPath().data());
-			if (key == "Parent") G_LOG_INFO("Is parent");
-			if (!properties.contains(key)) G_LOG_INFO("Not included");
-			if (!property->Serializable) G_LOG_INFO("Not serializable");
-			if (!property->Write) G_LOG_INFO("Not writable");
 			if (key == "Parent" || !properties.contains(key) || !property->Serializable || !property->Write) continue;
 			G_LOG_INFO("Deserializing %s of %s", key.data(), state.FormatCurrentPath().data());
 
@@ -398,8 +396,6 @@ namespace gargantuan::InstanceSerialization {
 				return state.ReturnError("Unknown error setting property '{}' in {}", key, state.FormatCurrentPath());
 			}
 		}
-
-		state.CurrentPath.push_back(instance->Name);
 
 		for (auto &child : children) {
 			auto maybeChild = TryDeserializeInstance(child, state);

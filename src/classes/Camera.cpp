@@ -12,6 +12,7 @@
 namespace gargantuan {
 	G_INSTANCE_IMPL(
 		Camera,
+		.Description = "Provides the 3D view of the workspace.",
 		.Properties = {
 			{"CameraType", Property::fromMember<&Camera::CameraType>(true, true).SetSerializable()},
 			{"CFrame", Property::fromMember<&Camera::CFrame>(true, true).SetSerializable()},

@@ -27,7 +27,7 @@
 					"Name": "TestScript",
 					"Properties": {
 						"Source": {
-							"String": "local test = require('@game/Workspace/Module'); print('got:', test)"
+							"String": "task.delay(1, function() for _, v in game:GetDescendants() do print(v:GetFullName()) end end)"
 						}
 					}
 				},
@@ -40,6 +40,23 @@
 							"String": "return 'foo'"
 						}
 					}
+				},
+				{
+					"Children": [
+						{
+							"Children": [],
+							"ClassName": "FileLink",
+							"Name": "FileLink",
+							"Properties": {
+								"Path": {
+									"String": "src/shared"
+								}
+							}
+						}
+					],
+					"ClassName": "Folder",
+					"Name": "ServerScriptService",
+					"Properties": {}
 				}
 			],
 			"ClassName": "Workspace",
