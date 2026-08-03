@@ -82,6 +82,7 @@ namespace gargantuan {
 			);
 			if (CurrentState) ScriptEngine::DumpStack(CurrentState);
 			assert(false);
+			return 1;
 		};
 
 		lua_pushstring(L, "gargantuan::ScriptEngine");

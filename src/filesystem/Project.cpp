@@ -1,6 +1,8 @@
 #include "gargantuan/filesystem/Project.hpp"
 #include "gargantuan/assets/InstanceSerialization.hpp"
 #include "gargantuan/classes/DataModel.hpp"
+#include "gargantuan/classes/FileLink.hpp"
+#include "gargantuan/filesystem/Paths.hpp"
 
 #include <SDL3/SDL.h>
 #include <format>
@@ -17,13 +19,13 @@ namespace gargantuan {
 	ResolveInstanceFile(std::filesystem::path rootConfiguration) {
 		SDL_PathInfo binaryInfo;
 		std::filesystem::path binaryPath = rootConfiguration / "project.instance.bin";
-		if (SDL_GetPathInfo(binaryPath.c_str(), &binaryInfo) && binaryInfo.type == SDL_PATHTYPE_FILE) {
+		if (SDL_GetPathInfo(Paths::ToUtf8(binaryPath).c_str(), &binaryInfo) && binaryInfo.type == SDL_PATHTYPE_FILE) {
 			return std::tuple{binaryPath, InstanceFormat::Binary};
 		}
 
 		SDL_PathInfo jsonInfo;
 		std::filesystem::path jsonPath = rootConfiguration / "project.instance.json";
-		if (SDL_GetPathInfo(jsonPath.c_str(), &jsonInfo) && jsonInfo.type == SDL_PATHTYPE_FILE) {
+		if (SDL_GetPathInfo(Paths::ToUtf8(jsonPath).c_str(), &jsonInfo) && jsonInfo.type == SDL_PATHTYPE_FILE) {
 			return std::tuple{jsonPath, InstanceFormat::Json};
 		}
 
@@ -40,7 +42,7 @@ namespace gargantuan {
 		std::filesystem::path root, std::string projectName, Instance::Pointer instance, InstanceFormat format
 	) {
 		Project self(root);
-		if (!SDL_CreateDirectory(self.RootConfiguration.c_str())) {
+		if (!SDL_CreateDirectory(Paths::ToUtf8(self.RootConfiguration).c_str())) {
 			throw std::runtime_error(std::format("Failed to create .gargantuan directory: {}", SDL_GetError()));
 		}
 
@@ -60,7 +62,7 @@ namespace gargantuan {
 			throw std::runtime_error("Binary instance formats are not yet implemented");
 		}
 
-		auto instanceStream = SDL_IOFromFile(self.InstanceFilePath.c_str(), "w");
+		auto instanceStream = SDL_IOFromFile(Paths::ToUtf8(self.InstanceFilePath).c_str(), "w");
 		SDL_WriteIO(instanceStream, instanceFileContents.data(), instanceFileContents.size());
 		if (!SDL_CloseIO(instanceStream)) {
 			throw std::runtime_error(std::format("Failed to create .gargantuan directory: {}", SDL_GetError()));
@@ -73,7 +75,7 @@ namespace gargantuan {
 		Project self(root);
 
 		SDL_PathInfo configurationInfo;
-		if (!SDL_GetPathInfo(self.RootConfiguration.c_str(), &configurationInfo)) {
+		if (!SDL_GetPathInfo(Paths::ToUtf8(self.RootConfiguration).c_str(), &configurationInfo)) {
 			throw std::runtime_error(std::format("Failed to open .gargantuan directory: {}", SDL_GetError()));
 		} else if (configurationInfo.type != SDL_PATHTYPE_DIRECTORY) {
 			auto pathType = magic_enum::enum_name(configurationInfo.type);

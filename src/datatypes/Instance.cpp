@@ -62,14 +62,9 @@ namespace gargantuan {
 
 		std::shared_ptr<Instance> self = shared_from_this();
 
-<<<<<<< HEAD
-		std::vectory<Instance::Pointer> subtree;
-		subtree.push_back(self);
-=======
 		// This whole subtree leaves the old ancestry and joins the new one, so
 		// collect it once up front and reuse it for both sets of signals
 		std::vector<std::shared_ptr<Instance>> subtree = {self};
->>>>>>> e5d834d418690230b04cfc19879170b351d5e3df
 		CollectDescendants(subtree);
 
 		if (Parent != nullptr) {
@@ -77,11 +72,6 @@ namespace gargantuan {
 			if (auto it = std::find(oldChildren.begin(), oldChildren.end(), self); it != oldChildren.end()) {
 				oldChildren.erase(it);
 				Parent->ChildRemoved->Fire(self);
-				for (Instance *ancestor = Parent; ancestor != ancestor->Parent) {
-				    for (const auto &instance : subtree) {
-						ancestor->DescendentRemoved->Fire(instance);
-					}
-				}
 			}
 
 			for (Instance *ancestor = Parent; ancestor != nullptr; ancestor = ancestor->Parent) {
@@ -98,13 +88,8 @@ namespace gargantuan {
 			newParent->ChildAdded->Fire(self);
 
 			for (Instance *ancestor = newParent.get(); ancestor != nullptr; ancestor = ancestor->Parent) {
-<<<<<<< HEAD
-			    for (const auto &instance : subtree) {
-					ancestor->DescendantAdded->Fire(instance);
-=======
 				for (auto &node : subtree) {
 					ancestor->DescendantAdded->Fire(node);
->>>>>>> e5d834d418690230b04cfc19879170b351d5e3df
 				}
 			}
 		}
