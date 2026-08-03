@@ -77,8 +77,8 @@ namespace gargantuan {
 
 		CurrentState = L;
 		Luau::assertHandler() = [](const char *expression, const char *file, int line, const char *function) -> int {
-			G_LOG_CRITICAL(
-				"Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function
+			LOG_CRITICAL(
+				App, "Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function
 			);
 			if (CurrentState) ScriptEngine::DumpStack(CurrentState);
 			assert(false);
@@ -173,7 +173,7 @@ namespace gargantuan {
 	}
 
 	Instance::Pointer ScriptEngine::FindRequiredInstanceByPath(const char *rawPath) {
-		G_LOG_INFO("Attempting to find required instance %s", rawPath);
+		LOG_INFO(App, "Attempting to find required instance %s", rawPath);
 
 		if (!rawPath || !DataModel || std::strcmp(rawPath, "\0") == 0) return nullptr;
 
@@ -202,7 +202,7 @@ namespace gargantuan {
 
 			switch (status) {
 			case ScriptStatus::Error:
-				G_LOG_CRITICAL("%s", script->ErrorMessage.c_str());
+				LOG_CRITICAL(App, "%s", script->ErrorMessage.c_str());
 				[[fallthrough]];
 
 			case ScriptStatus::Finished:

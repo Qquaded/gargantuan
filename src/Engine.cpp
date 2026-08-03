@@ -37,8 +37,12 @@ namespace gargantuan {
 				auto link = std::static_pointer_cast<gargantuan::FileLink>(inst);
 				auto relativePath = link->Path;
 				auto absolutePath = std::filesystem::absolute(this->DataModel->Root / relativePath);
-				G_LOG_INFO(
-					"Got file link: %s %s %s", inst->GetFullName().c_str(), absolutePath.c_str(), relativePath.c_str()
+				LOG_INFO(
+					App,
+					"Got file link: %s %s %s",
+					inst->GetFullName().c_str(),
+					absolutePath.c_str(),
+					relativePath.c_str()
 				);
 				link->Synchronize(absolutePath);
 			}
@@ -57,11 +61,11 @@ namespace gargantuan {
 			descendantAdded(descendant);
 		}
 
-		G_LOG_INFO("Constructed engine");
+		LOG_INFO(App, "Constructed engine");
 	}
 
 	void Engine::Destroy() {
-		G_LOG_INFO("Destroying engine");
+		LOG_INFO(App, "Destroying engine");
 		Renderer->Destroy();
 	}
 
@@ -99,7 +103,7 @@ namespace gargantuan {
 					}
 
 					case SDL_EVENT_QUIT:
-						G_LOG_INFO("Stopping engine");
+						LOG_INFO(App, "Stopping engine");
 						ProcessService->Alive = false;
 						return;
 					}
