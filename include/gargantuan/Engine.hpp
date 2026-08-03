@@ -4,6 +4,7 @@
 #include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/services/ProcessService.hpp"
 #include "gargantuan/services/RunService.hpp"
 #include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/services/Workspace.hpp"
@@ -26,6 +27,7 @@ namespace gargantuan {
 		std::shared_ptr<Workspace> Workspace;
 		std::shared_ptr<WorldRoot> WorldRoot;
 		std::shared_ptr<RunService> RunService;
+		std::shared_ptr<ProcessService> ProcessService;
 		std::shared_ptr<UserInputService> UserInputService;
 
 		bool IsRunning = true;

@@ -80,8 +80,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	G_LOG_INFO("Starting engine loop");
+	engine->ProcessService->Alive = true;
 	try {
-		while (engine->IsRunning) {
+		while (engine->ProcessService->Alive) {
 			engine->Step();
 		}
 	} catch (std::exception &e) {
@@ -89,6 +90,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	auto exitCode = engine->ProcessService->ExitCode;
 	engine->Destroy();
-	return 0;
+	return exitCode;
 }

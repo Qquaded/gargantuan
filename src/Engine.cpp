@@ -3,7 +3,6 @@
 #include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/classes/FileLink.hpp"
-#include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
@@ -22,7 +21,7 @@ namespace gargantuan {
 		: DataModel(game), Renderer(renderer), Script(new class ScriptEngine(game)),
 		  Workspace(GetService<gargantuan::Workspace>()),
 		  WorldRoot(std::static_pointer_cast<gargantuan::WorldRoot>(Workspace)),
-		  RunService(GetService<gargantuan::RunService>()),
+		  RunService(GetService<gargantuan::RunService>()), ProcessService(GetService<gargantuan::ProcessService>()),
 		  UserInputService(GetService<gargantuan::UserInputService>()) {
 
 		auto descendantAdded = [this](Instance::Pointer inst) {
@@ -71,7 +70,7 @@ namespace gargantuan {
 	}
 
 	void Engine::Step() {
-		if (!IsRunning) return;
+		if (!ProcessService->Alive) return;
 
 		CurrentTick = SDL_GetTicks();
 		if (LastTick == 0) LastTick = CurrentTick;
@@ -101,7 +100,7 @@ namespace gargantuan {
 
 					case SDL_EVENT_QUIT:
 						G_LOG_INFO("Stopping engine");
-						IsRunning = false;
+						ProcessService->Alive = false;
 						return;
 					}
 
