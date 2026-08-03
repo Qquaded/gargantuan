@@ -76,8 +76,8 @@ namespace gargantuan {
 		virtual void Copy(const std::filesystem::path &source, const std::filesystem::path &destination);
 		virtual void Move(const std::filesystem::path &source, const std::filesystem::path &destination);
 		virtual std::string ReadFileToString(const std::filesystem::path &path);
-		virtual void WriteStringToFile(const std::filesystem::path &path, std::string);
-		virtual std::istringstream ReadFileToStringStream(const std::filesystem::path &path);
-		virtual void WriteStringStreamToFile(const std::filesystem::path &path, std::ostringstream output);
+		virtual void WriteStringToFile(const std::filesystem::path &path, std::string contents);
+		virtual std::stringstream ReadFileToStringStream(const std::filesystem::path &path);
+		virtual void WriteStringStreamToFile(const std::filesystem::path &path, std::ostringstream contents);
 	};
 }
