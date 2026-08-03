@@ -1,9 +1,9 @@
 GARGANTUAN_BUILD_DIRECTORY := "./build"
 GARGANTUAN_BINARY := "./build/gargantuan"
 
-# Lists available recipes
-default:
-    just -l
+# Runs the Gargantuan binary
+run *args:
+    -{{ GARGANTUAN_BINARY }} {{ args }}
 
 # Configures the build directory
 configure tracy="OFF" build_type="Debug":
