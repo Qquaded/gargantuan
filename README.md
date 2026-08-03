@@ -70,7 +70,7 @@ Studio progress:
 - [x] `.instance.json` format
 - [x] Load projects by CLI
 - [x] Opens existing projects
-- [ ] Filelinking (see: devlogs, prerequisite for Fluid library & etc)
+- [x] Filelinking (NOTE: needs bugfixes and edge casing for Rojo init.luaus)
 - [ ] New project flow
 - [ ] Implement UI primitives
 - [ ] Widgets

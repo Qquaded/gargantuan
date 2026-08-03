@@ -1,6 +1,5 @@
 #include "gargantuan/classes/FileLink.hpp"
 #include "gargantuan/Log.hpp"
-#include "gargantuan/assets/InstanceSerialization.hpp"
 #include "gargantuan/classes/Folder.hpp"
 #include "gargantuan/classes/LuaSourceContainer.hpp"
 #include "gargantuan/classes/ModuleScript.hpp"
