@@ -1,12 +1,48 @@
+#include "gargantuan/Log.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 
-#include <Luau/Require.h>
+#include <iostream>
 #include <lua.h>
 #include <lualib.h>
+#include <sstream>
 
 namespace gargantuan {
+	int print(lua_State *L) {
+		int n = lua_gettop(L);
+		std::ostringstream ss;
+		for (int i = 1; i <= n; i++) {
+			size_t l;
+			if (i > 1) ss << " ";
+			ss << luaL_tolstring(L, i, &l);
+			lua_pop(L, 1); // pop result
+		}
+		ss << std::endl;
+		LOG_INFO(Lua, "%s", ss.str().c_str());
+		return 0;
+	}
+
+	int warn(lua_State *L) {
+		int n = lua_gettop(L);
+		std::ostringstream ss;
+		for (int i = 1; i <= n; i++) {
+			size_t l;
+			if (i > 1) ss << " ";
+			ss << luaL_tolstring(L, i, &l);
+			lua_pop(L, 1); // pop result
+		}
+		ss << std::endl;
+		LOG_WARN(Lua, "%s", ss.str().c_str());
+		return 0;
+	}
+
 	int OpenLibBase(lua_State *L) {
 		auto scriptEngine = ScriptEngine::Get(L);
+
+		lua_pushcclosurek(L, print, "print", 0, nullptr);
+		lua_setglobal(L, "print");
+
+		lua_pushcclosurek(L, warn, "warn", 0, nullptr);
+		lua_setglobal(L, "warn");
 
 		StackValue<Instance::Pointer>::Push(L, scriptEngine->DataModel);
 		lua_setglobal(L, "game");
@@ -40,4 +76,4 @@ namespace gargantuan {
 
 		return 0;
 	}
-} // namespace gargantuan
+}

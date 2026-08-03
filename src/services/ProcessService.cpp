@@ -20,10 +20,8 @@ namespace gargantuan {
 
 	int ProcessService::LExitAsync(lua_State *L, Instance *self) {
 		auto processService = self->Cast<ProcessService>();
-		if (processService->Alive) {
-			int exitCode = luaL_checknumber(L, 1);
-			processService->ExitAsync(exitCode);
-		}
+		int exitCode = luaL_checknumber(L, 2);
+		if (processService->Alive) processService->ExitAsync(exitCode);
 		return lua_yield(L, 0);
 	}
 }

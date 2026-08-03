@@ -14,7 +14,35 @@
 #define LOG_CRITICAL(category, ...) LOG_BASE(SDL_LogCritical, category, __VA_ARGS__)
 
 namespace gargantuan {
-	typedef enum SDL_LogCategory { App = SDL_LOG_CATEGORY_CUSTOM, User } LogCategory;
+	enum LogCategory : int { App = SDL_LOG_CATEGORY_CUSTOM + 1, Lua };
 
-	void OutputLog(void *_unused, int category, SDL_LogPriority priority, const char *message);
+	enum class AnsiCode : int {
+		Reset,
+		Bold,
+		Dim,
+		Black = 30,
+		Red,
+		Green,
+		Yellow,
+		Blue,
+		Magenta,
+		Cyan,
+		White,
+		Default = 39,
+		BgBlack,
+		BgRed,
+		BgGreen,
+		BgYellow,
+		BgBlue,
+		BgMagenta,
+		BgCyan,
+		BgDefault = 49,
+	};
+
+	struct LogContext {
+		bool EnableAnsi;
+		bool EnablePretty;
+	};
+
+	SDL_LogOutputFunction GetLogOutputFunction(LogContext *logContext);
 }

@@ -10,28 +10,42 @@
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_log.h>
 #include <argparse/argparse.hpp>
+#include <cstdlib>
+#include <cstring>
 #include <exception>
+#include <iostream>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 
 int main(int argc, char *argv[]) {
-	SDL_SetLogOutputFunction(gargantuan::OutputLog, nullptr);
-
 	argparse::ArgumentParser program("gargantuan");
 	program.add_description("An independent game engine for Roblox developers");
+	program.add_group("Gargantuan");
 	program.add_argument("--project").help("path of a project directory to be loaded").default_value("-");
 	program.add_argument("--script").help("path of a Luau script to be loaded").default_value("-");
 	program.add_argument("--headless").flag().help("whether to disable the renderer");
+	program.add_group("Logging");
+	program.add_argument("--noansi").flag().help("disable ansi logs");
+	program.add_argument("--nopretty").flag().help("whether to print json structured logs");
+
+	SDL_Init(SDL_INIT_VIDEO);
+	std::atexit(SDL_Quit);
 
 	try {
 		program.parse_args(argc, argv);
 	} catch (std::exception &e) {
-		LOG_CRITICAL(App, "%s", e.what());
-		return 1;
+		std::cerr << e.what() << std::endl;
+		std::exit(1);
 	}
 
-	SDL_Init(SDL_INIT_VIDEO);
-	std::atexit(SDL_Quit);
+	gargantuan::LogContext logContext{
+		.EnableAnsi = !program.is_used("--noansi"),
+		.EnablePretty = !program.is_used("--nopretty"),
+	};
+	SDL_SetLogPriorities(SDL_LOG_PRIORITY_WARN);
+	SDL_SetLogPriority(gargantuan::LogCategory::App, SDL_LOG_PRIORITY_DEBUG);
+	SDL_SetLogPriority(gargantuan::LogCategory::Lua, SDL_LOG_PRIORITY_TRACE);
+	SDL_SetLogOutputFunction(gargantuan::GetLogOutputFunction(&logContext), &logContext);
 
 	// Constructing the renderer
 	gargantuan::Vector2 viewportSize(720, 540);
@@ -43,7 +57,7 @@ int main(int argc, char *argv[]) {
 			renderer = new gargantuan::SDLRenderer(viewportSize);
 		} catch (std::exception &e) {
 			LOG_CRITICAL(App, "Failed to construct SDL3 renderer: %s", e.what());
-			return 1;
+			std::exit(1);
 		}
 	}
 
@@ -71,12 +85,12 @@ int main(int argc, char *argv[]) {
 			auto script = gargantuan::ScriptFromFile<gargantuan::Script>(path.c_str());
 			script->SetParent(engine->Workspace);
 		} catch (std::exception &e) {
-			LOG_CRITICAL(App, "Failed to load script %s: %s", path.c_str(), e.what());
-			return 1;
+			LOG_CRITICAL(App, "%s", e.what());
+			std::exit(1);
 		}
 	} else {
 		LOG_CRITICAL(App, "Missing --project or --script to load");
-		return 1;
+		std::exit(1);
 	}
 
 	LOG_INFO(App, "Starting engine loop");
@@ -87,10 +101,10 @@ int main(int argc, char *argv[]) {
 		}
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
-		return 1;
+		std::exit(1);
 	}
 
 	auto exitCode = engine->ProcessService->ExitCode;
 	engine->Destroy();
-	return exitCode;
+	std::exit(exitCode);
 }
