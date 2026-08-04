@@ -3,7 +3,6 @@
 #include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/classes/FileLink.hpp"
-#include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/filesystem/Paths.hpp"
@@ -24,7 +23,7 @@ namespace gargantuan {
 		: DataModel(game), Renderer(renderer), Script(new class ScriptEngine(game)),
 		  Workspace(GetService<gargantuan::Workspace>()),
 		  WorldRoot(std::static_pointer_cast<gargantuan::WorldRoot>(Workspace)),
-		  RunService(GetService<gargantuan::RunService>()),
+		  RunService(GetService<gargantuan::RunService>()), ProcessService(GetService<gargantuan::ProcessService>()),
 		  UserInputService(GetService<gargantuan::UserInputService>()) {
 
 		auto descendantAdded = [this](Instance::Pointer inst) {
@@ -40,7 +39,8 @@ namespace gargantuan {
 				auto link = std::static_pointer_cast<gargantuan::FileLink>(inst);
 				auto relativePath = link->Path;
 				auto absolutePath = std::filesystem::absolute(this->DataModel->Root / relativePath);
-				G_LOG_INFO(
+				LOG_INFO(
+					App,
 					"Got file link: %s %s %s",
 					inst->GetFullName().c_str(),
 					Paths::ToUtf8(absolutePath).c_str(),
@@ -63,11 +63,11 @@ namespace gargantuan {
 			descendantAdded(descendant);
 		}
 
-		G_LOG_INFO("Constructed engine");
+		LOG_INFO(App, "Constructed engine");
 	}
 
 	void Engine::Destroy() {
-		G_LOG_INFO("Destroying engine");
+		LOG_INFO(App, "Destroying engine");
 		Renderer->Destroy();
 		WorldRoot->KillWorld();
 	}
@@ -77,7 +77,7 @@ namespace gargantuan {
 	}
 
 	void Engine::Step() {
-		if (!IsRunning) return;
+		if (!ProcessService->Alive) return;
 
 		CurrentTick = SDL_GetTicks();
 		if (LastTick == 0) LastTick = CurrentTick;
@@ -106,8 +106,8 @@ namespace gargantuan {
 					}
 
 					case SDL_EVENT_QUIT:
-						G_LOG_INFO("Stopping engine");
-						IsRunning = false;
+						LOG_INFO(App, "Stopping engine");
+						ProcessService->Alive = false;
 						return;
 					}
 

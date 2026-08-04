@@ -2,6 +2,7 @@
 
 #include <Luau/Require.h>
 #include <lua.h>
+#include <lualib.h>
 
 namespace gargantuan {
 	int OpenLibBase(lua_State *L) {

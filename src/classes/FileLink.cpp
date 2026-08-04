@@ -1,6 +1,5 @@
 #include "gargantuan/classes/FileLink.hpp"
 #include "gargantuan/Log.hpp"
-#include "gargantuan/assets/InstanceSerialization.hpp"
 #include "gargantuan/classes/Folder.hpp"
 #include "gargantuan/classes/LuaSourceContainer.hpp"
 #include "gargantuan/classes/ModuleScript.hpp"
@@ -39,8 +38,12 @@ namespace gargantuan {
 				script->Name = filename.substr(0, filename.size() - extension.size());
 				return script;
 			} catch (std::exception &err) {
-				G_LOG_WARN(
-					"Failed to create %s %s: %s", debugNoun.c_str(), Paths::ToUtf8(absolutePath).c_str(), err.what()
+				LOG_WARN(
+					App,
+					"Failed to create %s %s: %s",
+					debugNoun.c_str(),
+					Paths::ToUtf8(absolutePath).c_str(),
+					err.what()
 				);
 			}
 		}
@@ -50,7 +53,7 @@ namespace gargantuan {
 	Instance::Pointer InstanceFromPath(const std::filesystem::path absolutePath) {
 		SDL_PathInfo pathInfo;
 		if (!SDL_GetPathInfo(Paths::ToUtf8(absolutePath).c_str(), &pathInfo)) {
-			G_LOG_WARN("Failed to synchronize %s: %s", Paths::ToUtf8(absolutePath).c_str(), SDL_GetError());
+			LOG_WARN(App, "Failed to synchronize %s: %s", Paths::ToUtf8(absolutePath).c_str(), SDL_GetError());
 			return nullptr;
 		};
 
@@ -63,9 +66,9 @@ namespace gargantuan {
 				// if (state.Ok) {
 				// 	return state.Instance;
 				// } else {
-				// 	G_LOG_WARN("Failed to deserialize %s:", absolutePath.c_str());
+				// 	LOG_WARN(App, "Failed to deserialize %s:", absolutePath.c_str());
 				// 	for (auto &error : state.Errors) {
-				// 		G_LOG_WARN("* %s", error.c_str());
+				// 		LOG_WARN(App, "* %s", error.c_str());
 				// 	}
 				// 	return nullptr;
 				// }
@@ -97,7 +100,7 @@ namespace gargantuan {
 		if (!Parent || Synchronizing) return;
 		Synchronizing = true;
 
-		G_LOG_INFO("Synchronizing FileLink path: %s", Paths::ToUtf8(absolutePath).c_str());
+		LOG_INFO(App, "Synchronizing FileLink path: %s", Paths::ToUtf8(absolutePath).c_str());
 
 		for (auto &child : Parent->GetChildren()) {
 			if (child.get() != this) child->Destroy();
@@ -105,12 +108,12 @@ namespace gargantuan {
 
 		SDL_PathInfo pathInfo;
 		if (!SDL_GetPathInfo(Paths::ToUtf8(absolutePath).c_str(), &pathInfo)) {
-			G_LOG_WARN(
-				"Failed to get path information for %s: %s", Paths::ToUtf8(absolutePath).c_str(), SDL_GetError()
+			LOG_WARN(
+				App, "Failed to get path information for %s: %s", Paths::ToUtf8(absolutePath).c_str(), SDL_GetError()
 			);
 			return;
 		} else if (pathInfo.type != SDL_PATHTYPE_DIRECTORY) {
-			G_LOG_WARN("FileLinks (for now) can only be used with directories");
+			LOG_WARN(App, "FileLinks (for now) can only be used with directories");
 			return;
 		};
 
@@ -119,7 +122,7 @@ namespace gargantuan {
 			if (!child) continue;
 			child->Archivable = false;
 			child->SetParent(Parent->shared_from_this());
-			G_LOG_INFO("Got %s", child->GetFullName().c_str());
+			LOG_INFO(App, "Got %s", child->GetFullName().c_str());
 		}
 
 		Synchronizing = false;

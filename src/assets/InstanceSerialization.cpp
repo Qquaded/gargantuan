@@ -351,13 +351,13 @@ namespace gargantuan::InstanceSerialization {
 			return std::nullopt;
 		}
 
-		G_LOG_INFO("Registered property count for %s: %zu", className.c_str(), definition->AllProperties.size());
+		LOG_INFO(App, "Registered property count for %s: %zu", className.c_str(), definition->AllProperties.size());
 		auto instance = definition->Constructor();
 		instance->Name = name.get<std::string>();
 		for (auto &[key, property] : definition->AllProperties) {
-			G_LOG_INFO("Trying to deserialize %s of %s", key.data(), state.FormatCurrentPath().data());
+			LOG_INFO(App, "Trying to deserialize %s of %s", key.data(), state.FormatCurrentPath().data());
 			if (key == "Parent" || !properties.contains(key) || !property->Serializable || !property->Write) continue;
-			G_LOG_INFO("Deserializing %s of %s", key.data(), state.FormatCurrentPath().data());
+			LOG_INFO(App, "Deserializing %s of %s", key.data(), state.FormatCurrentPath().data());
 
 			auto value = properties[key];
 			if (!value.is_object()) {
