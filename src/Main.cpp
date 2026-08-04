@@ -44,10 +44,12 @@ int main(int argc, char *argv[]) {
 		.EnableAnsi = !program.is_used("--noansi"),
 		.EnablePretty = !program.is_used("--nopretty"),
 	};
-	SDL_SetLogPriorities(SDL_LOG_PRIORITY_WARN);
+	SDL_SetLogPriorities(SDL_LOG_PRIORITY_TRACE);
 	SDL_SetLogPriority(gargantuan::LogCategory::App, SDL_LOG_PRIORITY_DEBUG);
 	SDL_SetLogPriority(gargantuan::LogCategory::Lua, SDL_LOG_PRIORITY_TRACE);
 	SDL_SetLogOutputFunction(gargantuan::GetLogOutputFunction(&logContext), &logContext);
+
+	LOG_INFO(App, "Gargantuan start");
 
 	// Constructing the renderer
 	gargantuan::Vector2 viewportSize(720, 540);

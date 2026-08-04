@@ -41,7 +41,7 @@ namespace gargantuan {
 		return priority >= SDL_LOG_PRIORITY_ERROR ? std::cerr : std::cout;
 	}
 
-	std::vector<AnsiCode> ColorPriority(SDL_LogPriority priority) {
+	std::vector<AnsiCode> StylePriority(SDL_LogPriority priority) {
 		switch (priority) {
 		case SDL_LOG_PRIORITY_TRACE:
 			return {AnsiCode::Black, AnsiCode::Dim};
@@ -59,6 +59,18 @@ namespace gargantuan {
 			return {AnsiCode::Red, AnsiCode::Bold};
 		default:
 			return {AnsiCode::Dim, AnsiCode::Bold};
+		}
+	}
+
+	std::vector<AnsiCode> StyleCategory(int category) {
+		switch (category) {
+		case LogCategory::App:
+		case SDL_LOG_CATEGORY_APPLICATION:
+			return {AnsiCode::BgCyan, AnsiCode::Blue, AnsiCode::Bold};
+		case LogCategory::Lua:
+			return {AnsiCode::BgBlue, AnsiCode::White, AnsiCode::Bold};
+		default:
+			return {AnsiCode::BgBlack, AnsiCode::Dim, AnsiCode::Bold};
 		}
 	}
 
@@ -128,7 +140,7 @@ namespace gargantuan {
 		std::ostringstream output;
 
 		if (logContext.EnableAnsi) {
-			for (auto code : ColorPriority(priority)) {
+			for (auto code : StylePriority(priority)) {
 				output << FormatAnsiCode(code);
 			}
 		};
@@ -137,9 +149,18 @@ namespace gargantuan {
 
 		output << " ";
 
-		if (logContext.EnableAnsi) output << FormatAnsiCode(AnsiCode::Dim);
-		output << StringifyCategory(category) << ": ";
-		if (logContext.EnableAnsi) output << FormatAnsiCode(AnsiCode::Reset);
+		if (logContext.EnableAnsi) {
+			for (auto code : StyleCategory(category)) {
+				output << FormatAnsiCode(code);
+			}
+			output << " ";
+		};
+		output << StringifyCategory(category);
+		if (logContext.EnableAnsi) {
+			output << " " << FormatAnsiCode(AnsiCode::Reset) << " ";
+		} else {
+			output << ": ";
+		};
 
 		output << message << " ";
 		if (logContext.EnableAnsi) output << FormatAnsiCode(AnsiCode::Black) << FormatAnsiCode(AnsiCode::Dim);
