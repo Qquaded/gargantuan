@@ -22,6 +22,10 @@ if(APPLE)
 	endif()
 endif()
 
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+  message(FATAL_ERROR "Gargantuan requires a 64-bit toolchain. Please build from the x64 Native Tools Command Prompt.")
+endif()
+
 file(GLOB_RECURSE SHADER_SOURCES CONFIGURE_DEPENDS
 	"assets/shaders/*.vert"
 	"assets/shaders/*.frag"

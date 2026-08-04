@@ -19,6 +19,8 @@ namespace gargantuan {
 		std::unordered_map<BasePart *, b3BodyId> PartBodies;
 		void KillWorld();
 
+		void StepPhys(float deltaTime);
+
 		WorldRoot();
 	};
 } // namespace gargantuan

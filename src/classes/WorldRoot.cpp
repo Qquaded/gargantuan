@@ -1,19 +1,26 @@
 #include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/classes/BasePart.hpp"
 #include "gargantuan/classes/Part.hpp"
+#include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/physics/Conversions.hpp"
 #include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 #include <SDL3/SDL_log.h>
 #include <box3d/box3d.h>
 #include <box3d/collision.h>
+#include <box3d/math_functions.h>
 #include <box3d/types.h>
-#include <common.hpp>
+#include <cstddef>
+#include <float.h>
 #include <memory>
 #include <unordered_map>
 
 namespace gargantuan {
 	G_INSTANCE_ABSTRACT_IMPL(WorldRoot);
+	constexpr int MAX_STEPS_PER_FRAME = 4;
+	constexpr float TimeStep = 1.0f / 60.0f;
+	constexpr int SubStepCount = 4;
+	float Accumulator = 0.0f;
 
 	WorldRoot::WorldRoot() {
 		b3WorldDef worldDef = b3DefaultWorldDef();
@@ -49,13 +56,40 @@ namespace gargantuan {
 				// hull
 				if (const Part *partNotBasePart = part->Cast<Part>()) {
 					switch (partNotBasePart->Shape) {
-					case Enums::PartType::Block:
-					case Enums::PartType::Wedge:
-					case Enums::PartType::CornerWedge: {
+					case Enums::PartType::Block: {
 						b3BoxHull partBox = b3MakeBoxHull(
 							part->Size.x * 0.5f, part->Size.y * 0.5f, part->Size.z * 0.5f
 						);
 						b3CreateHullShape(partId, &partShapeDef, &partBox.base);
+						break;
+					}
+					case Enums::PartType::Wedge: {
+						const glm::vec3 h = part->Size * 0.5f;
+						const b3Vec3 points[6] = {
+							{-h.x, -h.y, -h.z},
+							{h.x, -h.y, -h.z},
+							{h.x, -h.y, h.z},
+							{-h.x, -h.y, h.z},
+							{h.x, h.y, -h.z},
+							{-h.x, h.y, -h.z},
+						};
+						b3HullData *hull = b3CreateHull(points, 6, 6);
+						b3CreateHullShape(partId, &partShapeDef, hull);
+						b3DestroyHull(hull);
+						break;
+					}
+					case Enums::PartType::CornerWedge: {
+						const glm::vec3 h = part->Size * 0.5f;
+						const b3Vec3 points[5] = {
+							{-h.x, -h.y, -h.z},
+							{h.x, -h.y, -h.z},
+							{h.x, -h.y, h.z},
+							{-h.x, -h.y, h.z},
+							{-h.x, h.y, -h.z},
+						};
+						b3HullData *hull = b3CreateHull(points, 5, 5);
+						b3CreateHullShape(partId, &partShapeDef, hull);
+						b3DestroyHull(hull);
 						break;
 					}
 					case Enums::PartType::Ball: {
@@ -95,6 +129,28 @@ namespace gargantuan {
 		DescendantAdded->Connect(checkChildAdded);
 		DescendantRemoved->Connect(checkChildRemoved);
 	};
+
+	void WorldRoot::StepPhys(float deltaTime) {
+		Accumulator += deltaTime;
+
+		int steps = 0;
+		while (Accumulator >= TimeStep && steps < MAX_STEPS_PER_FRAME) {
+			b3World_Step(World, TimeStep, SubStepCount);
+			b3BodyEvents events = b3World_GetBodyEvents(World);
+			for (int i = 0; i < events.moveCount; ++i) {
+				const b3BodyMoveEvent &move = events.moveEvents[i];
+				BasePart *part = static_cast<BasePart *>(move.userData);
+				if (part == nullptr) continue;
+				part->CFrame = gargantuan::CFrame(
+					FromBox3(move.transform.p), glm::mat3_cast(FromBox3(move.transform.q))
+				);
+			}
+			Accumulator -= TimeStep;
+			++steps;
+		}
+
+		if (steps == MAX_STEPS_PER_FRAME) Accumulator = 0.0f;
+	}
 
 	void WorldRoot::KillWorld() {
 		b3DestroyWorld(World);

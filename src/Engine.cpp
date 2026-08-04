@@ -6,17 +6,18 @@
 #include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/filesystem/Paths.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 #include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
 #include <SDL3/SDL.h>
+#include <box3d/box3d.h>
 #include <filesystem>
 #include <glm/glm.hpp>
 #include <lua.h>
 #include <memory>
-#include <box3d/box3d.h>
 
 namespace gargantuan {
 	Engine::Engine(std::shared_ptr<gargantuan::DataModel> game, BaseRenderer *renderer)
@@ -40,7 +41,10 @@ namespace gargantuan {
 				auto relativePath = link->Path;
 				auto absolutePath = std::filesystem::absolute(this->DataModel->Root / relativePath);
 				G_LOG_INFO(
-					"Got file link: %s %s %s", inst->GetFullName().c_str(), absolutePath.c_str(), relativePath.c_str()
+					"Got file link: %s %s %s",
+					inst->GetFullName().c_str(),
+					Paths::ToUtf8(absolutePath).c_str(),
+					relativePath.c_str()
 				);
 				link->Synchronize(absolutePath);
 			}
@@ -65,6 +69,7 @@ namespace gargantuan {
 	void Engine::Destroy() {
 		G_LOG_INFO("Destroying engine");
 		Renderer->Destroy();
+		WorldRoot->KillWorld();
 	}
 
 	float Engine::GetDeltaTime() {
@@ -114,6 +119,7 @@ namespace gargantuan {
 			{
 				G_PROFILE("Simulation");
 				RunService->PreSimulation->Fire(deltaTime);
+				WorldRoot->StepPhys(deltaTime);
 				Workspace->CurrentCamera->Step(deltaTime);
 				RunService->PostSimulation->Fire(deltaTime);
 			}
