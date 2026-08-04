@@ -1,6 +1,7 @@
 #include "gargantuan/filesystem/DiskFilesystem.hpp"
 #include "gargantuan/filesystem/BaseFilesystem.hpp"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_iostream.h>
 #include <filesystem>
 #include <memory>
@@ -89,7 +90,9 @@ namespace gargantuan {
 	}
 
 	std::unique_ptr<FileHandle> DiskFilesystem::Open(const std::filesystem::path &path, const FileOpen &mode) {
-		return std::make_unique<DiskFileHandle>(SDL_IOFromFile(path.c_str(), MapFileOpen(mode)));
+		auto stream = SDL_IOFromFile(path.c_str(), MapFileOpen(mode));
+		if (!stream) throw SDL_GetError();
+		return std::make_unique<DiskFileHandle>(stream);
 	};
 
 	void DiskFilesystem::CreateDirectory(const std::filesystem::path &path) {
@@ -102,7 +105,7 @@ namespace gargantuan {
 
 	std::vector<DirectoryEntry> DiskFilesystem::GetChildren(const std::filesystem::path &path) {
 		std::vector<DirectoryEntry> entries;
-		for (const auto &entry : std::filesystem::directory_iterator()) {
+		for (const auto &entry : std::filesystem::directory_iterator(path)) {
 			entries.push_back({
 				.Name = entry.path().filename(),
 				.Path = entry.path(),
@@ -113,7 +116,7 @@ namespace gargantuan {
 	};
 
 	void CollectDescendants(std::vector<DirectoryEntry> &entries, const std::filesystem::path &path) {
-		for (const auto &entry : std::filesystem::directory_iterator()) {
+		for (const auto &entry : std::filesystem::directory_iterator(path)) {
 			entries.push_back({
 				.Name = entry.path().filename(),
 				.Path = entry.path(),
