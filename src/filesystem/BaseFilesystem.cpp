@@ -22,12 +22,12 @@ namespace gargantuan {
 			auto destinationHandle = Open(destination, FileOpen::Write);
 
 			void *sourceContents;
-			size_t sourceSize = sourceHandle.Size();
-			sourceHandle.Read(sourceContents, sourceSize);
-			destinationHandle.Write(sourceContents, sourceSize);
+			size_t sourceSize = sourceHandle->Size();
+			sourceHandle->Read(sourceContents, sourceSize);
+			destinationHandle->Write(sourceContents, sourceSize);
 
-			sourceHandle.Close();
-			destinationHandle.Close();
+			sourceHandle->Close();
+			destinationHandle->Close();
 		} else {
 			throw std::format("Unsupported source file type");
 		}
@@ -46,12 +46,12 @@ namespace gargantuan {
 			auto destinationHandle = Open(destination, FileOpen::Write);
 
 			void *sourceContents;
-			size_t sourceSize = sourceHandle.Size();
-			sourceHandle.Read(sourceContents, sourceSize);
-			destinationHandle.Write(sourceContents, sourceSize);
+			size_t sourceSize = sourceHandle->Size();
+			sourceHandle->Read(sourceContents, sourceSize);
+			destinationHandle->Write(sourceContents, sourceSize);
 
-			sourceHandle.Close();
-			destinationHandle.Close();
+			sourceHandle->Close();
+			destinationHandle->Close();
 			Remove(source);
 		} else {
 			throw std::format("Unsupported source file type");
@@ -63,11 +63,16 @@ namespace gargantuan {
 		if (Type(path) != FileType::File) throw std::format("{} is not a file", path.c_str());
 
 		auto handle = Open(path, FileOpen::Read);
-		unsigned int bytesToWrite = handle.Size();
+
 		std::string result;
-		result.reserve(handle.Size());
-		handle.Read(result.data(), bytesToWrite);
-		handle.Close();
+		result.resize(handle->Size());
+
+		unsigned int bytesToWrite = handle->Size();
+		auto bytesRead = handle->Read(result.data(), bytesToWrite);
+
+		result.resize(bytesRead);
+		handle->Close();
+
 		return result;
 	};
 
@@ -76,20 +81,12 @@ namespace gargantuan {
 		if (Type(path) != FileType::File) throw std::format("{} is not a file", path.c_str());
 
 		auto handle = Open(path, FileOpen::Write);
-		handle.Write(contents.data(), contents.size());
-		handle.Close();
+		handle->Write(contents.data(), contents.size());
+		handle->Close();
 	};
 
 	std::stringstream BaseFilesystem::ReadFileToStringStream(const std::filesystem::path &path) {
-		if (!Exists(path)) throw std::format("File {} does not exist", path.c_str());
-		if (Type(path) != FileType::File) throw std::format("{} is not a file", path.c_str());
-
-		auto handle = Open(path, FileOpen::Read);
-		unsigned int bytesToWrite = handle.Size();
-		auto result = new char[handle.Size()];
-		handle.Read(result, bytesToWrite);
-		handle.Close();
-		return std::stringstream(result);
+		return std::stringstream(ReadFileToString(path));
 	};
 
 	void BaseFilesystem::WriteStringStreamToFile(const std::filesystem::path &path, std::ostringstream contents) {

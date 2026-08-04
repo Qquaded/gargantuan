@@ -3,6 +3,7 @@
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
+#include "gargantuan/filesystem/DiskFilesystem.hpp"
 #include "gargantuan/filesystem/Project.hpp"
 
 #include <SDL3/SDL.h>
@@ -13,6 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
@@ -66,13 +68,14 @@ int main(int argc, char *argv[]) {
 
 	if (program.is_used("--project")) {
 		// Projects
-		auto path = program.get<std::string>("--project");
+		auto root = std::filesystem::path(program.get<std::string>("--project"));
 		try {
-			auto project = gargantuan::Project::fromExisting(path);
+			auto fs = new gargantuan::DiskFilesystem(root);
+			auto project = gargantuan::Project::fromExisting(fs);
 			auto game = project.DeserializeGame();
 			engine = new gargantuan::Engine(game, renderer);
 		} catch (std::exception &e) {
-			LOG_CRITICAL(App, "Failed to deserialize project %s: %s", path.c_str(), e.what());
+			LOG_CRITICAL(App, "Failed to open project %s: %s", root.c_str(), e.what());
 			return 1;
 		}
 	} else if (program.is_used("--script")) {

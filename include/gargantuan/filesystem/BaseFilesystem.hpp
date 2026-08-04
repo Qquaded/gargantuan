@@ -43,10 +43,10 @@ namespace gargantuan {
 
 	struct FileHandle {
 		virtual ~FileHandle() = default;
-		virtual size_t Read(void *buffer, std::size_t bytesToRead);
-		virtual size_t Write(const void *buffer, std::size_t bytesToWrite);
-		virtual size_t Size();
-		virtual void Close();
+		virtual size_t Read(void *buffer, std::size_t bytesToRead) = 0;
+		virtual size_t Write(const void *buffer, std::size_t bytesToWrite) = 0;
+		virtual size_t Size() = 0;
+		virtual void Close() = 0;
 	};
 
 	struct DirectoryEntry {
@@ -64,7 +64,7 @@ namespace gargantuan {
 
 		[[nodiscard]] virtual FileMetadata Metadata(const std::filesystem::path &path) const = 0;
 		[[nodiscard]] virtual bool Exists(const std::filesystem::path &path) const = 0;
-		[[nodiscard]] virtual FileHandle
+		[[nodiscard]] virtual std::unique_ptr<FileHandle>
 		Open(const std::filesystem::path &path, const FileOpen &mode = FileOpen::Read) = 0;
 		virtual void CreateDirectory(const std::filesystem::path &path) = 0;
 		virtual void Remove(const std::filesystem::path &path) = 0;

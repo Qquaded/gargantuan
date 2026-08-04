@@ -3,10 +3,12 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_iostream.h>
 #include <filesystem>
+#include <memory>
 #include <stdexcept>
 
 namespace gargantuan {
 	struct DiskFileHandle final : public FileHandle {
+		bool Closed = false;
 		DiskFileHandle(SDL_IOStream *stream) : Stream(stream) {};
 		~DiskFileHandle() {
 			Close();
@@ -23,10 +25,12 @@ namespace gargantuan {
 		};
 
 		size_t Size() override {
-			return sizeof(&Stream);
+			return SDL_GetIOSize(Stream);
 		};
 
 		void Close() override {
+			if (Closed) return;
+			Closed = true;
 			SDL_CloseIO(Stream);
 		};
 	};
@@ -84,8 +88,8 @@ namespace gargantuan {
 		return std::filesystem::exists(path);
 	}
 
-	FileHandle DiskFilesystem::Open(const std::filesystem::path &path, const FileOpen &mode) {
-		return DiskFileHandle(SDL_IOFromFile(path.c_str(), MapFileOpen(mode)));
+	std::unique_ptr<FileHandle> DiskFilesystem::Open(const std::filesystem::path &path, const FileOpen &mode) {
+		return std::make_unique<DiskFileHandle>(SDL_IOFromFile(path.c_str(), MapFileOpen(mode)));
 	};
 
 	void DiskFilesystem::CreateDirectory(const std::filesystem::path &path) {

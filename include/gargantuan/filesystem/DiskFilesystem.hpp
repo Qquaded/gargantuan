@@ -7,9 +7,11 @@
 namespace gargantuan {
 	class DiskFilesystem final : public BaseFilesystem {
 	  public:
+		DiskFilesystem(std::filesystem::path root) : BaseFilesystem(root) {};
+
 		[[nodiscard]] FileMetadata Metadata(const std::filesystem::path &path) const override;
 		[[nodiscard]] bool Exists(const std::filesystem::path &path) const override;
-		[[nodiscard]] FileHandle
+		[[nodiscard]] std::unique_ptr<FileHandle>
 		Open(const std::filesystem::path &path, const FileOpen &mode = FileOpen::Read) override;
 		void CreateDirectory(const std::filesystem::path &path) override;
 		void Remove(const std::filesystem::path &path) override;
