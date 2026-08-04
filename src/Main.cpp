@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 	try {
 		program.parse_args(argc, argv);
 	} catch (std::exception &e) {
-		G_LOG_CRITICAL("%s", e.what());
+		LOG_CRITICAL(App, "%s", e.what());
 		return 1;
 	}
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 		try {
 			renderer = new gargantuan::SDLRenderer(viewportSize);
 		} catch (std::exception &e) {
-			G_LOG_CRITICAL("Failed to construct SDL3 renderer: %s", e.what());
+			LOG_CRITICAL(App, "Failed to construct SDL3 renderer: %s", e.what());
 			return 1;
 		}
 	}
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 			auto game = project.DeserializeGame();
 			engine = new gargantuan::Engine(game, renderer);
 		} catch (std::exception &e) {
-			G_LOG_CRITICAL("Failed to deserialize project %s: %s", path.c_str(), e.what());
+			LOG_CRITICAL(App, "Failed to deserialize project %s: %s", path.c_str(), e.what());
 			return 1;
 		}
 	} else if (program.is_used("--script")) {
@@ -71,17 +71,18 @@ int main(int argc, char *argv[]) {
 			auto script = gargantuan::ScriptFromFile<gargantuan::Script>(path.c_str());
 			script->SetParent(engine->Workspace);
 		} catch (std::exception &e) {
-			G_LOG_CRITICAL("Failed to load script %s: %s", path.c_str(), e.what());
+			LOG_CRITICAL(App, "Failed to load script %s: %s", path.c_str(), e.what());
 			return 1;
 		}
 	} else {
-		G_LOG_CRITICAL("Missing --project or --script to load");
+		LOG_CRITICAL(App, "Missing --project or --script to load");
 		return 1;
 	}
 
-	G_LOG_INFO("Starting engine loop");
+	LOG_INFO(App, "Starting engine loop");
+	engine->ProcessService->Alive = true;
 	try {
-		while (engine->IsRunning) {
+		while (engine->ProcessService->Alive) {
 			engine->Step();
 		}
 	} catch (std::exception &e) {
@@ -89,6 +90,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	auto exitCode = engine->ProcessService->ExitCode;
 	engine->Destroy();
-	return 0;
+	return exitCode;
 }

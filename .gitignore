@@ -2,5 +2,5 @@ build
 cmake-build-debug
 .DS_Store
 .cache
-Testbed.luau
+.lest
 .fetchcontent-cache

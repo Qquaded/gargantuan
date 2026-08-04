@@ -120,11 +120,11 @@ namespace gargantuan {
 			frameContext.Commands, Window, &frameContext.SwapchainTexture, &frameContext.Width, &frameContext.Height
 		);
 		if (!swapchainResult) {
-			G_LOG_TRACE("Failed to acquire swapchain texture: %s", SDL_GetError());
+			LOG_TRACE(App, "Failed to acquire swapchain texture: %s", SDL_GetError());
 			if (frameContext.Commands) SDL_CancelGPUCommandBuffer(frameContext.Commands);
 			return;
 		} else if (!frameContext.SwapchainTexture) {
-			G_LOG_TRACE("Acquired swapchain texture, but it is null");
+			LOG_TRACE(App, "Acquired swapchain texture, but it is null");
 			if (frameContext.Commands) SDL_CancelGPUCommandBuffer(frameContext.Commands);
 			return;
 		}

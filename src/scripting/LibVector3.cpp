@@ -132,7 +132,7 @@ namespace gargantuan {
 			lua_pushnumber(L, glm::length(self));
 			return 1;
 		} else if (std::strcmp(key, "Unit") == 0) {
-			StackValue<glm::vec3>::Push(L, glm::normalize(self));
+			StackValue<glm::vec3>::Push(L, self.x == 0 && self.y == 0 && self.z == 0 ? self : glm::normalize(self));
 			return 1;
 		}
 
