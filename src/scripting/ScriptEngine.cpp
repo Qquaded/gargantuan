@@ -80,7 +80,8 @@ namespace gargantuan {
 			LOG_CRITICAL(Lua, "Internal assertion failed: %s", expression);
 			LOG_CRITICAL(Lua, "In: %s:%d in %s", file, line, function);
 			if (CurrentState) ScriptEngine::DumpStack(CurrentState);
-			throw "Lua assertion failed";
+			assert(false);
+			return 1;
 		};
 
 		lua_pushstring(L, "gargantuan::ScriptEngine");

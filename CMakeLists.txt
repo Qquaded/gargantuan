@@ -22,6 +22,10 @@ if(APPLE)
 	endif()
 endif()
 
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+  message(FATAL_ERROR "Gargantuan requires a 64-bit toolchain. Please build from the x64 Native Tools Command Prompt.")
+endif()
+
 file(GLOB_RECURSE SHADER_SOURCES CONFIGURE_DEPENDS
 	"assets/shaders/*.vert"
 	"assets/shaders/*.frag"
@@ -78,6 +82,7 @@ set(SDL_DISABLE_PCH ON CACHE BOOL "" FORCE)
 set(SDL_RENDER ON CACHE BOOL "" FORCE)
 set(SDL_SHARED ON CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
+set(SDLIMAGE_AVIF OFF CACHE BOOL "" FORCE) #was giving me compile issues (don't wnna install nasm for no reason)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(vendor/argparse SYSTEM)
@@ -175,7 +180,7 @@ target_link_libraries(gargantuan
 		SDL3::SDL3
 		SDL3_ttf-static
 		SDL3_image-static
-		box3d
+		box3d::box3d
 		glm
 		nlohmann_json
 		Luau.Compiler
