@@ -6,6 +6,8 @@ namespace gargantuan {
 		RunService,
 		.Properties = {
 			{"PreRender", Property::fromMember<&RunService::PreRender>(true, false)},
+			{"PreSimulation", Property::fromMember<&RunService::PreSimulation>(true, false)},
+			{"PostSimulation", Property::fromMember<&RunService::PostSimulation>(true, false)},
 		}
 	);
 }

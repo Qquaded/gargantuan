@@ -1,4 +1,5 @@
 #include "gargantuan/datatypes/Vector2.hpp"
+#include "gargantuan/scripting/StackValue.hpp"
 #include "gargantuan/scripting/Userdata.hpp"
 #include "gargantuan/scripting/UserdataTag.hpp"
 
@@ -34,7 +35,9 @@ namespace gargantuan {
 			{"__add", Method{Vector2::LAdd}},
 			{"__sub", Method{Vector2::LSub}},
 			{"__mul", Method{Vector2::LMul}},
-			{"__div", Method{Vector2::LDiv}}
+			{"__div", Method{Vector2::LDiv}},
+			{"__eq", Method{Vector2::LEq}},
+			{"__lt", Method{Vector2::LLt}},
 		}
 	)
 
@@ -54,6 +57,7 @@ namespace gargantuan {
 	};
 
 	Vector2 Vector2::GetUnit() const {
+		if (Value.x == 0 && Value.y == 0) return Vector2();
 		return glm::normalize(Value);
 	};
 
@@ -98,7 +102,7 @@ namespace gargantuan {
 		return glm::min(Value, other.Value);
 	};
 
-	Vector2 Vector2::FuzzyEq(const Vector2 &other, float epsilon) const {
+	bool Vector2::FuzzyEq(const Vector2 &other, float epsilon) const {
 		return glm::abs(Value.x - this->Value.x) <= epsilon && glm::abs(Value.y - this->Value.y) <= epsilon;
 	};
 
@@ -111,13 +115,13 @@ namespace gargantuan {
 	}
 
 	int Vector2::LAdd(lua_State *L, Vector2 *self) {
-		Vector2 other = StackValue<Vector2>::From(L, -1);
+		Vector2 other = CheckStackValue<Vector2>(L, -1);
 		StackValue<Vector2>::Push(L, self->Value + other.Value);
 		return 1;
 	}
 
 	int Vector2::LSub(lua_State *L, Vector2 *self) {
-		Vector2 other = StackValue<Vector2>::From(L, -1);
+		Vector2 other = CheckStackValue<Vector2>(L, -1);
 		StackValue<Vector2>::Push(L, self->Value - other.Value);
 		return 1;
 	}
@@ -127,7 +131,7 @@ namespace gargantuan {
 			float other = lua_tonumber(L, -1);
 			StackValue<Vector2>::Push(L, self->Value * other);
 		} else if (StackValue<Vector2>::Is(L, -1)) {
-			Vector2 other = StackValue<Vector2>::From(L, -1);
+			Vector2 other = CheckStackValue<Vector2>(L, -1);
 			StackValue<Vector2>::Push(L, self->Value * other.Value);
 		} else {
 			luaL_typeerror(L, 2, "Vector2 or number");
@@ -141,7 +145,7 @@ namespace gargantuan {
 			float other = lua_tonumber(L, -1);
 			StackValue<Vector2>::Push(L, self->Value / other);
 		} else if (StackValue<Vector2>::Is(L, -1)) {
-			Vector2 other = StackValue<Vector2>::From(L, -1);
+			Vector2 other = CheckStackValue<Vector2>(L, -1);
 			StackValue<Vector2>::Push(L, self->Value / other.Value);
 		} else {
 			luaL_typeerror(L, 2, "Vector2 or number");
@@ -150,4 +154,28 @@ namespace gargantuan {
 		return 1;
 	}
 
-} // namespace gargantuan
+	int Vector2::LEq(lua_State *L, Vector2 *self) {
+		if (StackValue<Vector2>::Is(L, 2)) {
+			Vector2 other = StackValue<Vector2>::From(L, 2);
+			// ISO C++20 considers use of overloaded operator '==' (with operand
+			// types 'Vector2' and 'Vector2') to be ambiguous despite there
+			// being a unique best viable function
+			// ^ ???????????? fuck u mean
+			// lua_pushboolean(L, *self == other);
+			lua_pushboolean(L, self->Value.x == other.Value.x && self->Value.y == other.Value.y);
+		} else {
+			lua_pushboolean(L, false);
+		}
+		return 1;
+	}
+
+	int Vector2::LLt(lua_State *L, Vector2 *self) {
+		if (StackValue<Vector2>::Is(L, 2)) {
+			Vector2 other = StackValue<Vector2>::From(L, 2);
+			lua_pushboolean(L, *self < other);
+		} else {
+			lua_pushboolean(L, false);
+		}
+		return 1;
+	}
+}

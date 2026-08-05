@@ -113,4 +113,4 @@ namespace gargantuan {
 			return gargantuan::StackValue<Instance::Pointer>::Push(L, std::static_pointer_cast<Instance>(value));
 		};
 	};
-} // namespace gargantuan
+}

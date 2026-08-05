@@ -12,5 +12,6 @@ namespace gargantuan {
 
 		void ExitAsync(int exitCode);
 		static int LExitAsync(lua_State *L, Instance *self);
+		static int LWriteToStdout(lua_State *L, Instance *self);
 	};
 }

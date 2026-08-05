@@ -14,6 +14,8 @@ namespace gargantuan {
 
 	class ShadowPass final : public RenderPass {
 	  public:
+		static constexpr std::string LABEL = "Shadow";
+
 		struct alignas(16) Uniforms {
 			glm::mat4 ShadowMatrix;
 			glm::mat4 PartMatrix;
@@ -28,7 +30,6 @@ namespace gargantuan {
 
 		ShadowPass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
 			Shader.Init(gpu);
-
 			Pipeline = PipelineBuilder()
 						   .SetVertexShader(Shader.VertexShader)
 						   .SetFragmentShader(Shader.FragmentShader)

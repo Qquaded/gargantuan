@@ -88,6 +88,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(vendor/argparse SYSTEM)
 add_subdirectory(vendor/box3d SYSTEM)
 add_subdirectory(vendor/glm SYSTEM)
+add_subdirectory(vendor/glaze SYSTEM)
 add_subdirectory(vendor/json SYSTEM)
 add_subdirectory(vendor/luau SYSTEM)
 add_subdirectory(vendor/sdl SYSTEM)
@@ -157,6 +158,7 @@ target_include_directories(gargantuan SYSTEM PRIVATE
 	"vendor/argparse/include"
 	"vendor/box3d/include"
 	"vendor/glm/glm"
+	"vendor/glaze/include"
 	"vendor/luau/Ast/include"
 	"vendor/luau/CodeGen/include"
 	"vendor/luau/Common/include"
@@ -182,6 +184,7 @@ target_link_libraries(gargantuan
 		SDL3_image-static
 		box3d::box3d
 		glm
+		glaze::glaze
 		nlohmann_json
 		Luau.Compiler
 		Luau.CodeGen

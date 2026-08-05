@@ -45,6 +45,7 @@ namespace gargantuan {
 		switch (Status) {
 		case ScriptStatus::Error:
 		case ScriptStatus::Disabled:
+		case ScriptStatus::Yielded:
 		case ScriptStatus::Finished:
 			return false;
 
@@ -54,7 +55,7 @@ namespace gargantuan {
 	}
 
 	ScriptStatus Script::Step(lua_State *L) {
-		if (!ShouldStep()) return Status;
+		if (!ShouldStep() || Thread) return Status;
 		Status = ScriptStatus::Running;
 
 		auto scriptEngine = ScriptEngine::Get(L);
@@ -65,27 +66,26 @@ namespace gargantuan {
 			return Status;
 		}
 
-		if (!Thread) {
-			Thread = lua_newthread(L);
+		Thread = lua_newthread(L);
 
-			auto loadError = LoadIntoState(Thread);
-			if (loadError.has_value()) {
-				Status = ScriptStatus::Error;
-				ErrorMessage = loadError.value();
-				return Status;
-			}
-
-			lua_pushthread(Thread);
-			lua_xmove(Thread, L, 1);
-			ThreadReference = lua_ref(L, 1);
-			// lua_ref keeps the value on the stack
-			lua_pop(L, 1);
+		auto loadError = LoadIntoState(Thread);
+		if (loadError.has_value()) {
+			Status = ScriptStatus::Error;
+			ErrorMessage = loadError.value();
+			return Status;
 		}
+
+		lua_pushthread(Thread);
+		lua_xmove(Thread, L, 1);
+		ThreadReference = lua_ref(L, 1);
+		// lua_ref keeps the value on the stack
+		lua_pop(L, 1);
 
 		auto status = lua_resume(Thread, L, 0);
 		switch (status) {
 		case LUA_YIELD:
 		case LUA_BREAK:
+			Status = ScriptStatus::Yielded;
 			break;
 
 		case LUA_OK:

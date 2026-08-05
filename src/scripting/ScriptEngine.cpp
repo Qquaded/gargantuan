@@ -208,6 +208,8 @@ namespace gargantuan {
 
 			case ScriptStatus::Finished:
 			case ScriptStatus::Disabled:
+			case ScriptStatus::Yielded:
+			case ScriptStatus::Running:
 				it = ScriptQueue.erase(it);
 				break;
 

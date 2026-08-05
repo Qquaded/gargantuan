@@ -17,12 +17,19 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-
-static constexpr auto WINDOW_FLAGS = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-static constexpr auto SHADER_FORMATS = SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_METALLIB |
-									   SDL_GPU_SHADERFORMAT_MSL;
+#include <vector>
 
 namespace gargantuan {
+	static constexpr auto WINDOW_FLAGS = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+	static constexpr auto SHADER_FORMATS = SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_METALLIB |
+										   SDL_GPU_SHADERFORMAT_MSL;
+
+	const std::vector<RenderPassConstructor> RENDER_PASS_CONSTRUCTORS{
+		CreateShadowPass,
+		CreateOpaquePass,
+		// CreateGuiPass,
+	};
+
 	SDLRenderer::SDLRenderer(Vector2 &viewportSize) : BaseRenderer(viewportSize) {
 		Gpu = SDL_CreateGPUDevice(SHADER_FORMATS, true, nullptr);
 		if (!Gpu) throw std::runtime_error(std::format("Failed to create GPU device: {}", SDL_GetError()));
@@ -63,8 +70,9 @@ namespace gargantuan {
 		SDL_GetWindowSizeInPixels(Window, &width, &height);
 		Resize(width, height);
 
-		ShadowPass = CreateShadowPass(Gpu, SwapchainFormat);
-		OpaquePass = CreateOpaquePass(Gpu, SwapchainFormat);
+		for (auto &ctor : RENDER_PASS_CONSTRUCTORS) {
+			RenderPasses.push_back(ctor(Gpu, SwapchainFormat));
+		}
 	}
 
 	void SDLRenderer::Destroy() {
@@ -87,8 +95,10 @@ namespace gargantuan {
 			ShadowSampler = nullptr;
 		}
 
-		ShadowPass->Destroy(Gpu);
-		OpaquePass->Destroy(Gpu);
+		for (auto &pass : RenderPasses) {
+			pass->Destroy(Gpu);
+		}
+		RenderPasses.clear();
 
 		SDL_ReleaseWindowFromGPUDevice(Gpu, Window);
 		SDL_DestroyGPUDevice(Gpu);
@@ -145,8 +155,9 @@ namespace gargantuan {
 			.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
 		};
 
-		SDL_EndGPURenderPass(ShadowPass->Draw(Gpu, frameContext));
-		SDL_EndGPURenderPass(OpaquePass->Draw(Gpu, frameContext));
+		for (auto &pass : RenderPasses) {
+			SDL_EndGPURenderPass(pass->Draw(Gpu, frameContext));
+		}
 
 		SDL_SubmitGPUCommandBuffer(frameContext.Commands);
 	}

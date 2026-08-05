@@ -1,0 +1,32 @@
+{
+	"Version": 0,
+	"Name": "Gargantuan Studio",
+	"ClassName": "DataModel",
+	"Properties": {},
+	"Children": [
+		{
+			"Name": "ReplicatedStorage",
+			"ClassName": "ReplicatedStorage",
+			"Properties": {},
+			"Children": [
+				{
+					"Name": "ReplicatedStorage",
+					"ClassName": "ReplicatedStorage",
+					"Properties": {},
+					"Children": [
+						{
+							"Name": "DirectoryLink",
+							"ClassName": "DirectoryLink",
+							"Properties": {
+								"Path": {
+									"String": "src"
+								}
+							},
+							"Children": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

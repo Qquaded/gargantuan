@@ -1,5 +1,3 @@
-#include "gargantuan/Log.hpp"
-#include <string>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include "gargantuan/render/PipelineBuilder.hpp"
@@ -9,6 +7,7 @@
 
 #include <SDL3/SDL.h>
 #include <memory>
+#include <string>
 
 namespace gargantuan {
 	static const glm::mat4 SHADOW_BIAS_MATRIX{
@@ -36,6 +35,8 @@ namespace gargantuan {
 
 	class OpaquePass final : public RenderPass {
 	  public:
+		static constexpr std::string LABEL = "Opaque";
+
 		struct alignas(16) WorldUniforms {
 			glm::mat4 ViewMatrix;
 			glm::mat4 ProjectionMatrix;

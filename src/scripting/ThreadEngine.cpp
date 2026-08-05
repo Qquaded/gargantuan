@@ -1,4 +1,5 @@
 #include "gargantuan/scripting/ThreadEngine.hpp"
+#include "gargantuan/Log.hpp"
 
 #include <SDL3/SDL_log.h>
 #include <chrono>
@@ -22,17 +23,14 @@ namespace gargantuan {
 
 	void ThreadEngine::ResumeThread(lua_State *thread, int threadReference, int argumentCount) {
 		int status = lua_resume(thread, L, argumentCount);
+		lua_unref(L, threadReference);
 		switch (status) {
+		case LUA_OK:
 		case LUA_YIELD:
 			break;
 
-		case LUA_OK:
-			lua_unref(L, threadReference);
-			break;
-
 		default:
-			lua_unref(L, threadReference);
-			SDL_Log("Thread error: %s", lua_tostring(thread, -1));
+			LOG_ERROR(Lua, "Thread error: %s", lua_tostring(thread, -1));
 		}
 	}
 
