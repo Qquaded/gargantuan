@@ -1,0 +1,1 @@
+docs/src/content/docs/developing/contributing-to-gargantuan.mdx
