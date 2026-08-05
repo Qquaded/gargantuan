@@ -3,6 +3,7 @@
 #include "gargantuan/assets/InstanceSerialization.hpp"
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/filesystem/BaseFilesystem.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -17,18 +18,19 @@ namespace gargantuan {
 		InstanceSerialization::InstanceFormat InstanceFileFormat;
 
 		static Project fromInit(
-			std::filesystem::path root,
+			BaseFilesystem *fs,
 			std::string projectName = "Untitled",
 			Instance::Pointer instance = nullptr,
 			InstanceSerialization::InstanceFormat format = InstanceSerialization::InstanceFormat ::Json
 		);
 
-		static Project fromExisting(std::filesystem::path root);
+		static Project fromExisting(BaseFilesystem *fs);
 
 		std::shared_ptr<DataModel> DeserializeGame();
 		void SerializeGame(std::shared_ptr<DataModel> game);
 
 	  private:
-		Project(std::filesystem::path root);
+		BaseFilesystem *Filesystem;
+		Project(BaseFilesystem *fs);
 	};
 }

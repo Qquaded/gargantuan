@@ -6,6 +6,7 @@
 
 #include <SDL3/SDL.h>
 #include <format>
+#include <istream>
 #include <magic_enum/magic_enum.hpp>
 #include <optional>
 #include <sstream>
@@ -36,13 +37,13 @@ namespace gargantuan {
 		return std::format("project.instance.{}", format == InstanceFormat::Json ? "json" : "bin");
 	}
 
-	Project::Project(std::filesystem::path root) : Root(root), RootConfiguration(root / ".gargantuan") {}
+	Project::Project(BaseFilesystem *fs)
+		: Filesystem(fs), Root(fs->Root), RootConfiguration(fs->Root / ".gargantuan") {}
 
-	Project Project::fromInit(
-		std::filesystem::path root, std::string projectName, Instance::Pointer instance, InstanceFormat format
-	) {
-		Project self(root);
-		if (!SDL_CreateDirectory(Paths::ToUtf8(self.RootConfiguration).c_str())) {
+	Project
+	Project::fromInit(BaseFilesystem *fs, std::string projectName, Instance::Pointer instance, InstanceFormat format) {
+		Project self(fs);
+		if (!SDL_CreateDirectory(self.RootConfiguration.c_str())) {
 			throw std::runtime_error(std::format("Failed to create .gargantuan directory: {}", SDL_GetError()));
 		}
 
@@ -62,17 +63,13 @@ namespace gargantuan {
 			throw std::runtime_error("Binary instance formats are not yet implemented");
 		}
 
-		auto instanceStream = SDL_IOFromFile(Paths::ToUtf8(self.InstanceFilePath).c_str(), "w");
-		SDL_WriteIO(instanceStream, instanceFileContents.data(), instanceFileContents.size());
-		if (!SDL_CloseIO(instanceStream)) {
-			throw std::runtime_error(std::format("Failed to create .gargantuan directory: {}", SDL_GetError()));
-		}
+		self.Filesystem->WriteStringToFile(self.InstanceFilePath, instanceFileContents);
 
 		return self;
 	}
 
-	Project Project::fromExisting(std::filesystem::path root) {
-		Project self(root);
+	Project Project::fromExisting(BaseFilesystem *fs) {
+		Project self(fs);
 
 		SDL_PathInfo configurationInfo;
 		if (!SDL_GetPathInfo(Paths::ToUtf8(self.RootConfiguration).c_str(), &configurationInfo)) {
@@ -95,12 +92,9 @@ namespace gargantuan {
 	}
 
 	std::shared_ptr<DataModel> Project::DeserializeGame() {
-		std::ifstream input(InstanceFilePath.string());
-		if (!input.is_open()) {
-			throw std::runtime_error(std::format("Failed to open instance file at {}", InstanceFilePath.string()));
-		}
+		auto stream = Filesystem->ReadFileToStringStream(InstanceFilePath);
 
-		auto deserialized = InstanceSerialization::Deserialize(InstanceFileFormat, input);
+		auto deserialized = InstanceSerialization::Deserialize(InstanceFileFormat, stream);
 		if (!deserialized.Ok) {
 			std::ostringstream err;
 			err << "Failed to deserialize instance file:" << std::endl;

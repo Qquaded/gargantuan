@@ -10,6 +10,7 @@
 
 #include <SDL3/SDL_log.h>
 #include <cstring>
+#include <istream>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -413,11 +414,11 @@ namespace gargantuan::InstanceSerialization {
 		return instance;
 	}
 
-	DeserializationState Deserialize(InstanceFormat format, std::ifstream &input) {
+	DeserializationState Deserialize(InstanceFormat format, std::istream &input) {
 		DeserializationState state;
 
-		if (!input.is_open() || !input.good()) {
-			state.PushError("Failed to open or read instance file stream");
+		if (!input.good()) {
+			state.PushError("Bad stream from instance contents");
 			return state;
 		}
 

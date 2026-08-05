@@ -1,10 +1,10 @@
 # CMakeLists.txt for Gargantuan Engine:
 # https://github.com/teamfireworks/gargantuan/
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 project(gargantuan CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -85,15 +85,14 @@ set(SDL_TEST OFF CACHE BOOL "" FORCE)
 set(SDLIMAGE_AVIF OFF CACHE BOOL "" FORCE) #was giving me compile issues (don't wnna install nasm for no reason)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-add_subdirectory(vendor/argparse)
-add_subdirectory(vendor/box3d)
-add_subdirectory(vendor/glm)
-add_subdirectory(vendor/json)
-add_subdirectory(vendor/luau)
-add_subdirectory(vendor/sdl)
-add_subdirectory(vendor/sdl_image)
-add_subdirectory(vendor/sdl_ttf)
-add_subdirectory(vendor/spdlog)
+add_subdirectory(vendor/argparse SYSTEM)
+add_subdirectory(vendor/box3d SYSTEM)
+add_subdirectory(vendor/glm SYSTEM)
+add_subdirectory(vendor/json SYSTEM)
+add_subdirectory(vendor/luau SYSTEM)
+add_subdirectory(vendor/sdl SYSTEM)
+add_subdirectory(vendor/sdl_image SYSTEM)
+add_subdirectory(vendor/sdl_ttf SYSTEM)
 
 ################################################################################
 # Tracy
@@ -103,9 +102,14 @@ option(GARGANTUAN_TRACY "Compile in the Tracy client" OFF)
 set(TRACY_ENABLE ${GARGANTUAN_TRACY} CACHE BOOL "" FORCE)
 set(TRACY_ON_DEMAND ON CACHE BOOL "" FORCE)
 set(TRACY_ONLY_LOCALHOST ON CACHE BOOL "" FORCE)
+set(TRACY_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 add_subdirectory(vendor/tracy)
 
-option(GARGANTUAN_TRACY_TOOLS "Build tracy-profiler, tracy-capture and tracy-csvexport" OFF)
+option(
+	GARGANTUAN_TRACY_TOOLS
+	"Build tracy-profiler, tracy-capture and tracy-csvexport"
+	OFF
+)
 if(GARGANTUAN_TRACY_TOOLS)
 	include(ExternalProject)
 
@@ -164,8 +168,11 @@ target_include_directories(gargantuan SYSTEM PRIVATE
 	"vendor/sdl/include"
 	"vendor/sdl_image/include"
 	"vendor/sdl_ttf/include"
-	"vendor/spdlog/include"
 )
+
+if(APPLE)
+	target_link_options(gargantuan PRIVATE "LINKER:-no_warn_duplicate_libraries")
+endif()
 
 target_link_libraries(gargantuan
 	PRIVATE
@@ -176,7 +183,6 @@ target_link_libraries(gargantuan
 		box3d::box3d
 		glm
 		nlohmann_json
-		spdlog::spdlog
 		Luau.Compiler
 		Luau.CodeGen
 		Luau.Ast

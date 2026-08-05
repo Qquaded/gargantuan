@@ -4,7 +4,6 @@
 #include "nlohmann/json.hpp" // IWYU pragma: export
 
 #include <format>
-#include <fstream>
 #include <optional>
 #include <string_view>
 #include <utility>
@@ -35,5 +34,5 @@ namespace gargantuan::InstanceSerialization {
 	};
 
 	std::string Serialize(InstanceFormat format, Instance::Pointer &instance);
-	DeserializationState Deserialize(InstanceFormat format, std::ifstream &input);
+	DeserializationState Deserialize(InstanceFormat format, std::istream &input);
 }

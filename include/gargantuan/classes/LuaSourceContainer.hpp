@@ -38,7 +38,9 @@ namespace gargantuan {
 
 		if (code == nullptr) {
 			throw std::runtime_error(
-				std::format("Failed to load %s from {}: {}", T::CLASS_DEFINITION.ClassName, filepath, SDL_GetError())
+				std::format(
+					"Failed to load {} from file {}: {}", T::CLASS_DEFINITION.ClassName, filepath, SDL_GetError()
+				)
 			);
 		};
 

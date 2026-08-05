@@ -1,53 +1,95 @@
 #include "gargantuan/filesystem/BaseFilesystem.hpp"
 
 #include <format>
+#include <sstream>
+#include <string>
 
 namespace gargantuan {
-	// void BaseFilesystem::Copy(const std::filesystem::path &source, const std::filesystem::path &destination) {
-	// 	if (!Exists(source)) throw std::format("File {} does not exist", source.c_str());
+	FileType BaseFilesystem::Type(const std::filesystem::path &path) const {
+		return Metadata(path).Type;
+	}
 
-	// 	if (Type(source) == FileType::File) {
-	// 		if (Exists(destination) && Type(source) != FileType::File) {
-	// 			throw std::format("Cannot copy file {} to non-file {}", source.c_str(), destination.c_str());
-	// 		}
+	void BaseFilesystem::Copy(const std::filesystem::path &source, const std::filesystem::path &destination) {
+		if (!Exists(source)) throw std::format("File {} does not exist", source.c_str());
+		if (Exists(destination)) throw std::format("Cannot copy to existing destination {}", destination.c_str());
 
-	// 		auto sourceHandle = Open(source, FileOpen::Read);
-	// 		auto destinationHandle = Open(destination, FileOpen::Write);
+		if (Type(source) == FileType::File) {
+			if (Exists(destination) && Type(source) != FileType::File) {
+				throw std::format("Cannot copy file {} to non-file {}", source.c_str(), destination.c_str());
+			}
 
-	// 		void *sourceContents;
-	// 		size_t sourceSize = sourceHandle.Size();
-	// 		sourceHandle.Read(sourceContents, sourceSize);
-	// 		destinationHandle.Write(sourceContents, sourceSize);
+			auto sourceHandle = Open(source, FileOpen::Read);
+			auto destinationHandle = Open(destination, FileOpen::Write);
 
-	// 		sourceHandle.Close();
-	// 		destinationHandle.Close();
-	// 		// } else if (Type(source) == FileType::Directory) {
-	// 		// 	if (Exists(destination) && Type(source) != FileType::Directory) {
-	// 		// 		throw std::format("Cannot copy directory {} to non-directory {}", source.c_str(),
-	// 		// destination.c_str());
-	// 		// 	}
-	// 	} else {
-	// 		throw std::format("Unsupported source file type");
-	// 	}
-	// };
+			void *sourceContents;
+			size_t sourceSize = sourceHandle->Size();
+			sourceHandle->Read(sourceContents, sourceSize);
+			destinationHandle->Write(sourceContents, sourceSize);
 
-	// void BaseFilesystem::Move(const std::filesystem::path &source, const std::filesystem::path &destination) {
-	// 	throw "not yet implemented";
-	// };
+			sourceHandle->Close();
+			destinationHandle->Close();
+		} else {
+			throw std::format("Unsupported source file type");
+		}
+	};
 
-	// std::string BaseFilesystem::ReadFileToString(const std::filesystem::path &path) {
-	// 	throw "not yet implemented";
-	// };
+	void BaseFilesystem::Move(const std::filesystem::path &source, const std::filesystem::path &destination) {
+		if (!Exists(source)) throw std::format("File {} does not exist", source.c_str());
+		if (Exists(destination)) throw std::format("Cannot move to existing destination {}", destination.c_str());
 
-	// void BaseFilesystem::WriteStringToFile(const std::filesystem::path &path, std::string) {
-	// 	throw "not yet implemented";
-	// };
+		if (Type(source) == FileType::File) {
+			if (Exists(destination) && Type(source) != FileType::File) {
+				throw std::format("Cannot copy file {} to non-file {}", source.c_str(), destination.c_str());
+			}
 
-	// std::istringstream BaseFilesystem::ReadFileToStringStream(const std::filesystem::path &path) {
-	// 	throw "not yet implemented";
-	// };
+			auto sourceHandle = Open(source, FileOpen::Read);
+			auto destinationHandle = Open(destination, FileOpen::Write);
 
-	// void BaseFilesystem::WriteStringStreamToFile(const std::filesystem::path &path, std::ostringstream output) {
-	// 	throw "not yet implemented";
-	// };
+			void *sourceContents;
+			size_t sourceSize = sourceHandle->Size();
+			sourceHandle->Read(sourceContents, sourceSize);
+			destinationHandle->Write(sourceContents, sourceSize);
+
+			sourceHandle->Close();
+			destinationHandle->Close();
+			Remove(source);
+		} else {
+			throw std::format("Unsupported source file type");
+		}
+	};
+
+	std::string BaseFilesystem::ReadFileToString(const std::filesystem::path &path) {
+		if (!Exists(path)) throw std::format("File {} does not exist", path.c_str());
+		if (Type(path) != FileType::File) throw std::format("{} is not a file", path.c_str());
+
+		auto handle = Open(path, FileOpen::Read);
+
+		std::string result;
+		result.resize(handle->Size());
+
+		unsigned int bytesToWrite = handle->Size();
+		auto bytesRead = handle->Read(result.data(), bytesToWrite);
+
+		result.resize(bytesRead);
+		handle->Close();
+
+		return result;
+	};
+
+	void BaseFilesystem::WriteStringToFile(const std::filesystem::path &path, std::string contents) {
+		if (!Exists(path)) throw std::format("File {} does not exist", path.c_str());
+		if (Type(path) != FileType::File) throw std::format("{} is not a file", path.c_str());
+
+		auto handle = Open(path, FileOpen::Write);
+		handle->Write(contents.data(), contents.size());
+		handle->Close();
+	};
+
+	std::stringstream BaseFilesystem::ReadFileToStringStream(const std::filesystem::path &path) {
+		return std::stringstream(ReadFileToString(path));
+	};
+
+	void BaseFilesystem::WriteStringStreamToFile(const std::filesystem::path &path, std::ostringstream contents) {
+		return WriteStringToFile(path, contents.str());
+	};
 }

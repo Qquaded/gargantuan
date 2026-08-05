@@ -77,9 +77,8 @@ namespace gargantuan {
 
 		CurrentState = L;
 		Luau::assertHandler() = [](const char *expression, const char *file, int line, const char *function) -> int {
-			LOG_CRITICAL(
-				App, "Luau assertion failed:\n\tExpression: %s\n\tIn: %s:%d in %s", expression, file, line, function
-			);
+			LOG_CRITICAL(Lua, "Internal assertion failed: %s", expression);
+			LOG_CRITICAL(Lua, "In: %s:%d in %s", file, line, function);
 			if (CurrentState) ScriptEngine::DumpStack(CurrentState);
 			assert(false);
 			return 1;
@@ -90,12 +89,13 @@ namespace gargantuan {
 		lua_settable(L, LUA_REGISTRYINDEX);
 
 		luaL_openlibs(L);
+		LOG_INFO(App, "ScriptEngine started opening libraries");
 		for (const auto &[name, open, metatable] : SCRIPT_LIBS) {
-			SDL_Log("Opening library %s", name.c_str());
+			LOG_DEBUG(App, "Opening library %s", name.c_str());
 			if (metatable) metatable(L);
 			if (open) open(L);
 		}
-		SDL_Log("ScriptEngine finished opening libraries");
+		LOG_INFO(App, "ScriptEngine finished opening libraries");
 
 		CompileOptions = lua_CompileOptions{
 			.vectorLib = "Vector3",
