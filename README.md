@@ -47,6 +47,13 @@ Below is the current status of Gargantuan's development:
 
 ### Gargantuan 0.1
 
+notes for a roblox compatibility mode:
+
+- Rename FlexAlignment classname -> UIFlexAlignment
+- Rename UIObject classname -> GuiObject
+- Rename Signal typename -> RBXScriptSignal (NOTE: LibSignal is unchanged)
+- Rename SignalConnection typename -> RBXScriptConnection
+
 ### Basics
 
 - [x] Luau runtime layer
@@ -91,10 +98,14 @@ Studio progress:
 - [ ] ScriptSecurity enum, tentatively: None, Plugin, Studio, Internal
 - [x] `require()` implementation with user-provided require aliases
 - [x] `@game/...` maps to requiring `DataModel...`
-- [ ] Implement `@std/test` from Lute
+- [ ] ~~Implement `@std/test` from Lute~~ Not needed with Lest having Gargantuan
+      support, but preferred for other projects
 - [ ] Implement the assortment of Lute stdlibs
 - [ ] Implement code modifications with `@std/syntax`
-- [ ] Implement Roblox-compatibility code modifications (for RBXScriptConnection)
+- [ ] ~~Implement Roblox-compatibility code modifications (for RBXScriptConnection)~~
+      This incurs a high compile time for any Gargantuan project when we can
+      simply change the typenames at runtime when registering the userdatas, we
+      can always revisit this later once stdlibs are implemented
 
 #### UI
 

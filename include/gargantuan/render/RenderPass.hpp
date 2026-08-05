@@ -32,6 +32,8 @@ namespace gargantuan {
 
 	class RenderPass {
 	  public:
+		static constexpr std::string LABEL;
+
 		Shader Shader;
 		SDL_GPUGraphicsPipeline *Pipeline = nullptr;
 

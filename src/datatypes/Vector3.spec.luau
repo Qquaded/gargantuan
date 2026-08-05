@@ -32,6 +32,14 @@ describe("Vector3", function()
 		expect(Vector3.new(1, 2, 3)).toNotEqual(Vector3.new(2, 4, 6))
 	end)
 
+	it("stringifies", function()
+		expect(tostring(Vector3.new(0, 6, 7))).toBe("0, 6, 7")
+	end)
+
+	it("uses vector as the underlying type", function()
+		expect(type(Vector3.new(0, 6, 7))).toBe("vector")
+	end)
+
 	it("returns correct magnitude", function()
 		local v = Vector3.new(3, 4, 0)
 		expect(v.Magnitude).toBe(5)

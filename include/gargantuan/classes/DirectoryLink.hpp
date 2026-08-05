@@ -9,22 +9,21 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace gargantuan {
-	class FileLink : public Instance {
+	class DirectoryLink : public Instance {
 	  public:
 		G_INSTANCE_DECL(FileLink);
 
 		std::string Path;
+		std::vector<Instance::Pointer> OwnedSiblings;
 		bool Synchronizing = false;
 		bool IgnoreErrors = false;
 		bool IgnoreUnknownDescendants = false;
 
 		// TODO: This syncs on engine start up. We should implement file
-		// watching.
-		//
-		// Also, Filesystem classes as a whole so we can support this in a
-		// --script session.
+		// watching. Also use the Filesystem classes
 		void Synchronize(const std::filesystem::path absolutePath);
 	};
 }

@@ -1,4 +1,4 @@
-#include "gargantuan/classes/FileLink.hpp"
+#include "gargantuan/classes/DirectoryLink.hpp"
 #include "gargantuan/Log.hpp"
 #include "gargantuan/classes/Folder.hpp"
 #include "gargantuan/classes/LuaSourceContainer.hpp"
@@ -16,10 +16,10 @@
 
 namespace gargantuan {
 	G_INSTANCE_IMPL(
-		FileLink,
+		DirectoryLink,
 		.Description = "Synchronizes a filesystem entry into the data model.",
 		.Properties = {
-			{"Path", Property::fromMember<&FileLink::Path>(true, true).SetSerializable()},
+			{"Path", Property::fromMember<&DirectoryLink::Path>(true, true).SetSerializable()},
 		}
 	);
 
@@ -89,22 +89,23 @@ namespace gargantuan {
 		return nullptr;
 	}
 
-	void FileLink::Synchronize(const std::filesystem::path absolutePath) {
+	void DirectoryLink::Synchronize(const std::filesystem::path absolutePath) {
 		if (!Parent || Synchronizing) return;
 		Synchronizing = true;
 
-		LOG_INFO(App, "Synchronizing FileLink path: %s", absolutePath.c_str());
+		LOG_INFO(App, "Synchronizing DirectoryLink path: %s", absolutePath.c_str());
 
-		for (auto &child : Parent->GetChildren()) {
-			if (child.get() != this) child->Destroy();
+		for (auto &child : OwnedSiblings) {
+			child->Destroy();
 		}
+		OwnedSiblings.clear();
 
 		SDL_PathInfo pathInfo;
 		if (!SDL_GetPathInfo(absolutePath.c_str(), &pathInfo)) {
 			LOG_WARN(App, "Failed to get path information for %s: %s", absolutePath.c_str(), SDL_GetError());
 			return;
 		} else if (pathInfo.type != SDL_PATHTYPE_DIRECTORY) {
-			LOG_WARN(App, "FileLinks (for now) can only be used with directories");
+			LOG_WARN(App, "DirectoryLinks (for now) can only be used with directories");
 			return;
 		};
 
@@ -113,7 +114,7 @@ namespace gargantuan {
 			if (!child) continue;
 			child->Archivable = false;
 			child->SetParent(Parent->shared_from_this());
-			LOG_INFO(App, "Got %s", child->GetFullName().c_str());
+			OwnedSiblings.push_back(child);
 		}
 
 		Synchronizing = false;

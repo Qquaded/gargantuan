@@ -9,10 +9,17 @@ namespace gargantuan {
 		Color3,
 		.Tag = UserdataTag::Color3,
 		.Type = "Color3",
-		.Properties = {
+		.Properties =
+			//
+		{
 			{"R", Color3::Property::fromReadonlyMember<&Color3::R>()},
 			{"G", Color3::Property::fromReadonlyMember<&Color3::G>()},
-			{"B", Color3::Property::fromReadonlyMember<&Color3::B>()}
+			{"B", Color3::Property::fromReadonlyMember<&Color3::B>()},
+		},
+		.Methods =
+			//
+		{
+			{"Lerp", Method::fromMember<&Color3::Lerp>()},
 		}
 	);
 
@@ -45,5 +52,13 @@ namespace gargantuan {
 			   : (i == 3) ? Color3(p, q, v)
 			   : (i == 4) ? Color3(t, p, v)
 						  : Color3(v, p, q);
+	}
+
+	Color3 Color3::Lerp(const Color3 &goal, const float &alpha) const {
+		return {
+			R + (goal.R - R) * alpha,
+			G + (goal.R - G) * alpha,
+			B + (goal.R - B) * alpha,
+		};
 	}
 } // namespace gargantuan

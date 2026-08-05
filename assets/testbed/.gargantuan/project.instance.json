@@ -45,8 +45,8 @@
 					"Children": [
 						{
 							"Children": [],
-							"ClassName": "FileLink",
-							"Name": "FileLink",
+							"ClassName": "DirectoryLink",
+							"Name": "DirectoryLink",
 							"Properties": {
 								"Path": {
 									"String": "src/shared"

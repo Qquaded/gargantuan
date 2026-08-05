@@ -38,8 +38,10 @@ namespace gargantuan {
 	int OpenLibBase(lua_State *L) {
 		auto scriptEngine = ScriptEngine::Get(L);
 
-		lua_pushcclosurek(L, print, "print", 0, nullptr);
-		lua_setglobal(L, "print");
+		// Disabling for now since Lest needs stdout
+		// TODO.... ProcessService:WriteStdout
+		// lua_pushcclosurek(L, print, "print", 0, nullptr);
+		// lua_setglobal(L, "print");
 
 		lua_pushcclosurek(L, warn, "warn", 0, nullptr);
 		lua_setglobal(L, "warn");

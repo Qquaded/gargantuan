@@ -2,7 +2,7 @@
 #include "gargantuan/Log.hpp"
 #include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/classes/FileLink.hpp"
+#include "gargantuan/classes/DirectoryLink.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/render/Renderer.hpp"
@@ -33,8 +33,8 @@ namespace gargantuan {
 				});
 			}
 
-			if (inst->IsClass<gargantuan::FileLink>()) {
-				auto link = std::static_pointer_cast<gargantuan::FileLink>(inst);
+			if (inst->IsClass<gargantuan::DirectoryLink>()) {
+				auto link = std::static_pointer_cast<gargantuan::DirectoryLink>(inst);
 				auto relativePath = link->Path;
 				auto absolutePath = std::filesystem::absolute(this->DataModel->Root / relativePath);
 				LOG_INFO(

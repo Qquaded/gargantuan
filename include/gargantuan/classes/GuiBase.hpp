@@ -3,8 +3,8 @@
 #include "gargantuan/datatypes/Instance.hpp"
 
 namespace gargantuan {
-	class ReplicatedStorage : public Instance {
+	class GuiBase : public Instance {
 	  public:
-		G_INSTANCE_DECL(ReplicatedStorage);
+		G_INSTANCE_DECL(UIBase);
 	};
 }

@@ -4,9 +4,11 @@
 #include "gargantuan/render/RenderPass.hpp"
 
 #include <SDL3/SDL.h>
+#include <functional>
 #include <glm/glm.hpp>
 
 #include <memory>
+#include <vector>
 
 namespace gargantuan {
 	class BaseRenderer {
@@ -32,6 +34,11 @@ namespace gargantuan {
 
 	std::unique_ptr<RenderPass> CreateOpaquePass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat);
 	std::unique_ptr<RenderPass> CreateShadowPass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat);
+	std::unique_ptr<RenderPass> CreateGuiPass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat);
+
+	typedef std::function<std::unique_ptr<RenderPass>(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat)>
+		RenderPassConstructor;
+	extern const std::vector<RenderPassConstructor> RENDER_PASS_CONSTRUCTORS;
 
 	class SDLRenderer final : public BaseRenderer {
 	  public:
@@ -46,8 +53,7 @@ namespace gargantuan {
 		SDL_GPUTexture *ShadowMapTexture = nullptr;
 		SDL_GPUSampler *ShadowSampler = nullptr;
 
-		std::unique_ptr<RenderPass> ShadowPass;
-		std::unique_ptr<RenderPass> OpaquePass;
+		std::vector<std::unique_ptr<RenderPass>> RenderPasses;
 
 		void Draw(DrawContext drawContext) override;
 		void Resize(int width, int height) override;
