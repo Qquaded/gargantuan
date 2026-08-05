@@ -15,7 +15,7 @@ submodules:
 
 # Configures the build directory
 configure tracy="OFF" build_type="Debug":
-    cmake -B {{ GARGANTUAN_BUILD_DIRECTORY }} -G Ninja \
+    cmake -B {{ GARGANTUAN_BUILD_DIRECTORY }} -S . -G Ninja \
         -DCMAKE_BUILD_TYPE={{ build_type }} \
         -DGARGANTUAN_TRACY={{ tracy }} \
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -46,8 +46,3 @@ test_core: build
 
 # Runs tests for all libraries
 test: test_core
-
-# Builds the documentation site, then begins watching for changes
-docs *flags:
-    cd docs
-    -bunx astro dev {{ flags }}

@@ -19,13 +19,49 @@ export default defineConfig({
 				{
 					label: "Guides",
 					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: "Example Guide", slug: "guides/example" },
+						{
+							label: "Roblox Deviations",
+							slug: "guides/roblox-deviations",
+						},
 					],
 				},
 				{
-					label: "Reference",
-					items: [{ autogenerate: { directory: "reference" } }],
+					label: "Developing",
+					items: [
+						{
+							label: "Contributing to Gargantuan",
+							slug: "developing/contributing-to-gargantuan",
+						},
+						{
+							label: "Working on Gargantuan",
+							slug: "developing/working-on-gargantuan",
+						},
+						{
+							label: "Roadmap",
+							slug: "developing/roadmap",
+						},
+						{
+							label: "Code of Conduct",
+							slug: "developing/code-of-conduct",
+						},
+					],
+				},
+				{
+					label: "Meta",
+					items: [
+						{
+							label: "License",
+							slug: "meta/license",
+						},
+						{
+							label: "Additional Copyright Notices",
+							slug: "meta/additional-copyright-notices",
+						},
+						{
+							label: "For AI Agents",
+							slug: "meta/agents",
+						},
+					],
 				},
 			],
 		}),

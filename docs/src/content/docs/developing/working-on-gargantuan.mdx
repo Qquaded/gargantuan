@@ -1,0 +1,227 @@
+---
+title: Working on Gargantuan
+description: Guide for working on Gargantuan.
+---
+
+import { Aside } from "@astrojs/starlight/components"
+
+Are you interested in working *on* Gargantuan? This guide walks through how to
+compile and work on your own homegrown Gargantuans.
+
+## Prerequisites
+
+You should be able to compile Gargantuan successfully on the following platforms
+(older and newer versions might work):
+
+- Windows 10
+- MacOS 26 + XCode 26
+- Linux
+
+Gargantuan provides a [Justfile](https://github.com/teamfireworks/gargantuan/blob/main/.justfile)
+which is used with [Just](https://just.systems/man/en/installation.html) to
+simplify the build process. It is strongly recommend you install Just before
+proceeding.
+
+You can get a summary of all recipes with:
+
+```sh
+just -l
+```
+
+Alternatively, you can manually run the commands inside the Justfile and replace
+any variables as you see fit. This is most important when working on Windows,
+where commands default to PowerShell (Bash installation process is awful on
+Windows)
+
+## Source Code
+
+Clone the repository and all its submodules using the following command:
+
+```sh
+git clone --recursive https://github.com/teamfireworks/gargantuan.git
+```
+
+<Aside type="caution">
+	If you are an outside contributor, please clone from your own fork of
+	Gargantuan. Team Fireworks can work on the main repository.
+</Aside>
+
+To update an existing clone, run the `submodules` Justfile recipe.
+
+## Dependencies
+
+To build Gargantuan, you need:
+
+- [CMake >=3.25](https://cmake.org/)
+- [Ninja ~1.13](https://ninja-build.org/)
+- [CCache ~4.13](https://ccache.dev/)
+- [glslc ~v2026.2](https://github.com/google/shaderc/tags)
+- [Rokit](https://github.com/rojo-rbx/rokit)
+    - It is preferred to install Lest (the test runner) using Rokit, as
+      Gargantuan's test suite makes use of the unreleased `gargantuan` backend.
+
+      You can wipe Rokit's Lest via:
+
+	      ```sh
+	      rm ~/.rokit/bin/lest
+	      ```
+
+If you have Vulkan SDK, glslc comes included.
+
+### Windows
+
+- Windows 10 and/or 11
+- Vulkan SDK
+
+DirectX 12 will eventually be supported.
+
+### MacOS
+
+- MacOS 26 and XCode 26
+- Vulkan SDK IF you want to test Vulkan via MoltenVK
+    - Vulkan SDK comes included with glslc
+
+[Homebrew](https://brew.sh) can be used to trivially install CMake, Ninja, and
+CCache:
+
+```sh
+brew install cmake ninja ccache
+```
+
+### Linux
+
+Several people have successfully run and developed Gargantuan in Linux.
+Unfortunately, they are vagueposters.
+
+## Automated Building
+
+Automated, versioned and packaged builds of Gargantuan will be provided once
+Gargantuan Studio is established.
+
+## Manual Building
+
+1. Get Gargantuan source code, then create a `build` directory inside to leave
+   all the files that are result of the compilation process (`.exe`, `.lib`,
+   `.obj`, `.a`, `.o`, etc):
+
+	   ```sh
+	   cd ~/Code/teamfireworks/gargantuan
+	   mkdir build
+	   ```
+
+2. Run the `build` Justfile recipe to instantiate CMake.
+
+	  ```sh
+	  just configure
+	  ```
+
+3. After you have configured cmake, you have to compile the engine:
+
+	  ```sh
+	  just build
+	  ```
+
+4. When ninja finishes the compilation, you can find the executable inside
+   `./build/gargantuan`.
+
+## Codebase
+
+Gargantuan comprises of multiple components:
+
+- `classes` and `services`, which implement instance classes with the
+  `Instance` base class
+- `datatypes` which implement the runtime types including the `Instance`
+- `scripting`, which provides the runtime alongside `Userdata` and the global
+  libraries in Luau
+- `reflection`, which provides registries for instance classes and enums
+- `render`, which implements the `Renderer` and related classes
+- Other components are self-explanatory
+
+### Implementing New Data Types
+
+1. Add a header file and implement a class using the `G_USERDATA_DECL` macros
+2. Add a source file and define the userdata with the `G_USERDATA_IMPL` macro
+3. Implement your data type
+4. Open `ScriptEngine`'s header file to add a matching `OpenLib` static function
+5. Implement a `Lib` and the matching `OpenLib` function for your data type
+6. Write unit tests & polish!
+
+### Implementing New Instances
+
+1. Add a header file and implement a class that extends the `Instance` class,
+   include `G_INSTANCE_DECL` in the instance's body
+2. Add a source file and define the instance with the `G_INSTANCE_IMPL` macro
+3. Implement your instance with whatever modules you need
+4. Write unit tests & polish!
+
+### Profiling
+
+Gargantuan is instrumented for [Tracy](https://github.com/wolfpld/tracy). The
+client is disabled by default and collects nothing until Tracy's profiler
+connects.
+
+Build the tools once. They are separate programs, so they disabled by default:
+
+```sh
+cmake -B build -DGARGANTUAN_TRACY_TOOLS=ON
+cmake --build build --target tracy-profiler tracy-capture tracy-csvexport
+```
+
+After running the engine, connect to Tracy:
+
+```sh
+just run ...
+./build/bin/tracy-profiler
+```
+
+`tracy-capture -o run.tracy -s 10` records without a window open, and
+`tracy-csvexport run.tracy` prints per-zone totals, which is how two runs get
+compared.
+
+`-DGARGANTUAN_TRACY=OFF` or `just build --tracy=OFF` completely disables
+profiling.
+
+## Code style
+
+- [Follow conventional commits.](https://www.conventionalcommits.org/en/v1.0.0/)
+- [Don't write comments. Code should be self-documenting, and Gargantuan already
+  has API documentation.](https://www.youtube.com/watch?v=Bf7vDBBOBUA&t=332s)
+- Proofread surrounding code before submitting.
+- camelCase for local variables and parameters. LOUD_SNAKE_CASE for constants.
+  PascalCase for everything else.
+
+## Hat Tricks
+
+Gargantuan has additional Justfile recipes to help simplify working on the
+engine.
+
+Run the binary with the `gargantuan` recipe:
+
+```sh
+just gargantuan --help
+```
+
+Run an `assets/example` script, the `assets/testbed` project, or the
+`studio` project:
+
+```sh
+just run_example cube.luau
+just run_testbed
+just run_studio
+```
+
+When you make changes in Gargantuan, you can easily rebuild the engine and run
+the binary with the `fresh` recipes:
+
+```sh
+just fresh_example cube.luau
+just fresh_testbed
+just fresh_studio
+```
+
+Tests are written using the [Lest](https://lest-luau.github.io/lest/writing-tests)
+framework. To run the test suite:
+
+```sh
+just test
+```

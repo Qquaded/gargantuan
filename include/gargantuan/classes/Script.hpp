@@ -9,7 +9,15 @@
 
 namespace gargantuan {
 	G_ENUM(RunContext, Client, Server);
-	enum class ScriptStatus : int { Disabled, Idle, Running, Error, Finished };
+
+	enum class ScriptStatus : int {
+		Disabled,
+		Idle,
+		Running,
+		Yielded,
+		Error,
+		Finished,
+	};
 
 	class Script : public LuaSourceContainer {
 	  public:

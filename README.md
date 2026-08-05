@@ -25,14 +25,14 @@ Gargantuan is an 3D game engine, scriptable using Luau, independently developed
 and maintained by Team Fireworks.
 
 - **Gargantuan is powerful,** boasting a feature rich 2D and 3D featureset.
-- **Gargantuan is productive,** with a familiar Luau API surface that enables rapid prototyping.
-- **Gargantuan is multiplatform,** so one game runs across MacOS, Windows, Linux, mobile, and VR.
+- **Gargantuan is productive,** with a familiar Luau API surface that facilitates rapid prototyping.
+- **Gargantuan is multiplatform,** enabling one game to run across desktop, mobile, and VR.
 
 And finally,
 
-- **Gargantuan is 100% yours,** from the platform, assets, multiplayer, and even core scripts.
+- **Gargantuan is 100% yours,** from the platform, assets, and even core scripts.
 
-Sparked your interest? [Read the documentation.](./docs/index.md)
+Sparked your interest? [Read the documentation.](https://gargantuan.teamfireworks.org/)
 
 ## Development
 
@@ -41,135 +41,7 @@ who representes [Team Fireworks](https://github.com/teamfireworks).
 
 Gargantuan is a project by and for the collective Roblox community. Gargantuan
 welcomes your contribution and support, even if it's just messing around with
-the engine. [We have a contributing guide for those interested!](./CONTRIBUTING.md)
-
-Below is the current status of Gargantuan's development:
-
-### Gargantuan 0.1
-
-notes for a roblox compatibility mode:
-
-- Rename FlexAlignment classname -> UIFlexAlignment
-- Rename UIObject classname -> GuiObject
-- Rename Signal typename -> RBXScriptSignal (NOTE: LibSignal is unchanged)
-- Rename SignalConnection typename -> RBXScriptConnection
-
-### Basics
-
-- [x] Luau runtime layer
-- [x] Parts
-- [x] Shadows
-- [x] RunService
-- [x] Workspace
-- [x] UserInputService
-- [x] Lighting
-- [x] TweenInfo
-
-#### Studio
-
-Projects will initially have:
-
-- a `.gargantuan/project.instance.json`
-- a `.gargantuan/project.config.json`
-
-Studio progress:
-
-- [x] `.instance.json` format
-- [x] Load projects by CLI
-- [x] Opens existing projects
-- [x] Filelinking (NOTE: needs bugfixes and edge casing for Rojo init.luaus)
-- [ ] New project flow
-- [ ] Implement UI primitives
-- [ ] Widgets
-- [ ] Docking
-- [ ] Plugins system
-- [ ] Ribbon bar
-- [ ] Settings plugin
-- [ ] Explorer plugin
-- [ ] Properties plugin
-- [ ] Console plugin
-- [ ] Building tool plugin
-- [ ] Run Rojo inside Gargantuan :)
-
-#### Scripting
-
-- [ ] ProcessService (great for Lest and friends!)
-- [ ] Implement the remaining data types to API parity
-- [ ] ScriptSecurity enum, tentatively: None, Plugin, Studio, Internal
-- [x] `require()` implementation with user-provided require aliases
-- [x] `@game/...` maps to requiring `DataModel...`
-- [ ] ~~Implement `@std/test` from Lute~~ Not needed with Lest having Gargantuan
-      support, but preferred for other projects
-- [ ] Implement the assortment of Lute stdlibs
-- [ ] Implement code modifications with `@std/syntax`
-- [ ] ~~Implement Roblox-compatibility code modifications (for RBXScriptConnection)~~
-      This incurs a high compile time for any Gargantuan project when we can
-      simply change the typenames at runtime when registering the userdatas, we
-      can always revisit this later once stdlibs are implemented
-
-#### UI
-
-- [ ] Render GuiObjects
-- [ ] Render Frames
-- [ ] Render TextLabels
-- [ ] Render ImageLabels
-- [ ] UIListLayout and UIFlexItem
-- [ ] UICorners, UIGradients, UIPaddings, UIStroke, etc
-- [ ] UISizeConstraint, UIGridLayouts, UIPageLayouts etc
-- [ ] Render EditableImages
-- [ ] TextButtons and ImageButtons receive input
-- [ ] TextBoxes are stateful
-- [ ] Render ScrollingFrames
-- [ ] Drag and drop
-- [ ] EditableImages
-- [ ] ViewportFrames
-- [ ] Stylesheets?
-
-#### World
-
-- [x] Basic physics colliders
-- [ ] Mesh colliders
-- [ ] Visual Materials
-- [ ] Physical Materials
-- [ ] MaterialService
-- [ ] PBR
-- [ ] LightingService
-- [ ] LightingEffects
-- [ ] Textures and decals
-- [ ] GlslSourceContainer, VertexShader, FragmentShader, ComputeShader classes
-- [ ] Competent lighting
-- [ ] MVP player controller preset (Exact obbying can be done later)
-
-### Gargantuan 0.2
-
-#### Repository
-
-- [ ] Monorepository layout (Can be done in 0.1 if deemed feasible)
-- [ ] Migrate to flecs with an ECS layout (Spook has a reference implementation)
-
-#### Studio
-
-- [ ] `.instance.bin` format
-- [ ] Compile projects into executables
-- [ ] Implement client-server boundaries (run two Gargantuans at once for now)
-- [ ] Datastores
-- [ ] Monetization $$$$$$ (by the developer, not Gargantuan)
-
-#### Worlds
-
-- [ ] Constraints
-- [ ] ParticleEmitters
-- [ ] Trails
-- [ ] Beams
-
-### Gargantuan 0.3/1.0
-
-#### Studio
-
-- [ ] Self-hosting game servers
-- [ ] Self-hosting CDN servers
-- [ ] API rich enough to get large games onto Gargantuan (ie. Welcome To Hell)
-- [ ] Visual scripting (block & node based)
+the engine. [We have a contributing guide for those interested!](https://gargantuan.teamfireworks.org/developing/contributing-to-gargantuan)
 
 ## Prior Art
 
