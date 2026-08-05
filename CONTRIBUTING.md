@@ -63,6 +63,9 @@ cmake -B build
 
 ```sh
 cmake -B build
+
+# for windows:
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 ```
 
 Create a `Testbed.luau` script in the repository root (it is not tracked by

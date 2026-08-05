@@ -5,6 +5,7 @@
 #include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/filesystem/Paths.hpp"
 #include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 #include <SDL3/SDL.h>
@@ -33,11 +34,17 @@ namespace gargantuan {
 		auto extension = extensionSuffix + ".luau";
 		if (filename.ends_with(extension)) {
 			try {
-				auto script = ScriptFromFile<T>(absolutePath.c_str());
+				auto script = ScriptFromFile<T>(Paths::ToUtf8(absolutePath).c_str());
 				script->Name = filename.substr(0, filename.size() - extension.size());
 				return script;
 			} catch (std::exception &err) {
-				LOG_WARN(App, "Failed to create %s %s: %s", debugNoun.c_str(), absolutePath.c_str(), err.what());
+				LOG_WARN(
+					App,
+					"Failed to create %s %s: %s",
+					debugNoun.c_str(),
+					Paths::ToUtf8(absolutePath).c_str(),
+					err.what()
+				);
 			}
 		}
 		return nullptr;
@@ -45,8 +52,8 @@ namespace gargantuan {
 
 	Instance::Pointer InstanceFromPath(const std::filesystem::path absolutePath) {
 		SDL_PathInfo pathInfo;
-		if (!SDL_GetPathInfo(absolutePath.c_str(), &pathInfo)) {
-			LOG_WARN(App, "Failed to synchronize %s: %s", absolutePath.c_str(), SDL_GetError());
+		if (!SDL_GetPathInfo(Paths::ToUtf8(absolutePath).c_str(), &pathInfo)) {
+			LOG_WARN(App, "Failed to synchronize %s: %s", Paths::ToUtf8(absolutePath).c_str(), SDL_GetError());
 			return nullptr;
 		};
 
@@ -77,7 +84,7 @@ namespace gargantuan {
 			}
 		} else if (pathInfo.type == SDL_PATHTYPE_DIRECTORY) {
 			auto container = std::make_shared<Folder>();
-			container->Name = absolutePath.filename();
+			container->Name = absolutePath.filename().string();
 			for (const auto &entry : std::filesystem::directory_iterator(absolutePath)) {
 				auto child = InstanceFromPath(entry.path());
 				if (!child) continue;
@@ -93,7 +100,7 @@ namespace gargantuan {
 		if (!Parent || Synchronizing) return;
 		Synchronizing = true;
 
-		LOG_INFO(App, "Synchronizing DirectoryLink path: %s", absolutePath.c_str());
+		LOG_INFO(App, "Synchronizing DirectoryLink path: %s", Paths::ToUtf8(absolutePath).c_str());
 
 		for (auto &child : OwnedSiblings) {
 			child->Destroy();
@@ -101,8 +108,10 @@ namespace gargantuan {
 		OwnedSiblings.clear();
 
 		SDL_PathInfo pathInfo;
-		if (!SDL_GetPathInfo(absolutePath.c_str(), &pathInfo)) {
-			LOG_WARN(App, "Failed to get path information for %s: %s", absolutePath.c_str(), SDL_GetError());
+		if (!SDL_GetPathInfo(Paths::ToUtf8(absolutePath).c_str(), &pathInfo)) {
+			LOG_WARN(
+				App, "Failed to get path information for %s: %s", Paths::ToUtf8(absolutePath).c_str(), SDL_GetError()
+			);
 			return;
 		} else if (pathInfo.type != SDL_PATHTYPE_DIRECTORY) {
 			LOG_WARN(App, "DirectoryLinks (for now) can only be used with directories");

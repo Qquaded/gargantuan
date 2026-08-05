@@ -127,7 +127,7 @@ Studio progress:
 
 #### World
 
-- [ ] Basic physics colliders
+- [x] Basic physics colliders
 - [ ] Mesh colliders
 - [ ] Visual Materials
 - [ ] Physical Materials

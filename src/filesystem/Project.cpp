@@ -1,7 +1,8 @@
 #include "gargantuan/filesystem/Project.hpp"
 #include "gargantuan/assets/InstanceSerialization.hpp"
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/filesystem/BaseFilesystem.hpp"
+#include "gargantuan/classes/FileLink.hpp"
+#include "gargantuan/filesystem/Paths.hpp"
 
 #include <SDL3/SDL.h>
 #include <format>
@@ -19,13 +20,13 @@ namespace gargantuan {
 	ResolveInstanceFile(std::filesystem::path rootConfiguration) {
 		SDL_PathInfo binaryInfo;
 		std::filesystem::path binaryPath = rootConfiguration / "project.instance.bin";
-		if (SDL_GetPathInfo(binaryPath.c_str(), &binaryInfo) && binaryInfo.type == SDL_PATHTYPE_FILE) {
+		if (SDL_GetPathInfo(Paths::ToUtf8(binaryPath).c_str(), &binaryInfo) && binaryInfo.type == SDL_PATHTYPE_FILE) {
 			return std::tuple{binaryPath, InstanceFormat::Binary};
 		}
 
 		SDL_PathInfo jsonInfo;
 		std::filesystem::path jsonPath = rootConfiguration / "project.instance.json";
-		if (SDL_GetPathInfo(jsonPath.c_str(), &jsonInfo) && jsonInfo.type == SDL_PATHTYPE_FILE) {
+		if (SDL_GetPathInfo(Paths::ToUtf8(jsonPath).c_str(), &jsonInfo) && jsonInfo.type == SDL_PATHTYPE_FILE) {
 			return std::tuple{jsonPath, InstanceFormat::Json};
 		}
 
@@ -71,9 +72,9 @@ namespace gargantuan {
 		Project self(fs);
 
 		SDL_PathInfo configurationInfo;
-		if (!self.Filesystem->Exists(self.RootConfiguration)) {
-			throw std::runtime_error("Missing .gargantuan directory");
-		} else if (self.Filesystem->Type(self.RootConfiguration) != FileType::Directory) {
+		if (!SDL_GetPathInfo(Paths::ToUtf8(self.RootConfiguration).c_str(), &configurationInfo)) {
+			throw std::runtime_error(std::format("Failed to open .gargantuan directory: {}", SDL_GetError()));
+		} else if (configurationInfo.type != SDL_PATHTYPE_DIRECTORY) {
 			auto pathType = magic_enum::enum_name(configurationInfo.type);
 			throw std::runtime_error(std::format("Expected .gargantuan to be a directory, got {}", pathType));
 		}
