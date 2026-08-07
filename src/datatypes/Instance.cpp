@@ -25,12 +25,14 @@ namespace gargantuan {
 			{"__namecall", Method{&Instance::LNamecall}},
 		}
 	);
+
 	G_INSTANCE_IMPL(
 		Instance,
 		.Superclass = std::nullopt,
 		.Properties =
 			{
-				{"Name", Property::fromMember<&Instance::Name>(true, true)},
+				{"Archivable", Property::fromMember<&Instance::Name>()},
+				{"Name", Property::fromMember<&Instance::Name>()},
 				{
 					"ClassName",
 					Property::fromRead([](Instance *instance) -> std::string_view {
@@ -54,6 +56,13 @@ namespace gargantuan {
 			{"GetDescendants", Method::fromMember<&Instance::GetDescendants>()},
 			{"FindFirstChild", Method::fromMember<&Instance::FindFirstChild>()},
 			{"FindFirstChildOfClass", Method::fromMember<&Instance::FindFirstChildOfClass>()},
+			{"FindFirstChildWhichIsA", Method::fromMember<&Instance::FindFirstChildWhichIsA>()},
+			{"FindFirstDescendant", Method::fromMember<&Instance::FindFirstDescendant>()},
+			{"FindFirstDescendantOfClass", Method::fromMember<&Instance::FindFirstDescendantOfClass>()},
+			{"FindFirstDescendantWhichIsA", Method::fromMember<&Instance::FindFirstDescendantWhichIsA>()},
+			{"FindFirstAncestor", Method::fromMember<&Instance::FindFirstAncestor>()},
+			{"FindFirstAncestorOfClass", Method::fromMember<&Instance::FindFirstAncestorOfClass>()},
+			{"FindFirstAncestorWhichIsA", Method::fromMember<&Instance::FindFirstAncestorWhichIsA>()},
 		}
 	);
 
@@ -275,19 +284,74 @@ namespace gargantuan {
 
 	std::shared_ptr<Instance> Instance::FindFirstChild(std::string_view name, bool recursive) {
 		for (const auto &child : Children) {
-			if (child->Name == name) {
-				return child;
+			if (child->Name == name) return child;
+			if (recursive) {
+				if (auto found = child->FindFirstChild(name, recursive)) return found;
 			}
 		};
 		return nullptr;
 	}
 
-	std::shared_ptr<Instance> Instance::FindFirstChildOfClass(std::string_view className) {
+	std::shared_ptr<Instance> Instance::FindFirstChildOfClass(std::string_view className, bool recursive) {
 		for (const auto &child : Children) {
-			if (InstanceClassRegistry::GetDefinition(child.get())->ClassName == className) {
-				return child;
+			if (InstanceClassRegistry::GetDefinition(child.get())->ClassName == className) return child;
+			if (recursive) {
+				if (auto found = child->FindFirstChildOfClass(className, recursive)) return found;
 			}
 		};
+		return nullptr;
+	}
+
+	std::shared_ptr<Instance> Instance::FindFirstChildWhichIsA(std::string_view className, bool recursive) {
+		for (const auto &child : Children) {
+			if (InstanceClassRegistry::GetDefinition(child.get())->InheritedClasses.contains(className)) return child;
+			if (recursive) {
+				if (auto found = child->FindFirstChildWhichIsA(className, recursive)) return found;
+			}
+		};
+		return nullptr;
+	}
+
+	std::shared_ptr<Instance> Instance::FindFirstDescendant(std::string_view name) {
+		return FindFirstChild(name, true);
+	}
+
+	std::shared_ptr<Instance> Instance::FindFirstDescendantOfClass(std::string_view className) {
+		return FindFirstChildOfClass(className, true);
+	}
+
+	std::shared_ptr<Instance> Instance::FindFirstDescendantWhichIsA(std::string_view className) {
+		return FindFirstChildWhichIsA(className, true);
+	}
+
+	std::shared_ptr<Instance> Instance::FindFirstAncestor(std::string_view name) {
+		auto *current = this->Parent;
+		while (current) {
+			if (current->Name == name) return current->shared_from_this();
+			current = current->Parent;
+		}
+		return nullptr;
+	}
+
+	std::shared_ptr<Instance> Instance::FindFirstAncestorOfClass(std::string_view className) {
+		auto *current = this->Parent;
+		while (current) {
+			if (InstanceClassRegistry::GetDefinition(current)->ClassName == className) {
+				return current->shared_from_this();
+			}
+			current = current->Parent;
+		}
+		return nullptr;
+	}
+
+	std::shared_ptr<Instance> Instance::FindFirstAncestorWhichIsA(std::string_view className) {
+		auto *current = this->Parent;
+		while (current) {
+			if (InstanceClassRegistry::GetDefinition(current)->InheritedClasses.contains(className)) {
+				return current->shared_from_this();
+			}
+			current = current->Parent;
+		}
 		return nullptr;
 	}
 }

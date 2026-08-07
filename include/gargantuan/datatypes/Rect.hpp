@@ -9,6 +9,7 @@ namespace gargantuan {
 	G_USERDATA_DECL(
 		Rect,
 
+		Rect();
 		Rect(Vector2 min, Vector2 max);
 		Rect(float minX, float minY, float maxX, float maxY);
 

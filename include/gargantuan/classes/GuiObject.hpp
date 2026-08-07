@@ -3,10 +3,12 @@
 #include "gargantuan/classes/GuiBase2d.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
 #include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/datatypes/Rect.hpp"
 #include "gargantuan/datatypes/UDim.hpp"
 #include "gargantuan/datatypes/Vector2.hpp"
 #include "gargantuan/reflection/Enums.hpp"
 #include <memory>
+#include <optional>
 
 namespace gargantuan {
 	G_ENUM(GuiState, Idle, Hover, Press, NonInteractable);
@@ -28,11 +30,15 @@ namespace gargantuan {
 		UDim Position{0.0f, 0};
 		float Rotation{0.0f};
 		bool Selectable{false};
-		std::shared_ptr<GuiObject> SelectionImageObject = nullptr;
+		std::optional<std::shared_ptr<GuiObject>> SelectionImageObject = std::nullopt;
 		int SelectionOrder{0};
 		UDim Size{0.0f, 0};
 		Enums::SizeConstaint SizeConstaint{Enums::SizeConstaint::RelativeXY};
 		bool Visible{true};
 		int ZIndex{0};
+
+		Rect AbsoluteBounds{};
+		bool AbsoluteBoundsDirty{true};
+		Rect CalculateAbsoluteBounds();
 	};
 }

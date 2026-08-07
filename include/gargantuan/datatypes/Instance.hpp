@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 #define G_INSTANCE_DECL(instanceType) static const InstanceClassDefinition CLASS_DEFINITION;
@@ -19,12 +20,13 @@ namespace gargantuan {
 		std::shared_ptr<Instance> (*Constructor)();
 		std::string_view Description = "(No description provided.)";
 		std::optional<std::string_view> Superclass = "Instance";
-		std::unordered_map<std::string_view, UserdataProperty<Instance>> Properties = {};
-		std::unordered_map<std::string_view, UserdataMethod<Instance>> Methods = {};
+		std::unordered_map<std::string_view, UserdataProperty<Instance>> Properties{};
+		std::unordered_map<std::string_view, UserdataMethod<Instance>> Methods{};
 
 		bool Flattened = false;
-		std::unordered_map<std::string_view, const UserdataProperty<Instance> *> AllProperties = {};
-		std::unordered_map<std::string_view, const UserdataMethod<Instance> *> AllMethods = {};
+		std::unordered_set<std::string_view> InheritedClasses{};
+		std::unordered_map<std::string_view, const UserdataProperty<Instance> *> AllProperties{};
+		std::unordered_map<std::string_view, const UserdataMethod<Instance> *> AllMethods{};
 	};
 
 	G_SHARED_USERDATA_DECL(
@@ -66,11 +68,14 @@ namespace gargantuan {
 		std::vector<std::shared_ptr<Instance>> & GetChildren();
 		std::vector<std::shared_ptr<Instance>> GetDescendants();
 		std::shared_ptr<Instance> FindFirstChild(std::string_view name, bool recursive = false);
-		std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className);
-		std::shared_ptr<Instance> FindFirstChildWhichIsA(std::string_view className);
+		std::shared_ptr<Instance> FindFirstChildOfClass(std::string_view className, bool recursive = false);
+		std::shared_ptr<Instance> FindFirstChildWhichIsA(std::string_view className, bool recursive = false);
 		std::shared_ptr<Instance> FindFirstDescendant(std::string_view name);
 		std::shared_ptr<Instance> FindFirstDescendantOfClass(std::string_view className);
 		std::shared_ptr<Instance> FindFirstDescendantWhichIsA(std::string_view className);
+		std::shared_ptr<Instance> FindFirstAncestor(std::string_view name);
+		std::shared_ptr<Instance> FindFirstAncestorOfClass(std::string_view className);
+		std::shared_ptr<Instance> FindFirstAncestorWhichIsA(std::string_view className);
 		void Destroy();
 
 		template <typename T> bool IsClass() const { return dynamic_cast<const T *>(this) != nullptr; }

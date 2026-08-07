@@ -16,6 +16,10 @@ namespace gargantuan {
 		}
 	)
 
+	Rect::Rect() {};
+	Rect::Rect(Vector2 min, Vector2 max) : Min(min), Max(max) {};
+	Rect::Rect(float minX, float minY, float maxX, float maxY) : Min(minX, minY), Max(maxX, maxY) {};
+
 	float Rect::GetWidth() const {
 		return Max.GetX() - Min.GetX();
 	}

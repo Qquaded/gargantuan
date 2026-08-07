@@ -43,18 +43,16 @@ namespace gargantuan::InstanceClassRegistry {
 				for (auto &[name, property] : current->Properties) {
 					definition->AllProperties.emplace(name, &property);
 				}
+
 				for (auto &[name, method] : current->Methods) {
 					definition->AllMethods.emplace(name, &method);
 				}
 
-				if (!current->Superclass.has_value()) {
-					break;
-				}
+				if (!current->Superclass.has_value()) break;
+				definition->InheritedClasses.emplace(current->Superclass.value());
 
 				InstanceClassDefinition *next = GetDefinitionByName(current->Superclass.value());
-				if (next == current) {
-					break;
-				}
+				if (next == current) break;
 				current = next;
 			}
 

@@ -26,7 +26,7 @@ namespace gargantuan {
 		};
 
 		template <auto MemberPointer>
-		static UserdataProperty fromMember(bool enableRead = false, bool enableWrite = false) {
+		static UserdataProperty fromMember(bool enableRead = true, bool enableWrite = true) {
 			using MemberClass = typename MemberTraits<decltype(MemberPointer)>::Target;
 			using Value = typename MemberTraits<decltype(MemberPointer)>::Value;
 
