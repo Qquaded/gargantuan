@@ -14,12 +14,12 @@ namespace gargantuan {
 	  public:
 		static constexpr std::string LABEL = "Gui";
 
-		// FileShader Shader{
-		// 	.VertexFilepath = GetShaderPath("gui.vert"),
-		// 	.VertexUniformBufferCount = 1,
-		// 	.FragmentFilepath = GetShaderPath("gui.frag"),
-		// 	.FragmentUniformBufferCount = 0,
-		// };
+		FileShader Shader{
+			.VertexFilepath = GetShaderPath("gui.vert"),
+			.VertexUniformBufferCount = 1,
+			.FragmentFilepath = GetShaderPath("gui.frag"),
+			.FragmentUniformBufferCount = 0,
+		};
 
 		GuiPass(SDL_GPUDevice *gpu, SDL_GPUTextureFormat swapchainFormat) {
 			// Shader.Init(gpu);
