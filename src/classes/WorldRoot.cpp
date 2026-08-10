@@ -50,69 +50,7 @@ namespace gargantuan {
 
 				partBodyDef.userData = part.get();
 				b3BodyId partId = b3CreateBody(World, &partBodyDef);
-				// hull
-				if (const Part *partNotBasePart = dynamic_cast<Part *>(part.get())) {
-					switch (partNotBasePart->GetShape()) {
-					case Enums::PartType::Block: {
-						b3BoxHull partBox = b3MakeBoxHull(
-							part->GetSize().x * 0.5f, part->GetSize().y * 0.5f, part->GetSize().z * 0.5f
-						);
-						b3CreateHullShape(partId, &partShapeDef, &partBox.base);
-						break;
-					}
-					case Enums::PartType::Wedge: {
-						const glm::vec3 h = part->GetSize() * 0.5f;
-						const b3Vec3 points[6] = {
-							{-h.x, -h.y, -h.z},
-							{h.x, -h.y, -h.z},
-							{h.x, -h.y, h.z},
-							{-h.x, -h.y, h.z},
-							{h.x, h.y, -h.z},
-							{-h.x, h.y, -h.z},
-						};
-						b3HullData *hull = b3CreateHull(points, 6, 6);
-						b3CreateHullShape(partId, &partShapeDef, hull);
-						b3DestroyHull(hull);
-						break;
-					}
-					case Enums::PartType::CornerWedge: {
-						const glm::vec3 h = part->GetSize() * 0.5f;
-						const b3Vec3 points[5] = {
-							{-h.x, -h.y, -h.z},
-							{h.x, -h.y, -h.z},
-							{h.x, -h.y, h.z},
-							{-h.x, -h.y, h.z},
-							{-h.x, h.y, -h.z},
-						};
-						b3HullData *hull = b3CreateHull(points, 5, 5);
-						b3CreateHullShape(partId, &partShapeDef, hull);
-						b3DestroyHull(hull);
-						break;
-					}
-					case Enums::PartType::Ball: {
-						b3Sphere partSphere = b3Sphere{
-							.center = {0, 0, 0},
-							.radius = fmin(fmin(part->GetSize().x, part->GetSize().y), part->GetSize().z) * 0.5f
-						};
-						b3CreateSphereShape(partId, &partShapeDef, &partSphere);
-						break;
-					}
-					case Enums::PartType::Cylinder: {
-						b3HullData *cylinderHullData = b3CreateCylinder(
-							part->GetSize().y, fmin(part->GetSize().x * 0.5f, part->GetSize().z * 0.5f), 0, 20
-						); // idk 20 sides seems fine
-						b3CreateHullShape(partId, &partShapeDef, cylinderHullData);
-						b3DestroyHull(cylinderHullData);
-						break;
-					}
-					};
-				} else {
-					b3BoxHull partBox = b3MakeBoxHull(
-						part->GetSize().x * 0.5f, part->GetSize().y * 0.5f, part->GetSize().z * 0.5f
-					);
-					b3CreateHullShape(partId, &partShapeDef, &partBox.base);
-				}
-
+				part->CreateBodyShape(partId, partShapeDef);
 				this->PartBodies[part.get()] = partId;
 			}
 		};

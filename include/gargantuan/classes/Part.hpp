@@ -17,5 +17,6 @@ namespace gargantuan {
 		I_Part;
 
 		std::unique_ptr<GpuMesh> &GetMesh() const override;
+		void CreateBodyShape(b3BodyId bodyId, b3ShapeDef &bodyShape) override;
 	};
 } // namespace gargantuan
