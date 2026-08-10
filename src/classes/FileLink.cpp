@@ -1,29 +1,19 @@
-#include "gargantuan/classes/DirectoryLink.hpp"
+#include "gargantuan/classes/FileLink.hpp"
 #include "gargantuan/Log.hpp"
 #include "gargantuan/classes/Folder.hpp"
-#include "gargantuan/classes/LuaSourceContainer.hpp"
+#include "gargantuan/classes/Instance.hpp"
 #include "gargantuan/classes/ModuleScript.hpp"
 #include "gargantuan/classes/Script.hpp"
-#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/filesystem/Paths.hpp"
-#include "gargantuan/reflection/InstanceClassRegistry.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_filesystem.h>
+
 #include <exception>
 #include <filesystem>
 #include <memory>
 #include <string>
 
 namespace gargantuan {
-	G_INSTANCE_IMPL(
-		DirectoryLink,
-		.Description = "Synchronizes a filesystem entry into the data model.",
-		.Properties = {
-			{"Path", Property::fromMember<&DirectoryLink::Path>(true, true).SetSerializable()},
-		}
-	);
-
 	template <typename T>
 	std::shared_ptr<T> TryCreateScript(
 		const std::string &extensionSuffix,
@@ -35,7 +25,7 @@ namespace gargantuan {
 		if (filename.ends_with(extension)) {
 			try {
 				auto script = ScriptFromFile<T>(Paths::ToUtf8(absolutePath).c_str());
-				script->Name = filename.substr(0, filename.size() - extension.size());
+				script->SetName(filename.substr(0, filename.size() - extension.size()));
 				return script;
 			} catch (std::exception &err) {
 				LOG_WARN(
@@ -50,7 +40,13 @@ namespace gargantuan {
 		return nullptr;
 	}
 
-	Instance::Pointer InstanceFromPath(const std::filesystem::path absolutePath) {
+	FileLink::FileLink() {
+		GetPropertyChangedSignal("Path")->Connect([this](std::monostate _) {
+			LOG_DEBUG(App, "Source -> %s", this->GetPath().c_str());
+		});
+	}
+
+	std::shared_ptr<Instance> InstanceFromPath(const std::filesystem::path absolutePath) {
 		SDL_PathInfo pathInfo;
 		if (!SDL_GetPathInfo(Paths::ToUtf8(absolutePath).c_str(), &pathInfo)) {
 			LOG_WARN(App, "Failed to synchronize %s: %s", Paths::ToUtf8(absolutePath).c_str(), SDL_GetError());
@@ -74,17 +70,17 @@ namespace gargantuan {
 				// }
 				return nullptr;
 			} else if (auto script = TryCreateScript<Script>(".client", "client script", filename, absolutePath)) {
-				script->RunContext = Enums::RunContext::Client;
+				script->SetRunContext(Enums::RunContext::Client);
 				return script;
 			} else if (auto script = TryCreateScript<Script>(".server", "server script", filename, absolutePath)) {
-				script->RunContext = Enums::RunContext::Server;
+				script->SetRunContext(Enums::RunContext::Server);
 				return script;
 			} else if (auto script = TryCreateScript<ModuleScript>("", "module script", filename, absolutePath)) {
 				return script;
 			}
 		} else if (pathInfo.type == SDL_PATHTYPE_DIRECTORY) {
 			auto container = std::make_shared<Folder>();
-			container->Name = absolutePath.filename().string();
+			container->SetName(absolutePath.filename().string());
 			for (const auto &entry : std::filesystem::directory_iterator(absolutePath)) {
 				auto child = InstanceFromPath(entry.path());
 				if (!child) continue;
@@ -96,11 +92,11 @@ namespace gargantuan {
 		return nullptr;
 	}
 
-	void DirectoryLink::Synchronize(const std::filesystem::path absolutePath) {
-		if (!Parent || Synchronizing) return;
+	void FileLink::Synchronize(const std::filesystem::path absolutePath) {
+		if (!ParentPointer || Synchronizing) return;
 		Synchronizing = true;
 
-		LOG_INFO(App, "Synchronizing DirectoryLink path: %s", Paths::ToUtf8(absolutePath).c_str());
+		LOG_INFO(App, "Synchronizing FileLink path: %s", Paths::ToUtf8(absolutePath).c_str());
 
 		for (auto &child : OwnedSiblings) {
 			child->Destroy();
@@ -114,15 +110,15 @@ namespace gargantuan {
 			);
 			return;
 		} else if (pathInfo.type != SDL_PATHTYPE_DIRECTORY) {
-			LOG_WARN(App, "DirectoryLinks (for now) can only be used with directories");
+			LOG_WARN(App, "FileLinks (for now) can only be used with directories");
 			return;
 		};
 
 		for (const auto &entry : std::filesystem::directory_iterator(absolutePath)) {
 			auto child = InstanceFromPath(entry.path());
 			if (!child) continue;
-			child->Archivable = false;
-			child->SetParent(Parent->shared_from_this());
+			child->SetArchivable(false);
+			child->SetParent(ParentPointer->shared_from_this());
 			OwnedSiblings.push_back(child);
 		}
 

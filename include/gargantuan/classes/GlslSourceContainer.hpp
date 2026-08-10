@@ -1,10 +1,9 @@
 #pragma once
 
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/classes/generated/GlslSourceContainer.hpp"
 
 namespace gargantuan {
 	class GlslSourceContainer : public Instance {
-	  public:
-		G_INSTANCE_DECL(GlslSourceContainer);
+		I_GlslSourceContainer;
 	};
 }

@@ -2,9 +2,9 @@
 #include "gargantuan/Log.hpp"
 #include "gargantuan/Profiler.hpp"
 #include "gargantuan/classes/DataModel.hpp"
-#include "gargantuan/classes/DirectoryLink.hpp"
+#include "gargantuan/classes/FileLink.hpp"
+#include "gargantuan/classes/Instance.hpp"
 #include "gargantuan/classes/Script.hpp"
-#include "gargantuan/datatypes/Instance.hpp"
 #include "gargantuan/filesystem/Paths.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
@@ -26,22 +26,21 @@ namespace gargantuan {
 		  RunService(GetService<gargantuan::RunService>()), ProcessService(GetService<gargantuan::ProcessService>()),
 		  UserInputService(GetService<gargantuan::UserInputService>()) {
 
-		auto descendantAdded = [this](Instance::Pointer inst) {
-			if (inst->IsClass<gargantuan::Script>()) {
-				auto script = std::static_pointer_cast<gargantuan::Script>(inst);
+		auto descendantAdded = [this](std::shared_ptr<Instance> inst) {
+			if (auto script = std::dynamic_pointer_cast<gargantuan::Script>(inst)) {
 				this->Script->ScriptQueue.insert(script);
 				inst->Destroying->Once([ScriptEngine = this->Script, script](std::monostate _) {
 					if (ScriptEngine->ScriptQueue.contains(script)) ScriptEngine->ScriptQueue.erase(script);
 				});
 			}
 
-			if (inst->IsClass<gargantuan::DirectoryLink>()) {
-				auto link = std::static_pointer_cast<gargantuan::DirectoryLink>(inst);
-				auto relativePath = link->Path;
+			if (auto link = std::dynamic_pointer_cast<gargantuan::FileLink>(inst)) {
+				auto relativePath = link->GetPath();
 				auto absolutePath = std::filesystem::absolute(this->DataModel->Root / relativePath);
 				LOG_INFO(
 					App,
-					"Got file link: %s %s %s",
+					"Got file link: %s, %s %s %s",
+					inst->GetClassName().c_str(),
 					inst->GetFullName().c_str(),
 					Paths::ToUtf8(absolutePath).c_str(),
 					relativePath.c_str()
@@ -50,10 +49,10 @@ namespace gargantuan {
 			}
 		};
 
-		auto descendantRemoved = [this](Instance::Pointer inst) {
-			if (inst->IsClass<gargantuan::Script>()) {
-				auto script = std::static_pointer_cast<gargantuan::Script>(inst);
-				if (Script->ScriptQueue.contains(script)) Script->ScriptQueue.erase(script);
+		auto descendantRemoved = [this](std::shared_ptr<Instance> inst) {
+			if (auto script = std::static_pointer_cast<gargantuan::Script>(inst);
+				script && Script->ScriptQueue.contains(script)) {
+				Script->ScriptQueue.erase(script);
 			}
 		};
 
@@ -100,7 +99,7 @@ namespace gargantuan {
 						SDL_GetWindowSizeInPixels(window, &width, &height);
 						Renderer->Resize(width, height);
 
-						Workspace->CurrentCamera->ViewportSize = Vector2(width, height);
+						Workspace->GetCurrentCamera()->SetViewportSize(Vector2(width, height));
 
 						continue;
 					}
@@ -112,7 +111,7 @@ namespace gargantuan {
 					}
 
 					UserInputService->ProcessEvent(event);
-					Workspace->CurrentCamera->OnEvent(event);
+					Workspace->GetCurrentCamera()->OnEvent(event);
 				}
 			}
 
@@ -120,7 +119,7 @@ namespace gargantuan {
 				G_PROFILE("Simulation");
 				RunService->PreSimulation->Fire(deltaTime);
 				WorldRoot->StepPhys(deltaTime);
-				Workspace->CurrentCamera->Step(deltaTime);
+				Workspace->GetCurrentCamera()->Step(deltaTime);
 				RunService->PostSimulation->Fire(deltaTime);
 			}
 
@@ -133,7 +132,7 @@ namespace gargantuan {
 				G_PROFILE("Draw");
 				Renderer->Draw({
 					.WorldRoot = WorldRoot,
-					.Camera = Workspace->CurrentCamera,
+					.Camera = Workspace->GetCurrentCamera(),
 				});
 			}
 

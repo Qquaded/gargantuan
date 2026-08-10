@@ -1,62 +1,35 @@
 #include "gargantuan/classes/Camera.hpp"
-#include "gargantuan/datatypes/CFrame.hpp"
-#include "gargantuan/datatypes/Vector2.hpp"
-#include "gargantuan/reflection/InstanceClassRegistry.hpp"
-#include "gargantuan/scripting/Userdata.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_video.h>
-#include <glm/trigonometric.hpp>
+#include <glm/glm.hpp>
 
 namespace gargantuan {
-	G_INSTANCE_IMPL(
-		Camera,
-		.Description = "Provides the 3D view of the workspace.",
-		.Properties = {
-			{"CameraType", Property::fromMember<&Camera::CameraType>(true, true).SetSerializable()},
-			{"CFrame", Property::fromMember<&Camera::CFrame>(true, true).SetSerializable()},
-			{"FieldOfView", Property::fromMember<&Camera::FieldOfView>(true, true).SetSerializable()},
-			{"ViewportSize", Property::fromMember<&Camera::ViewportSize>(true, false)},
-			{
-				"HorizontalFieldOfView",
-				Property::fromReadWrite<float>(
-					[](Instance *self) { return self->Cast<Camera>()->GetHorizontalFieldOfView(); },
-					[](Instance *self, float value) { self->Cast<Camera>()->SetHorizontalFieldOfView(value); }
-				),
-			},
-			{
-				"DiagonalFieldOfView",
-				Property::fromReadWrite<float>(
-					[](Instance *self) { return self->Cast<Camera>()->GetDiagonalFieldOfView(); },
-					[](Instance *self, float value) { self->Cast<Camera>()->SetDiagonalFieldOfView(value); }
-				),
-			},
-		},
-	);
-
-	float Camera::GetAspectRatio() {
+	float Camera::GetAspectRatio() const {
 		return ViewportSize.GetY() > 0.0f ? ViewportSize.GetX() / ViewportSize.GetY() : 1.0f;
 	}
 
-	float Camera::GetHorizontalFieldOfView() {
+	float Camera::GetHorizontalFieldOfView() const {
 		return glm::degrees(2 * glm::atan(GetAspectRatio() * glm::tan(glm::radians(FieldOfView) / 2)));
 	}
 
 	void Camera::SetHorizontalFieldOfView(float fovy) {
-		FieldOfView = glm::degrees(2 * glm::atan(1 / GetAspectRatio() * glm::tan(glm::radians(fovy) / 2)));
+		SetFieldOfView(glm::degrees(2 * glm::atan(1 / GetAspectRatio() * glm::tan(glm::radians(fovy) / 2))));
+		GetPropertyChangedSignal("HorizontalFieldOfView")->Fire({});
 	}
 
-	float Camera::GetDiagonalFieldOfView() {
+	float Camera::GetDiagonalFieldOfView() const {
 		return glm::degrees(
 			2 * glm::atan(glm::sqrt(1 + glm::pow(GetAspectRatio(), 2)) * glm::tan(glm::radians(FieldOfView) / 2))
 		);
 	}
 
 	void Camera::SetDiagonalFieldOfView(float fovy) {
-		FieldOfView = glm::degrees(
-			2 * glm::atan(1 / glm::sqrt(1 + glm::pow(GetAspectRatio(), 2)) * glm::tan(glm::radians(fovy) / 2))
+		SetFieldOfView(
+			glm::degrees(
+				2 * glm::atan(1 / glm::sqrt(1 + glm::pow(GetAspectRatio(), 2)) * glm::tan(glm::radians(fovy) / 2))
+			)
 		);
+		GetPropertyChangedSignal("DiagonalFieldOfView")->Fire({});
 	}
 
 	glm::mat4 Camera::GetProjectionMatrix() {
@@ -142,4 +115,4 @@ namespace gargantuan {
 			CFrame.Position -= glm::vec3(0, FreecamSpeed * deltaTime, 0);
 		}
 	}
-} // namespace gargantuan
+}

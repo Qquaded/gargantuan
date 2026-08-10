@@ -1,10 +1,9 @@
 #pragma once
 
-#include "gargantuan/datatypes/Instance.hpp"
+#include "gargantuan/classes/generated/Folder.hpp"
 
 namespace gargantuan {
 	class Folder : public Instance {
-	  public:
-		G_INSTANCE_DECL(Folder);
+		I_Folder;
 	};
 }
