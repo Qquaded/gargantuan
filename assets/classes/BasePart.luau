@@ -25,6 +25,12 @@ return c({
 			unmodified = "true",
 			serializable = true,
 		},
+		CanTouch = {
+			description = "Whether this instance can register touched events.",
+			type = t.Bool,
+			unmodified = "true",
+			serializable = true,
+		},
 		CFrame = {
 			description = "The world transform of this instance",
 			type = t.CFrame,
@@ -50,13 +56,13 @@ return c({
 			overrideRead = "GetPosition",
 			overrideWrite = "SetPosition",
 		},
-		-- Rotation = {
-		-- 	description = "The world rotation of this instance",
-		-- 	type = t.Vector3,
-		-- 	unmodified = "glm::vec3(0.0f, 0.0f, 0.0f)",
-		-- 	overrideRead = "GetRotation",
-		-- 	overrideWrite = "SetRotation",
-		-- },
+		Rotation = {
+			description = "The world rotation of this instance",
+			type = t.Vector3,
+			unmodified = "glm::vec3(0.0f, 0.0f, 0.0f)",
+			overrideRead = "GetRotation",
+			overrideWrite = "SetRotation",
+		},
 		Transparency = {
 			description = "The visual transparency of this instance",
 			type = t.Float,

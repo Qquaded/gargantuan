@@ -1,6 +1,6 @@
 #include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/classes/BasePart.hpp"
-#include "gargantuan/classes/Part.hpp"
+#include "gargantuan/classes/Instance.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/physics/Conversions.hpp"
 
@@ -12,84 +12,85 @@
 #include <box3d/types.h>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <unordered_map>
+#include <variant>
+#include <vector>
 
 namespace gargantuan {
-	constexpr int MAX_STEPS_PER_FRAME = 4;
-	constexpr float TimeStep = 1.0f / 60.0f;
-	constexpr int SubStepCount = 4;
-	float Accumulator = 0.0f;
-
 	WorldRoot::WorldRoot() {
-		b3WorldDef worldDef = b3DefaultWorldDef();
-		// put stuff to change the worlddef (probably based on project.config.json)
-		// stuff like gravity and etc
-		worldDef.gravity = b3Vec3{0.0f, -10.0f, 0.0f};
-		b3WorldId worldId = b3CreateWorld(&worldDef);
-		World = worldId;
+		b3WorldDef worldDefinition = b3DefaultWorldDef();
+		worldDefinition.enableSleep = true;
+		worldDefinition.gravity = b3Vec3{0.0f, Gravity, 0.0f};
 
-		auto checkChildAdded = [this](std::shared_ptr<Instance> instance) {
-			if (auto part = std::dynamic_pointer_cast<BasePart>(instance)) {
-				this->Parts.push_back(part);
+		World = b3CreateWorld(&worldDefinition);
+		Destroying->Once([world = this->World](std::monostate _) { b3DestroyWorld(world); });
 
-				b3BodyDef partBodyDef = b3DefaultBodyDef();
-				partBodyDef.position = ToBox3(part->GetCFrame().Position);
-				partBodyDef.rotation = ToBox3(part->GetCFrame().ToQuaternion());
-				b3ShapeDef partShapeDef = b3DefaultShapeDef();
-				if (part->GetAnchored() == true) {
-					partBodyDef.type = (b3BodyType)b3_staticBody;
-				} else {
-					partBodyDef.type = (b3BodyType)b3_dynamicBody;
-					partShapeDef.density = 0.7f;
-				};
+		BindDescendants([this](std::shared_ptr<Instance> instance) {
+			auto part = std::dynamic_pointer_cast<BasePart>(instance);
+			if (!part) return;
 
-				if (part->GetCanCollide() == false) {
-					partShapeDef.isSensor = true;
-					partShapeDef.enableSensorEvents = true; // CanTouch
-				}
+			this->Parts.push_back(part);
 
-				partBodyDef.userData = part.get();
-				b3BodyId partId = b3CreateBody(World, &partBodyDef);
-				part->CreateBodyShape(partId, partShapeDef);
-				this->PartBodies[part.get()] = partId;
+			b3BodyDef bodyDefinition = b3DefaultBodyDef();
+			bodyDefinition.position = ToBox3(part->GetCFrame().Position);
+			bodyDefinition.rotation = ToBox3(part->GetCFrame().ToQuaternion());
+
+			b3ShapeDef shapeDefinition = b3DefaultShapeDef();
+
+			// TODO: Maybe generate BindProperty methods + a Life class akin to
+			// WTH for tracking signals from that
+			if (part->GetAnchored()) {
+				bodyDefinition.type = (b3BodyType)b3_staticBody;
+			} else {
+				bodyDefinition.type = (b3BodyType)b3_dynamicBody;
+				shapeDefinition.density = 0.7f;
+			};
+
+			if (part->GetCanCollide()) {
+				shapeDefinition.isSensor = false;
+			} else {
+				shapeDefinition.isSensor = true;
+				shapeDefinition.enableSensorEvents = part->GetCanTouch();
 			}
-		};
 
-		auto checkChildRemoved = [this](std::shared_ptr<Instance> instance) {
+			bodyDefinition.userData = part.get();
+			b3BodyId bodyId = b3CreateBody(World, &bodyDefinition);
+			part->CreateBodyShape(bodyId, shapeDefinition);
+			this->PartBodies[part.get()] = bodyId;
+		});
+
+		DescendantRemoved->Connect([this](std::shared_ptr<Instance> instance) {
 			if (auto part = std::static_pointer_cast<BasePart>(instance)) {
 				erase(Parts, part);
 				b3DestroyBody(this->PartBodies[part.get()]);
 				this->PartBodies.erase(part.get());
 			}
-		};
-
-		DescendantAdded->Connect(checkChildAdded);
-		DescendantRemoved->Connect(checkChildRemoved);
+		});
 	};
 
-	void WorldRoot::StepPhys(float deltaTime) {
-		Accumulator += deltaTime;
+	void WorldRoot::StepPhysics(double deltaTime, std::optional<std::vector<std::shared_ptr<Instance>>> instances) {
+		StepAccumulator += deltaTime;
 
 		int steps = 0;
-		while (Accumulator >= TimeStep && steps < MAX_STEPS_PER_FRAME) {
-			b3World_Step(World, TimeStep, SubStepCount);
+		while (StepAccumulator >= STEP_INTERVAL && steps < MAX_STEPS_PER_FRAME) {
+			b3World_Step(World, STEP_INTERVAL, SUB_STEP_COUNT);
+
 			b3BodyEvents events = b3World_GetBodyEvents(World);
 			for (int i = 0; i < events.moveCount; ++i) {
 				const b3BodyMoveEvent &move = events.moveEvents[i];
+
 				BasePart *part = static_cast<BasePart *>(move.userData);
 				if (part == nullptr) continue;
-				part->GetCFrame() = gargantuan::CFrame(
-					FromBox3(move.transform.p), glm::mat3_cast(FromBox3(move.transform.q))
+				part->SetCFrame(
+					gargantuan::CFrame(FromBox3(move.transform.p), glm::mat3_cast(FromBox3(move.transform.q)))
 				);
 			}
-			Accumulator -= TimeStep;
+			StepAccumulator -= STEP_INTERVAL;
 			++steps;
 		}
 
-		if (steps == MAX_STEPS_PER_FRAME) Accumulator = 0.0f;
+		if (steps == MAX_STEPS_PER_FRAME) StepAccumulator = 0.0f;
 	}
 
-	void WorldRoot::KillWorld() {
-		b3DestroyWorld(World);
-	}
 }
