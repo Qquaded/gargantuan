@@ -14,9 +14,7 @@
 
 namespace gargantuan {
 	G_SHARED_USERDATA_DECL(
-		Instance,
-
-		I_Instance;
+		Instance, I_Instance;
 
 		virtual ~Instance() = default;
 

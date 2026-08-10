@@ -70,4 +70,22 @@ return c({
 			serializable = true,
 		},
 	},
+
+	signals = {
+		Touched = {
+			description = "Fired when another BasePart touches this instance.",
+			args = { t.Instance("BasePart") },
+		},
+		TouchEnded = {
+			description = "Fired when another BasePart has stopped touching this instance.",
+			args = { t.Instance("BasePart") },
+		},
+	},
+
+	methods = {
+		ApplyImpulse = {
+			description = "Applies an impulse onto this instance.",
+			params = { p("impulse", t.Vector3) },
+		},
+	},
 })

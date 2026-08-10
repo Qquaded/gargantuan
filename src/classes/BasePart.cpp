@@ -25,6 +25,10 @@ namespace gargantuan {
 		SetCFrame(gargantuan::CFrame(GetCFrame().Position, rotMatrix));
 	}
 
+	void BasePart::ApplyImpulse(glm::vec3 impulse) {
+		AccumulatedImpulse += impulse;
+	}
+
 	glm::mat4 BasePart::GetModelMatrix() {
 		glm::mat4 translation = glm::translate(glm::mat4(1.0f), CFrame.Position);
 		glm::mat4 rotation = CFrame.Rotation;

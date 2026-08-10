@@ -17,6 +17,7 @@
 #include <glm/glm.hpp>
 #include <lua.h>
 #include <memory>
+#include <optional>
 
 namespace gargantuan {
 	Engine::Engine(std::shared_ptr<gargantuan::DataModel> game, BaseRenderer *renderer)
@@ -112,7 +113,7 @@ namespace gargantuan {
 			{
 				G_PROFILE("Simulation");
 				RunService->PreSimulation->Fire(deltaTime);
-				WorldRoot->StepPhysics(deltaTime);
+				WorldRoot->StepPhysics(deltaTime, std::nullopt);
 				Workspace->GetCurrentCamera()->Step(deltaTime);
 				RunService->PostSimulation->Fire(deltaTime);
 			}

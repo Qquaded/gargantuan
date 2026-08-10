@@ -42,8 +42,6 @@ namespace gargantuan {
 
 		SetParent(nullptr);
 		Destroyed = true;
-
-		delete this;
 	}
 
 	void Instance::AssertIsAlive() const {
