@@ -279,22 +279,23 @@ const function assembleImplFile(state: GenerationState)
 	return output
 end
 
-const function isOutputUpdated(filepath: string, lastModifiedAt: number): boolean
-	if parsed:get("force") then
+const function isOutputUpdated(filepath: string, lastModifiedAt): boolean
+	if parsed.flags.force then
 		return false
 	end
 
 	const file = fs.find(filepath):try_file()
 	if file then
 		const metadata = file:metadata()
-		return metadata.modified_at ~= nil and metadata.modified_at.UnixTimestampMillis >= lastModifiedAt
+		return (metadata.modified_at ~= nil) and metadata.modified_at.unix_timestamp >= lastModifiedAt
 	end
 
 	return false
 end
 
 const function assembleFile(target: Target, declarationContents: fs.FileEntry)
-	const classResult = luau.eval(declarationContents.path, { stdlib = "Seal", name = declarationContents.path })
+	const classContents = fs.readfile(declarationContents.path)
+	const classResult = luau.eval(classContents, { stdlib = "Seal", name = declarationContents.path })
 	if typeof(classResult) == "error" then
 		print(tostring(classResult))
 		return
@@ -304,10 +305,10 @@ const function assembleFile(target: Target, declarationContents: fs.FileEntry)
 	const lastModifiedAt = declarationContents:metadata().modified_at
 
 	local headerOutput = path.join(target.headerOutput, class.name .. ".hpp")
-	local isHeaderUpdated = lastModifiedAt and isOutputUpdated(headerOutput, lastModifiedAt.UnixTimestampMillis)
+	local isHeaderUpdated = lastModifiedAt and isOutputUpdated(headerOutput, lastModifiedAt.unix_timestamp)
 
 	local implOutput = path.join(target.implOutput, class.name .. ".cpp")
-	local isImplUpdated = lastModifiedAt and isOutputUpdated(implOutput, lastModifiedAt.UnixTimestampMillis)
+	local isImplUpdated = lastModifiedAt and isOutputUpdated(implOutput, lastModifiedAt.unix_timestamp)
 
 	if isHeaderUpdated and isImplUpdated then
 		print(`Skipping {class.name}`)
@@ -357,7 +358,7 @@ do
 		fs.dir.ensure(target.implOutput)
 
 		const input = fs.dir.from(target.input)
-		for _, entry in input:entries() do
+		for _, entry in orderedPairs(input:entries()) do
 			if entry.type == "File" and entry.name ~= ".config.luau" and string.find(entry.name, ".luau$") ~= nil then
 				assembleFile(target, entry)
 			end
