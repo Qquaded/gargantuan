@@ -1,7 +1,7 @@
 -- Creates a rotating wireframe sphere with latitude and longitude rings.
 
-local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 local CENTER = Vector3.new(0, 20, 0)
 local COLOR = Color3.fromRGB(255, 255, 0)
@@ -22,7 +22,8 @@ baseplate.Parent = Workspace
 local function createPart()
 	local part = Instance.new("Part")
 	part.Anchored = true
-	part.CanCollide = false
+	-- FIXME: Disabling CanCollide will emit seconds per frame
+	part.CanCollide = true
 	part.Size = Vector3.new(THICKNESS, THICKNESS, 1)
 	part.Color = COLOR
 	part.Transparency = TRANSPARENCY

@@ -20,7 +20,7 @@ submodules:
 configure tracy="OFF" build_type="Debug":
     cmake -B {{ GARGANTUAN_BUILD_DIRECTORY }} -S . -G Ninja \
         -DCMAKE_BUILD_TYPE={{ build_type }} \
-        -DGARGANTUAN_TRACY={{ tracy }} \
+        -DGARGANTUAN_TRACY_TOOLS={{ tracy }} \
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
 # Builds the engine
