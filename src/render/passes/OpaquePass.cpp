@@ -7,7 +7,6 @@
 
 #include <SDL3/SDL.h>
 #include <memory>
-#include <string>
 
 namespace gargantuan {
 	static const glm::mat4 SHADOW_BIAS_MATRIX{
@@ -35,7 +34,7 @@ namespace gargantuan {
 
 	class OpaquePass final : public RenderPass {
 	  public:
-		static constexpr std::string_view LABEL = "Opaque";
+		static constexpr const char *LABEL = "Opaque";
 
 		struct alignas(16) WorldUniforms {
 			glm::mat4 ViewMatrix;

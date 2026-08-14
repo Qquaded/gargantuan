@@ -6,15 +6,12 @@
 #include "gargantuan/render/Shader.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_gpu.h>
 #include <memory>
 
 namespace gargantuan {
-
 	class ShadowPass final : public RenderPass {
 	  public:
-		static constexpr std::string_view LABEL = "Shadow";
+		static constexpr const char *LABEL = "Shadow";
 
 		struct alignas(16) Uniforms {
 			glm::mat4 ShadowMatrix;

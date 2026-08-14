@@ -4,15 +4,12 @@
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_gpu.h>
 #include <memory>
 
 namespace gargantuan {
-
 	class GuiPass final : public RenderPass {
 	  public:
-		static constexpr std::string_view LABEL = "Gui";
+		static constexpr const char *LABEL = "Gui";
 
 		FileShader Shader{
 			.VertexFilepath = GetShaderPath("gui.vert"),

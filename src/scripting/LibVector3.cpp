@@ -1,6 +1,7 @@
 #include "gargantuan/datatypes/Vector3.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
 
+#include <cstring>
 #include <glm/glm.hpp>
 #include <lua.h>
 #include <lualib.h>
