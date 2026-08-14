@@ -44,8 +44,8 @@ const TARGETS: { [string]: Target } = {
 	},
 }
 
-const parsed = args.parse("classgen", "Procedurally generates C++ files from Luau instance declarations")
-	:simple(args.flag("--force", "Whether to force regeneration"):aliases("-f"))
+const parsed = args.parse("classgen", "procedurally generates C++ files from Luau instance declarations")
+	:simple(args.flag("--force", "whether to force regeneration"):aliases("-f"))
 
 const function pushTypeDependencies(state: GenerationState, type: types.Type)
 	if type.cIncludes then

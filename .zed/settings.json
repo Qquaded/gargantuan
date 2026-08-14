@@ -2,20 +2,20 @@
 	"disable_ai": true,
 	"format_on_save": "on",
 	"project_panel": {
-		"auto_fold_dirs": true
+		"auto_fold_dirs": true,
 	},
 	"file_associations": {
-		"JSON": [".zed/settings.json"]
+		"JSON": [".zed/settings.json"],
 	},
 	"languages": {
 		"Luau": {
 			"formatter": {
 				"external": {
 					"command": "stylua",
-					"arguments": ["-"]
-				}
-			}
-		}
+					"arguments": ["-"],
+				},
+			},
+		},
 	},
 	"lsp": {
 		"json-language-server": {
@@ -24,33 +24,34 @@
 					"schemas": [
 						{
 							"fileMatch": ["*.project.json"],
-							"url": "https://raw.githubusercontent.com/rojo-rbx/vscode-rojo/refs/heads/master/schemas/project.template.schema.json"
-						}
-					]
-				}
-			}
+							"url": "https://raw.githubusercontent.com/rojo-rbx/vscode-rojo/refs/heads/master/schemas/project.template.schema.json",
+						},
+					],
+				},
+			},
 		},
 		"luau-lsp": {
 			"settings": {
 				"roblox": {
-					"enabled": true
+					"enabled": true,
 				},
 				"fflags": {
 					"enable_new_solver": true,
-					"sync": true
+					"sync": true,
 				},
 				"luau-lsp": {
+					"ignoreGlobs": [".seal"],
 					"sourcemap": {
-						"enabled": false
+						"enabled": false,
 					},
 					"types": {
 						"definitionFiles": {
-							"@seal": "./.seal/typedefs/globals.d.luau"
+							"@seal": "./.seal/typedefs/globals.d.luau",
 						},
-						"documentationFiles": ["./.seal/typedefs/docs.json"]
-					}
-				}
-			}
-		}
-	}
+						"documentationFiles": ["./.seal/typedefs/docs.json"],
+					},
+				},
+			},
+		},
+	},
 }
