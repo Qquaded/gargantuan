@@ -3,7 +3,7 @@
 #include "gargantuan/classes/Constraint.hpp"
 #include "gargantuan/classes/Instance.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
-#include "gargantuan/physics/Conversions.hpp"
+#include "gargantuan/math/Conversions.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -29,8 +29,8 @@ namespace gargantuan {
 		Parts.push_back(it);
 
 		b3BodyDef bodyDefinition = b3DefaultBodyDef();
-		bodyDefinition.position = ToBox3(it->GetCFrame().Position);
-		bodyDefinition.rotation = ToBox3(it->GetCFrame().ToQuaternion());
+		bodyDefinition.position = AsB3Vec3(it->GetCFrame().Position);
+		bodyDefinition.rotation = AsB3Quat(it->GetCFrame().ToQuaternion());
 
 		b3ShapeDef shapeDefinition = b3DefaultShapeDef();
 
@@ -127,11 +127,11 @@ namespace gargantuan {
 				if (part == nullptr) continue;
 
 				part->SetCFrame(
-					gargantuan::CFrame(FromBox3(move.transform.p), glm::mat3_cast(FromBox3(move.transform.q)))
+					gargantuan::CFrame(AsGlmVec3(move.transform.p), glm::mat3_cast(AsGlmVec3(move.transform.q)))
 				);
 
 				if (auto body = PartBodies[part]; part->AccumulatedImpulse.value > ZERO_VEC3) {
-					b3Body_ApplyLinearImpulseToCenter(body, ToBox3(part->AccumulatedImpulse), true);
+					b3Body_ApplyLinearImpulseToCenter(body, AsB3Vec3(part->AccumulatedImpulse), true);
 					part->AccumulatedImpulse = {};
 				}
 			}
