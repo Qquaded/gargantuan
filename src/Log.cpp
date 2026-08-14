@@ -69,6 +69,8 @@ namespace gargantuan {
 			return {AnsiCode::BgCyan, AnsiCode::Blue, AnsiCode::Bold};
 		case LogCategory::Lua:
 			return {AnsiCode::BgBlue, AnsiCode::White, AnsiCode::Bold};
+		case LogCategory::Box3d:
+			return {AnsiCode::BgGreen, AnsiCode::White, AnsiCode::Bold};
 		default:
 			return {AnsiCode::BgBlack, AnsiCode::Dim, AnsiCode::Bold};
 		}
@@ -104,6 +106,8 @@ namespace gargantuan {
 			return "App";
 		case LogCategory::Lua:
 			return "Lua";
+		case LogCategory::Box3d:
+			return "B3D";
 		default:
 			return "SDL";
 		}

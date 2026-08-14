@@ -10,6 +10,7 @@
 
 #include <SDL3/SDL.h>
 #include <argparse/argparse.hpp>
+#include <box3d/base.h>
 #include <magic_enum/magic_enum.hpp>
 
 #include <cstdlib>
@@ -133,6 +134,7 @@ int main(int argc, char *argv[]) {
 	SDL_SetLogPriority(LogCategory::App, SDL_LOG_PRIORITY_TRACE);
 	SDL_SetLogPriority(LogCategory::Lua, SDL_LOG_PRIORITY_TRACE);
 	SDL_SetLogOutputFunction(GetLogOutputFunction(&logContext), &logContext);
+	b3SetLogFcn([](const char *message) { LOG_WARN(Box3d, "%s", message); });
 
 	LOG_INFO(App, "Gargantuan start");
 

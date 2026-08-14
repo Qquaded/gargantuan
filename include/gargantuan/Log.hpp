@@ -14,7 +14,7 @@
 #define LOG_CRITICAL(category, ...) LOG_BASE(SDL_LogCritical, category, __VA_ARGS__)
 
 namespace gargantuan {
-	enum LogCategory : int { App = SDL_LOG_CATEGORY_CUSTOM + 1, Lua };
+	enum LogCategory : int { App = SDL_LOG_CATEGORY_CUSTOM + 1, Lua, Box3d };
 
 	enum class AnsiCode : int {
 		Reset,
