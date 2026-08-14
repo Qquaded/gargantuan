@@ -11,11 +11,14 @@ namespace gargantuan {
 
 	void BaseFilesystem::Copy(const std::filesystem::path &source, const std::filesystem::path &destination) {
 		if (!Exists(source)) throw std::format("File {} does not exist", source.string().c_str());
-		if (Exists(destination)) throw std::format("Cannot copy to existing destination {}", destination.string().c_str());
+		if (Exists(destination))
+			throw std::format("Cannot copy to existing destination {}", destination.string().c_str());
 
 		if (Type(source) == FileType::File) {
 			if (Exists(destination) && Type(source) != FileType::File) {
-				throw std::format("Cannot copy file {} to non-file {}", source.string().c_str(), destination.string().c_str());
+				throw std::format(
+					"Cannot copy file {} to non-file {}", source.string().c_str(), destination.string().c_str()
+				);
 			}
 
 			auto sourceHandle = Open(source, FileOpen::Read);
@@ -35,20 +38,25 @@ namespace gargantuan {
 
 	void BaseFilesystem::Move(const std::filesystem::path &source, const std::filesystem::path &destination) {
 		if (!Exists(source)) throw std::format("File {} does not exist", source.string().c_str());
-		if (Exists(destination)) throw std::format("Cannot move to existing destination {}", destination.string().c_str());
+		if (Exists(destination))
+			throw std::format("Cannot move to existing destination {}", destination.string().c_str());
 
 		if (Type(source) == FileType::File) {
 			if (Exists(destination) && Type(source) != FileType::File) {
-				throw std::format("Cannot copy file {} to non-file {}", source.string().c_str(), destination.string().c_str());
+				throw std::format(
+					"Cannot copy file {} to non-file {}", source.string().c_str(), destination.string().c_str()
+				);
 			}
 
 			auto sourceHandle = Open(source, FileOpen::Read);
 			auto destinationHandle = Open(destination, FileOpen::Write);
 
-			void *sourceContents;
 			size_t sourceSize = sourceHandle->Size();
-			sourceHandle->Read(sourceContents, sourceSize);
-			destinationHandle->Write(sourceContents, sourceSize);
+			std::vector<char> sourceContents(sourceSize);
+
+			size_t bytesRead = sourceHandle->Read(sourceContents.data(), sourceContents.size());
+
+			destinationHandle->Write(sourceContents.data(), bytesRead);
 
 			sourceHandle->Close();
 			destinationHandle->Close();
