@@ -1,5 +1,4 @@
-local append = require("@tools/utils/append")
-
+local tableext = require("@std/tableext")
 export type Type = {
 	read kind: "c" | "class" | "datatype" | "enum" | "optional",
 	read cType: string,
@@ -77,7 +76,7 @@ function types.Signal(...: Type): Type
 		const type: Type = select(1, ...)
 		const cIncludes = { "<memory>", '"gargantuan/datatypes/Signal.hpp"' }
 		if type.cIncludes then
-			append(type.cIncludes, cIncludes)
+			tableext.extend(cIncludes, type.cIncludes)
 		end
 
 		return {
@@ -92,7 +91,7 @@ function types.Signal(...: Type): Type
 		for index = 1, numArgs do
 			const type: Type = select(index, ...)
 			if type.cIncludes then
-				append(type.cIncludes, cIncludes)
+				tableext.extend(cIncludes, type.cIncludes)
 			end
 			cArgs[index] = type.cType
 			luauArgs[index] = type.luauType
@@ -164,7 +163,7 @@ function types.Function(...: { name: string, type: Type })
 			luauParams ..= param.name .. ": " .. param.type.luauType
 
 			if param.type.cIncludes then
-				append(param.type.cIncludes, cIncludes)
+				tableext.extend(cIncludes, param.type.cIncludes)
 			end
 
 			if index ~= numParams then
@@ -184,7 +183,7 @@ function types.Function(...: { name: string, type: Type })
 			const ret = select(1, ...)
 			cReturns, luauReturns = ret.cType, ret.luauType
 			if ret.cIncludes then
-				append(ret.cIncludes, cIncludes)
+				tableext.extend(cIncludes, ret.cIncludes)
 			end
 		else
 			table.insert(cIncludes, "<tuple>")
@@ -195,7 +194,7 @@ function types.Function(...: { name: string, type: Type })
 				luauReturns ..= ret.luauType
 
 				if ret.cIncludes then
-					append(ret.cIncludes, cIncludes)
+					tableext.extend(cIncludes, ret.cIncludes)
 				end
 
 				if index ~= numReturns then
