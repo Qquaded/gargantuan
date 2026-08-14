@@ -15,21 +15,25 @@ function StringBuilder.formatIndent(self: StringBuilder): string
 	return string.rep("\t", self.halfTabs // 2) .. string.rep("  ", self.halfTabs % 2)
 end
 
+@[deprecated { reason = "Format your files with an external program like clang/stylua" }]
 function StringBuilder.tab(self: StringBuilder): StringBuilder
 	self.halfTabs += 2
 	return self
 end
 
+@[deprecated { reason = "Format your files with an external program like clang/stylua" }]
 function StringBuilder.tabHalf(self: StringBuilder): StringBuilder
 	self.halfTabs += 1
 	return self
 end
 
+@[deprecated { reason = "Format your files with an external program like clang/stylua" }]
 function StringBuilder.untab(self: StringBuilder): StringBuilder
 	self.halfTabs = math.max(self.halfTabs - 2, 0)
 	return self
 end
 
+@[deprecated { reason = "Format your files with an external program like clang/stylua" }]
 function StringBuilder.untabHalf(self: StringBuilder): StringBuilder
 	self.halfTabs = math.max(self.halfTabs - 1, 0)
 	return self
@@ -40,6 +44,7 @@ function StringBuilder.push(self: StringBuilder, str: string): StringBuilder
 	return self
 end
 
+@[deprecated { reason = "Format your files with an external program like clang/stylua" }]
 function StringBuilder.pushIndented(self: StringBuilder, str: string): StringBuilder
 	const indent = self:formatIndent()
 	self.inner ..= indent .. string.gsub(str, "\n", "\n" .. indent)

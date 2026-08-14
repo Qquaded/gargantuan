@@ -296,7 +296,7 @@ end
 const function assembleFile(target: Target, declarationContents: fs.FileEntry)
 	const classResult = luau.eval(declarationContents.path, { stdlib = "Seal", name = declarationContents.path })
 	if typeof(classResult) == "error" then
-		warn(classResult)
+		print(tostring(classResult))
 		return
 	end
 
