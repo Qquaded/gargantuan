@@ -7,11 +7,12 @@ const half = Instance.new("Frame")
 half.BackgroundColor3 = Color3.new(1, 0, 0)
 half.Size = UDim2.fromScale(0.5, 1)
 half.Name = "Frame"
+half.BackgroundTransparency = 0.5
 
 const centered = Instance.new("Frame")
 centered.AnchorPoint = Vector2.new(0.5, 0.5)
 centered.BackgroundColor3 = Color3.new(0, 1, 0)
-centered.Size = UDim2.fromScale(0.5, 0.5)
+centered.Size = UDim2.fromOffset(128, 128)
 centered.Position = UDim2.fromScale(0.5, 0.5)
 centered.Name = "Centered"
 

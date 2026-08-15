@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gargantuan/render/Mesh.hpp"
+#include "gargantuan/render/RenderPrimitives.hpp"
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>

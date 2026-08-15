@@ -1,5 +1,5 @@
 #include "gargantuan/render/PipelineBuilder.hpp"
-#include "gargantuan/render/Mesh.hpp"
+#include "gargantuan/render/RenderPrimitives.hpp"
 #include <SDL3/SDL_gpu.h>
 
 namespace gargantuan {

@@ -5,6 +5,9 @@
 #include <glm/glm.hpp>
 
 namespace gargantuan {
+	static constexpr SDL_GPUTextureFormat RENDERER_COLOR_FORMAT = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+	static constexpr SDL_GPUTextureFormat RENDERER_DEPTH_FORMAT = SDL_GPU_TEXTUREFORMAT_D16_UNORM;
+
 	struct Vertex {
 	  public:
 		glm::vec3 Position;
@@ -21,7 +24,7 @@ namespace gargantuan {
 		glm::vec2 AbsolutePosition;
 		glm::vec2 AbsoluteSize;
 		glm::vec2 UV;
-		glm::vec4 Color = {0.0f, 0.0f, 0.0f, 0.0f};
+		glm::vec4 Background = {0.0f, 0.0f, 0.0f, 0.0f};
 		float Rotation = 0;
 		int TextureIndex = UI_SOLID_COLOR_INDEX;
 
@@ -34,4 +37,4 @@ namespace gargantuan {
 		std::vector<Vertex> Vertices;
 		std::vector<uint32_t> Indices;
 	};
-}; // namespace gargantuan
+};

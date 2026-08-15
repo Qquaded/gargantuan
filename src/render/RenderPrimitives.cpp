@@ -1,4 +1,4 @@
-#include "gargantuan/render/Mesh.hpp"
+#include "gargantuan/render/RenderPrimitives.hpp"
 
 namespace gargantuan {
 	std::array<SDL_GPUVertexBufferDescription, 1> Vertex::BufferDescriptions[]{
@@ -61,7 +61,7 @@ namespace gargantuan {
 			.location = 3,
 			.buffer_slot = 0,
 			.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-			.offset = offsetof(UIVertex, Color),
+			.offset = offsetof(UIVertex, Background),
 		},
 		SDL_GPUVertexAttribute{
 			.location = 4,

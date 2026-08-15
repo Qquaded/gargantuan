@@ -2,8 +2,8 @@
 
 #include "gargantuan/render/GpuMesh.hpp"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace gargantuan::MeshProvider {
 	std::unique_ptr<GpuMesh> &GetGpuMesh(std::string id);

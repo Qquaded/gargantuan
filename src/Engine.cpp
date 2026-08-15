@@ -113,6 +113,12 @@ namespace gargantuan {
 
 						int width, height;
 						SDL_GetWindowSizeInPixels(window, &width, &height);
+
+						Vector2 layerAbsoluteSize{static_cast<float>(width), static_cast<float>(height)};
+						for (auto &layer : Layers) {
+							layer->SetAbsoluteSize(layerAbsoluteSize);
+						}
+
 						Renderer->Resize(width, height);
 
 						Workspace->GetCurrentCamera()->SetViewportSize(Vector2(width, height));

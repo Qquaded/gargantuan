@@ -4,6 +4,7 @@
 #include "gargantuan/Log.hpp"
 #include "gargantuan/render/MeshProvider.hpp"
 #include "gargantuan/render/RenderPass.hpp"
+#include "gargantuan/render/RenderPrimitives.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>
@@ -27,7 +28,7 @@ namespace gargantuan {
 	const std::vector<RenderPassConstructor> RENDER_PASS_CONSTRUCTORS{
 		CreateShadowPass,
 		CreateOpaquePass,
-		// CreateGuiPass,
+		CreateGuiPass,
 	};
 
 	SDLRenderer::SDLRenderer(Vector2 &viewportSize) : BaseRenderer(viewportSize) {
@@ -120,6 +121,7 @@ namespace gargantuan {
 		frameContext.Commands = commands;
 		frameContext.WorldRoot = drawContext.WorldRoot;
 		frameContext.Camera = drawContext.Camera;
+		frameContext.Layers = drawContext.Layers;
 
 		frameContext.DepthTexture = DepthTexture;
 		frameContext.ShadowMapTexture = ShadowMapTexture;
@@ -134,7 +136,8 @@ namespace gargantuan {
 			if (frameContext.Commands) SDL_CancelGPUCommandBuffer(frameContext.Commands);
 			return;
 		} else if (!frameContext.SwapchainTexture) {
-			LOG_TRACE(App, "Acquired swapchain texture, but it is null");
+			// Not worth warning
+			// LOG_TRACE(App, "Acquired swapchain texture, but it is null");
 			if (frameContext.Commands) SDL_CancelGPUCommandBuffer(frameContext.Commands);
 			return;
 		}
@@ -171,7 +174,7 @@ namespace gargantuan {
 		if (DepthTexture != nullptr) SDL_ReleaseGPUTexture(Gpu, DepthTexture);
 		SDL_GPUTextureCreateInfo depthInfo{
 			.type = SDL_GPU_TEXTURETYPE_2D,
-			.format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+			.format = RENDERER_DEPTH_FORMAT,
 			.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
 			.width = (uint32_t)width,
 			.height = (uint32_t)height,
