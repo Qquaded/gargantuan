@@ -1,0 +1,6 @@
+{
+	"lint": { "LocalUnused": false },
+	"aliases": {
+		"scripts": "../../../scripts/libs"
+	}
+}

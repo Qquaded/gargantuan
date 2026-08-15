@@ -1,4 +1,5 @@
 {
 	"languageMode": "nocheck",
-	"lint": { "*": false }
+	"lint": { "*": false },
+	"typeErrors": false
 }

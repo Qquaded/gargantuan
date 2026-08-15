@@ -1,6 +1,0 @@
-{
-	"lint": { "LocalUnused": false },
-	"aliases": {
-		"tools": "../../tools/libs"
-	}
-}
