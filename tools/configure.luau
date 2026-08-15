@@ -1,5 +1,6 @@
 const args = require("@std/args")
 const process = require("@std/process")
+local configuration = require("@tools/configuration")
 
 const parsed = args.parse("configure", "prepares the build directory"):simple(
 	args.named("--type", "build type to use, either 'Debug' or 'Release'"):default("Debug"),
@@ -8,10 +9,8 @@ const parsed = args.parse("configure", "prepares the build directory"):simple(
 	args.flag("--no-ccache", "disable CCache compiler launcher")
 )
 
-const BUILD_DIRECTORY = "build"
-
 do
-	const cmakeArguments = { `-B={BUILD_DIRECTORY}`, "-S=." }
+	const cmakeArguments = { `-B={configuration.buildDirectory}`, "-S=." }
 
 	const generator = parsed:get("--generator")
 	if generator == "Ninja" then
@@ -20,8 +19,7 @@ do
 		table.insert(cmakeArguments, "-G='MinGW Makefiles'")
 		table.insert(cmakeArguments, "-DCMAKE_PREFIX_PATH=C:/msys64/mingw64")
 	else
-		print(`Unknown generator named '{generator}'`)
-		process.exit(1)
+		error(`Unknown generator named '{generator}'`)
 	end
 
 	table.insert(cmakeArguments, `-DCMAKE_BUILD_TYPE={parsed:get("--type")}`)

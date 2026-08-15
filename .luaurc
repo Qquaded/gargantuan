@@ -1,13 +1,11 @@
 {
-  "languageMode": "strict",
-  "lint": {
-    "*": true
-  },
-  "aliases": {
-    "std": "./.seal/typedefs/std/",
-    "extra": "./.seal/extra/",
-    "interop": "./.seal/typedefs/interop/",
-    "lest": "./.lest/core",
-    "tools": "./tools/libs"
-  }
+	"languageMode": "strict",
+	"lint": { "*": true },
+	"aliases": {
+		"std": "./.seal/typedefs/std",
+		"extra": "./.seal/typedefs/extra",
+		"interop": "./.seal/typedefs/interop",
+		"lest": "./.lest/core",
+		"tools": "./tools/libs"
+	}
 }

@@ -1,6 +1,4 @@
 {
-  "languageMode": "nonstrict",
-  "lint": {
-    "UnknownType": false
-  }
+	"languageMode": "nonstrict",
+	"lint": { "UnknownType": false }
 }

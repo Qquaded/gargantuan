@@ -6,6 +6,7 @@ const orderedPairs = require("@tools/utils/orderedPairs")
 const path = require("@std/fs/path")
 const StringBuilder = require("@tools/utils/StringBuilder")
 const types = require("@tools/types")
+local configuration = require("@tools/configuration")
 local process = require("@std/process")
 local str = require("@std/str")
 
@@ -27,21 +28,6 @@ type GenerationState = {
 	publicBody: StringBuilder.StringBuilder,
 
 	includes: { [string]: true },
-}
-
-const TARGETS: { [string]: Target } = {
-	classes = {
-		input = "assets/classes",
-		headerImport = "gargantuan/classes",
-		headerOutput = "include/gargantuan/classes/generated",
-		implOutput = "src/classes/generated",
-	},
-	services = {
-		input = "assets/services",
-		headerImport = "gargantuan/services",
-		headerOutput = "include/gargantuan/services/generated",
-		implOutput = "src/services/generated",
-	},
 }
 
 const parsed = args.parse("classgen", "procedurally generates C++ files from Luau instance declarations")
@@ -353,7 +339,7 @@ const function assembleFile(target: Target, declarationContents: fs.FileEntry)
 end
 
 do
-	for _, target in orderedPairs(TARGETS) do
+	for _, target in orderedPairs(configuration.classgenTargets) do
 		fs.dir.ensure(target.headerOutput)
 		fs.dir.ensure(target.implOutput)
 
