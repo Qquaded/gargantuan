@@ -3,6 +3,7 @@
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/classes/Instance.hpp"
 #include "gargantuan/classes/Script.hpp"
+#include "gargantuan/classes/generated/GuiObject.hpp"
 #include "gargantuan/datatypes/Axes.hpp"
 #include "gargantuan/datatypes/CFrame.hpp"
 #include "gargantuan/datatypes/Color3.hpp"
@@ -56,7 +57,7 @@ namespace gargantuan {
 		{"Rect", nullptr, Rect::CreateUserdataMetatable},
 		// {"Region3", OpenLibRegion3, Region3::CreateUserdataMetatable},
 		{"UDim", OpenLibUDim, UDim::CreateUserdataMetatable},
-		// {"UDim2", OpenLibUDim2, UDim2::CreateUserdataMetatable},
+		{"UDim2", OpenLibUDim2, UDim2::CreateUserdataMetatable},
 		{"Signal", OpenLibSignal, BaseSignal::CreateUserdataMetatable},
 		{"SignalConnection", nullptr, SignalConnection::CreateUserdataMetatable},
 		{"TweenInfo", OpenLibTweenInfo, TweenInfo::CreateUserdataMetatable},
