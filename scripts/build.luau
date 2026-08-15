@@ -12,14 +12,15 @@ const parsed = args.parse("build", "compiles the engine"):simple(
 do
 	if fs.is(configuration.buildDirectory) == "NotFound" then
 		print("Configuring the build directory...")
-		const configureResult = process.run({ program = "seal", args = { "tools/configure.luau" }, stdio = "Inherit" })
+		const configureResult =
+			process.run({ program = "seal", args = { "scripts/configure.luau" }, stdio = "Inherit" })
 		if not configureResult.ok then
 			error("Failed to configure build directory")
 		end
 	end
 
 	if not parsed.flags["no-classgen"] then
-		const classgenResult = process.run({ program = "seal", args = { "tools/classgen.luau" }, stdio = "Inherit" })
+		const classgenResult = process.run({ program = "seal", args = { "scripts/classgen.luau" }, stdio = "Inherit" })
 		if not classgenResult.ok then
 			error("Failed to generate instance classes")
 		end
