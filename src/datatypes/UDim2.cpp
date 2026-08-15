@@ -24,6 +24,14 @@ namespace gargantuan {
 		return UDim2(X.Lerp(goal.X, alpha), Y.Lerp(goal.Y, alpha));
 	}
 
+	Vector2 UDim2::AsScale() const {
+		return {X.Scale, Y.Scale};
+	}
+
+	Vector2 UDim2::AsOffset() const {
+		return {static_cast<float>(X.Offset), static_cast<float>(Y.Offset)};
+	}
+
 	UDim2 UDim2::Add(const UDim2 &other) const {
 		return UDim2(X.Add(other.X), Y.Add(other.Y));
 	}

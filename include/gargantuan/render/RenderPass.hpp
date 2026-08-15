@@ -1,16 +1,20 @@
 #pragma once
 
 #include "gargantuan/classes/Camera.hpp"
+#include "gargantuan/classes/LayerCollector.hpp"
 #include "gargantuan/classes/WorldRoot.hpp"
 #include "gargantuan/render/Shader.hpp"
 
 #include <SDL3/SDL.h>
 #include <memory>
+#include <unordered_set>
 
 namespace gargantuan {
 	struct DrawContext {
 		std::shared_ptr<WorldRoot> WorldRoot;
 		std::shared_ptr<Camera> Camera;
+
+		std::unordered_set<std::shared_ptr<LayerCollector>> Layers;
 
 		// Direction TOWARDS the light
 		glm::vec3 LightDirection;

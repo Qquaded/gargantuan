@@ -21,7 +21,8 @@ namespace gargantuan {
 		glm::vec2 AbsolutePosition;
 		glm::vec2 AbsoluteSize;
 		glm::vec2 UV;
-		glm::vec4 Color;
+		glm::vec4 Color = {0.0f, 0.0f, 0.0f, 0.0f};
+		float Rotation = 0;
 		int TextureIndex = UI_SOLID_COLOR_INDEX;
 
 		static std::array<SDL_GPUVertexBufferDescription, 1> BufferDescriptions[];

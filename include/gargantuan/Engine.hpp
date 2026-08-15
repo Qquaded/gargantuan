@@ -15,6 +15,7 @@
 #include <lua.h>
 #include <memory>
 #include <type_traits>
+#include <unordered_set>
 
 namespace gargantuan {
 	// TODO: Move much of this into DataModel
@@ -29,6 +30,8 @@ namespace gargantuan {
 		std::shared_ptr<RunService> RunService;
 		std::shared_ptr<ProcessService> ProcessService;
 		std::shared_ptr<UserInputService> UserInputService;
+
+		std::unordered_set<std::shared_ptr<LayerCollector>> Layers;
 
 		bool IsRunning = true;
 

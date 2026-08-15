@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gargantuan/datatypes/UDim.hpp"
+#include "gargantuan/datatypes/Vector2.hpp"
 
 #include <glm/glm.hpp>
 
@@ -17,6 +18,9 @@ namespace gargantuan {
 		static UDim2 fromOffset(int x, int y);
 
 		UDim2 Lerp(const UDim2 &goal, float alpha) const;
+		Vector2 AsScale() const;
+		Vector2 AsOffset() const;
+
 		UDim2 Add(const UDim2 &other) const;
 		UDim2 Sub(const UDim2 &other) const;
 		UDim2 Unm() const;

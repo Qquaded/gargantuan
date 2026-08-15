@@ -86,6 +86,12 @@ return c({
 			unmodified = "gargantuan::UDim2(0.0f, 0, 0.0f, 0)",
 			serializable = true,
 		},
+		SizeConstraint = {
+			description = "Whether to restrain the size of this instance per axes.",
+			type = t.EnumItem("SizeConstraint"),
+			unmodified = "Enums::SizeConstraint::RelativeXY",
+			serializable = true,
+		},
 		Visible = {
 			description = "Whether this instance should be rendered",
 			type = t.Bool,

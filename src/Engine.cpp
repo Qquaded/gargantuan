@@ -4,10 +4,12 @@
 #include "gargantuan/classes/DataModel.hpp"
 #include "gargantuan/classes/FileLink.hpp"
 #include "gargantuan/classes/Instance.hpp"
+#include "gargantuan/classes/LayerCollector.hpp"
 #include "gargantuan/classes/Script.hpp"
 #include "gargantuan/filesystem/Paths.hpp"
 #include "gargantuan/render/Renderer.hpp"
 #include "gargantuan/scripting/ScriptEngine.hpp"
+#include "gargantuan/services/CoreGui.hpp"
 #include "gargantuan/services/UserInputService.hpp"
 #include "gargantuan/services/Workspace.hpp"
 
@@ -55,6 +57,25 @@ namespace gargantuan {
 				script && Script->ScriptQueue.contains(script)) {
 				Script->ScriptQueue.erase(script);
 			}
+		});
+
+		auto coreGui = GetService<gargantuan::CoreGui>();
+		coreGui->BindDescendants([this](std::shared_ptr<Instance> instance) {
+			if (auto it = std::dynamic_pointer_cast<LayerCollector>(instance);
+				it && !it->FindFirstAncestorWhichIsA("LayerCollector")) {
+				Layers.emplace(it);
+
+				if (auto renderer = dynamic_cast<SDLRenderer *>(Renderer)) {
+					int width, height;
+					SDL_GetWindowSizeInPixels(renderer->Window, &width, &height);
+					it->SetAbsoluteSize({static_cast<float>(width), static_cast<float>(height)});
+				}
+			};
+		});
+		coreGui->DescendantRemoved->Connect([this](std::shared_ptr<Instance> instance) {
+			if (auto it = std::dynamic_pointer_cast<LayerCollector>(instance); it && Layers.contains(it)) {
+				Layers.erase(it);
+			};
 		});
 
 		LOG_INFO(App, "Constructed engine");
@@ -128,6 +149,7 @@ namespace gargantuan {
 				Renderer->Draw({
 					.WorldRoot = WorldRoot,
 					.Camera = Workspace->GetCurrentCamera(),
+					.Layers = Layers,
 				});
 			}
 

@@ -5,5 +5,7 @@
 namespace gargantuan {
 	class GuiBase2d : public GuiBase {
 		I_GuiBase2d;
+
+		GuiBase2d();
 	};
 }

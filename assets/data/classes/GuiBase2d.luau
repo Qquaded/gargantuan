@@ -12,16 +12,19 @@ return c({
 			description = "Screen position of this instance in pixels",
 			type = t.Vector2,
 			unmodified = "gargantuan::Vector2(0.0f, 0.0f)",
+			writeLevel = "Never",
 		},
 		AbsoluteRotation = {
 			description = "Screen rotation of this instance in degrees",
 			type = t.Float,
 			unmodified = "0.0f",
+			writeLevel = "Never",
 		},
 		AbsoluteSize = {
 			description = "Screen size of this instance in pixels",
 			type = t.Vector2,
 			unmodified = "gargantuan::Vector2(0.0f, 0.0f)",
+			writeLevel = "Never",
 		},
 	},
 })

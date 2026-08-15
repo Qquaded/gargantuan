@@ -154,9 +154,6 @@ namespace gargantuan {
 		auto property = FindProperty(propertyName);
 
 		if (!property) throw std::runtime_error("Property does not exist");
-		if (!property->Write || property->WritePermission == Enums::Permission::Never) {
-			throw std::runtime_error("Property is read-only");
-		};
 
 		auto signal = std::make_shared<Signal<std::monostate>>();
 		PropertyChangedSignals.emplace(propertyName, signal);
