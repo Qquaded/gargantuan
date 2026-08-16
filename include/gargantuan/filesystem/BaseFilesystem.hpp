@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL3/SDL.h>
+
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -42,11 +44,17 @@ namespace gargantuan {
 	};
 
 	struct FileHandle {
-		virtual ~FileHandle() = default;
-		virtual size_t Read(void *buffer, std::size_t bytesToRead) = 0;
-		virtual size_t Write(const void *buffer, std::size_t bytesToWrite) = 0;
-		virtual size_t Size() = 0;
-		virtual void Close() = 0;
+		~FileHandle();
+
+		FileHandle(SDL_IOStream *stream) : Stream(stream) {};
+
+		SDL_IOStream *Stream;
+		bool Closed = false;
+
+		size_t Read(void *buffer, std::size_t bytesToRead);
+		size_t Write(const void *buffer, std::size_t bytesToWrite);
+		size_t Size();
+		void Close();
 	};
 
 	struct DirectoryEntry {

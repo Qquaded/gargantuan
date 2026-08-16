@@ -9,6 +9,7 @@
 #include "gargantuan/render/Renderer.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <argparse/argparse.hpp>
 #include <box3d/base.h>
 #include <magic_enum/magic_enum.hpp>
@@ -168,6 +169,9 @@ int main(int argc, char *argv[]) {
 			std::exit(1);
 		}
 	}
+
+	TTF_Init();
+	std::atexit(TTF_Quit);
 
 	auto engine = hasProject  ? ConstructProject(program.get<std::string>("--project"), renderer)
 				  : hasScript ? ConstructScript(program.get<std::string>("--script"), renderer)

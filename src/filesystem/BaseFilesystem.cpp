@@ -5,6 +5,28 @@
 #include <string>
 
 namespace gargantuan {
+	FileHandle::~FileHandle() {
+		Close();
+	}
+
+	size_t FileHandle::Read(void *buffer, std::size_t bytesToRead) {
+		return SDL_ReadIO(Stream, buffer, bytesToRead);
+	};
+
+	size_t FileHandle::Write(const void *buffer, std::size_t bytesToWrite) {
+		return SDL_WriteIO(Stream, buffer, bytesToWrite);
+	};
+
+	size_t FileHandle::Size() {
+		return SDL_GetIOSize(Stream);
+	};
+
+	void FileHandle::Close() {
+		if (Closed) return;
+		Closed = true;
+		SDL_CloseIO(Stream);
+	};
+
 	FileType BaseFilesystem::Type(const std::filesystem::path &path) const {
 		return Metadata(path).Type;
 	}

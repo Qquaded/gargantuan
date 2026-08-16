@@ -22,7 +22,9 @@ namespace gargantuan {
 
 	typedef std::string Content;
 
-	class Font : public Userdata<Font> {
+	G_USERDATA_DECL(
+		Font,
+
 		Font(
 			Content fontContent,
 			Enums::FontWeight weight = Enums::FontWeight::Regular,
@@ -33,5 +35,5 @@ namespace gargantuan {
 		Content Family = "";
 		Enums::FontWeight Weight;
 		Enums::FontStyle Style;
-	};
+	);
 }

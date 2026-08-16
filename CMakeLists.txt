@@ -23,7 +23,7 @@ if(APPLE)
 endif()
 
 if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
-  message(FATAL_ERROR "Gargantuan requires a 64-bit toolchain. Please build from the x64 Native Tools Command Prompt.")
+	message(FATAL_ERROR "Gargantuan requires a 64-bit toolchain. Please build from the x64 Native Tools Command Prompt.")
 endif()
 
 file(GLOB_RECURSE SHADER_SOURCES CONFIGURE_DEPENDS
@@ -204,7 +204,7 @@ if(WIN32)
 	)
 
 	add_custom_command(TARGET gargantuan POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_directory_if_newer 
+		COMMAND ${CMAKE_COMMAND} -E copy_directory_if_newer
 			"${CMAKE_CURRENT_BINARY_DIR}/shaders"
 			"$<TARGET_FILE_DIR:gargantuan>/shaders"
 		COMMENT "Copying shaders next to gargantuan.exe"

@@ -8,34 +8,6 @@
 #include <stdexcept>
 
 namespace gargantuan {
-	struct DiskFileHandle final : public FileHandle {
-		bool Closed = false;
-		DiskFileHandle(SDL_IOStream *stream) : Stream(stream) {};
-		~DiskFileHandle() {
-			Close();
-		};
-
-		SDL_IOStream *Stream = nullptr;
-
-		size_t Read(void *buffer, std::size_t bytesToRead) override {
-			return SDL_ReadIO(Stream, buffer, bytesToRead);
-		};
-
-		size_t Write(const void *buffer, std::size_t bytesToWrite) override {
-			return SDL_WriteIO(Stream, buffer, bytesToWrite);
-		};
-
-		size_t Size() override {
-			return SDL_GetIOSize(Stream);
-		};
-
-		void Close() override {
-			if (Closed) return;
-			Closed = true;
-			SDL_CloseIO(Stream);
-		};
-	};
-
 	FileType MapSDLPathType(const SDL_PathType &type) {
 		switch (type) {
 		case SDL_PATHTYPE_FILE:
@@ -92,7 +64,7 @@ namespace gargantuan {
 	std::unique_ptr<FileHandle> DiskFilesystem::Open(const std::filesystem::path &path, const FileOpen &mode) {
 		auto stream = SDL_IOFromFile(path.string().c_str(), MapFileOpen(mode));
 		if (!stream) throw SDL_GetError();
-		return std::make_unique<DiskFileHandle>(stream);
+		return std::make_unique<FileHandle>(stream);
 	};
 
 	void DiskFilesystem::CreateDirectory(const std::filesystem::path &path) {
